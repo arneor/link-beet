@@ -1,13 +1,13 @@
-import { z } from 'zod';
-import { 
-  insertUserSchema, 
-  insertBusinessSchema, 
-  insertCampaignSchema, 
-  users, 
-  businesses, 
-  campaigns, 
-  sessions 
-} from './schema';
+import { z } from "zod";
+import {
+  insertUserSchema,
+  insertBusinessSchema,
+  insertCampaignSchema,
+  users,
+  businesses,
+  campaigns,
+  sessions,
+} from "./schema";
 
 // === ERROR SCHEMAS ===
 export const errorSchemas = {
@@ -28,17 +28,35 @@ export const api = {
   // Auth (Mock)
   auth: {
     login: {
-      method: 'POST' as const,
-      path: '/api/login',
+      method: "POST" as const,
+      path: "/api/login",
       input: z.object({ username: z.string() }),
       responses: {
-        200: z.object({ 
-          id: z.number(), 
-          username: z.string(), 
+        200: z.object({
+          id: z.number(),
+          username: z.string(),
           role: z.enum(["admin", "business", "user"]),
-          businessId: z.number().optional() 
+          businessId: z.number().optional(),
         }),
         401: errorSchemas.notFound,
+      },
+    },
+    signup: {
+      method: "POST" as const,
+      path: "/api/signup",
+      input: z.object({
+        username: z.string().min(1),
+        email: z.string().email().optional(),
+        businessName: z.string().min(1),
+      }),
+      responses: {
+        201: z.object({
+          id: z.number(),
+          username: z.string(),
+          role: z.literal("business"),
+          businessId: z.number(),
+        }),
+        400: errorSchemas.validation,
       },
     },
   },
@@ -46,23 +64,23 @@ export const api = {
   // Businesses
   businesses: {
     list: {
-      method: 'GET' as const,
-      path: '/api/businesses',
+      method: "GET" as const,
+      path: "/api/businesses",
       responses: {
         200: z.array(z.custom<typeof businesses.$inferSelect>()),
       },
     },
     get: {
-      method: 'GET' as const,
-      path: '/api/businesses/:id',
+      method: "GET" as const,
+      path: "/api/businesses/:id",
       responses: {
         200: z.custom<typeof businesses.$inferSelect>(),
         404: errorSchemas.notFound,
       },
     },
     update: {
-      method: 'PUT' as const,
-      path: '/api/businesses/:id',
+      method: "PUT" as const,
+      path: "/api/businesses/:id",
       input: insertBusinessSchema.partial(),
       responses: {
         200: z.custom<typeof businesses.$inferSelect>(),
@@ -70,15 +88,17 @@ export const api = {
       },
     },
     dashboardStats: {
-      method: 'GET' as const,
-      path: '/api/businesses/:id/stats',
+      method: "GET" as const,
+      path: "/api/businesses/:id/stats",
       responses: {
         200: z.object({
           totalConnections: z.number(),
           activeUsers: z.number(),
           totalAdsServed: z.number(),
           revenue: z.number(),
-          connectionsHistory: z.array(z.object({ date: z.string(), count: z.number() })),
+          connectionsHistory: z.array(
+            z.object({ date: z.string(), count: z.number() }),
+          ),
         }),
       },
     },
@@ -87,22 +107,22 @@ export const api = {
   // Campaigns (Ads)
   campaigns: {
     list: {
-      method: 'GET' as const,
-      path: '/api/businesses/:businessId/campaigns',
+      method: "GET" as const,
+      path: "/api/businesses/:businessId/campaigns",
       responses: {
         200: z.array(z.custom<typeof campaigns.$inferSelect>()),
       },
     },
     listAll: {
-      method: 'GET' as const,
-      path: '/api/campaigns',
+      method: "GET" as const,
+      path: "/api/campaigns",
       responses: {
         200: z.array(z.custom<typeof campaigns.$inferSelect>()),
       },
     },
     create: {
-      method: 'POST' as const,
-      path: '/api/campaigns',
+      method: "POST" as const,
+      path: "/api/campaigns",
       input: insertCampaignSchema,
       responses: {
         201: z.custom<typeof campaigns.$inferSelect>(),
@@ -110,8 +130,8 @@ export const api = {
       },
     },
     update: {
-      method: 'PATCH' as const,
-      path: '/api/campaigns/:id',
+      method: "PATCH" as const,
+      path: "/api/campaigns/:id",
       input: insertCampaignSchema.partial(),
       responses: {
         200: z.custom<typeof campaigns.$inferSelect>(),
@@ -119,8 +139,8 @@ export const api = {
       },
     },
     delete: {
-      method: 'DELETE' as const,
-      path: '/api/campaigns/:id',
+      method: "DELETE" as const,
+      path: "/api/campaigns/:id",
       responses: {
         204: z.void(),
         404: errorSchemas.notFound,
@@ -131,8 +151,8 @@ export const api = {
   // Admin
   admin: {
     stats: {
-      method: 'GET' as const,
-      path: '/api/admin/stats',
+      method: "GET" as const,
+      path: "/api/admin/stats",
       responses: {
         200: z.object({
           totalBusinesses: z.number(),
@@ -147,8 +167,8 @@ export const api = {
   // Public Splash Page Data
   splash: {
     get: {
-      method: 'GET' as const,
-      path: '/api/splash/:businessId',
+      method: "GET" as const,
+      path: "/api/splash/:businessId",
       responses: {
         200: z.object({
           business: z.custom<typeof businesses.$inferSelect>(),
@@ -158,9 +178,13 @@ export const api = {
       },
     },
     connect: {
-      method: 'POST' as const,
-      path: '/api/splash/:businessId/connect',
-      input: z.object({ userId: z.number().optional(), deviceType: z.string().optional() }),
+      method: "POST" as const,
+      path: "/api/splash/:businessId/connect",
+      input: z.object({
+        userId: z.number().optional(),
+        deviceType: z.string().optional(),
+        email: z.string().email().optional(),
+      }),
       responses: {
         200: z.object({ success: z.boolean(), redirectUrl: z.string() }),
       },
@@ -168,8 +192,19 @@ export const api = {
   },
 };
 
+export type LoginRequest = z.infer<typeof api.auth.login.input>;
+export type LoginResponse = z.infer<(typeof api.auth.login.responses)[200]>;
+
+export type SignupRequest = z.infer<typeof api.auth.signup.input>;
+export type SignupResponse = z.infer<(typeof api.auth.signup.responses)[201]>;
+
+export type UpdateBusinessRequest = z.infer<typeof api.businesses.update.input>;
+
 // === BUILD URL HELPER ===
-export function buildUrl(path: string, params?: Record<string, string | number>): string {
+export function buildUrl(
+  path: string,
+  params?: Record<string, string | number>,
+): string {
   let url = path;
   if (params) {
     Object.entries(params).forEach(([key, value]) => {

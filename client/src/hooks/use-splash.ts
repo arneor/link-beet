@@ -15,16 +15,24 @@ export function useSplashData(businessId: number) {
     retry: (failureCount, error) => {
       if (error.message === "Business not found") return false;
       return failureCount < 2;
-    }
+    },
   });
 }
 
 export function useConnectWifi() {
   return useMutation({
-    mutationFn: async ({ businessId, ...data }: { businessId: number; userId?: number; deviceType?: string }) => {
+    mutationFn: async ({
+      businessId,
+      ...data
+    }: {
+      businessId: number;
+      userId?: number;
+      deviceType?: string;
+      email?: string;
+    }) => {
       // Simulate network delay for realistic "connecting" feel
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const url = buildUrl(api.splash.connect.path, { businessId });
       const res = await fetch(url, {
         method: api.splash.connect.method,
@@ -35,6 +43,6 @@ export function useConnectWifi() {
 
       if (!res.ok) throw new Error("Failed to connect");
       return api.splash.connect.responses[200].parse(await res.json());
-    }
+    },
   });
 }

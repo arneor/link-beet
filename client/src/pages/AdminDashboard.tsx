@@ -3,33 +3,39 @@ import { api, buildUrl } from "@shared/routes";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useState } from "react";
-import { 
-  Users, 
-  Wifi, 
-  Megaphone, 
-  Mail, 
-  Building2, 
-  Plus, 
+import {
+  Users,
+  Wifi,
+  Megaphone,
+  Mail,
+  Building2,
+  Plus,
   Search,
   Filter,
   MoreVertical,
   CheckCircle2,
   XCircle,
   Calendar,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -81,48 +87,74 @@ export default function AdminDashboard() {
 
   const updateBusiness = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
+      const validated = api.businesses.update.input.parse(updates);
       const res = await fetch(buildUrl(api.businesses.update.path, { id }), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        method: api.businesses.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
       });
-      return res.json();
+      if (!res.ok) throw new Error("Failed to update business");
+      return api.businesses.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.businesses.list.path] });
       toast({ title: "Business updated" });
-    }
+    },
   });
 
   const updateCampaign = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
+      const validated = api.campaigns.update.input.parse(updates);
       const res = await fetch(buildUrl(api.campaigns.update.path, { id }), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        method: api.campaigns.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
       });
-      return res.json();
+      if (!res.ok) throw new Error("Failed to update campaign");
+      return api.campaigns.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
       toast({ title: "Campaign updated" });
-    }
+    },
   });
 
   return (
     <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 lg:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-display font-bold text-gray-900">Platform Admin</h1>
-          <p className="text-muted-foreground mt-1">Manage all businesses and global advertising campaigns.</p>
+          <h1 className="text-3xl font-display font-bold text-gray-900">
+            Platform Admin
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage all businesses and global advertising campaigns.
+          </p>
         </div>
 
         {/* Global Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard title="Total Businesses" value={stats?.totalBusinesses || 0} icon={Building2} />
-          <StatsCard title="Total Connections" value={stats?.totalConnections || 0} icon={Wifi} />
-          <StatsCard title="Active Campaigns" value={stats?.totalActiveCampaigns || 0} icon={Megaphone} />
-          <StatsCard title="Emails Collected" value={stats?.totalEmailsCollected || 0} icon={Mail} />
+          <StatsCard
+            title="Total Businesses"
+            value={stats?.totalBusinesses || 0}
+            icon={Building2}
+          />
+          <StatsCard
+            title="Total Connections"
+            value={stats?.totalConnections || 0}
+            icon={Wifi}
+          />
+          <StatsCard
+            title="Active Campaigns"
+            value={stats?.totalActiveCampaigns || 0}
+            icon={Megaphone}
+          />
+          <StatsCard
+            title="Emails Collected"
+            value={stats?.totalEmailsCollected || 0}
+            icon={Mail}
+          />
         </div>
 
         <Tabs defaultValue="businesses" className="space-y-6">
@@ -136,12 +168,17 @@ export default function AdminDashboard() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
                   <CardTitle>Registered Businesses</CardTitle>
-                  <CardDescription>View and manage all businesses on the platform.</CardDescription>
+                  <CardDescription>
+                    View and manage all businesses on the platform.
+                  </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search..." className="pl-8 w-[200px] lg:w-[300px]" />
+                    <Input
+                      placeholder="Search..."
+                      className="pl-8 w-[200px] lg:w-[300px]"
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -172,15 +209,22 @@ export default function AdminDashboard() {
                         <TableCell>{biz.connectionCount}</TableCell>
                         <TableCell>{biz.emailCount}</TableCell>
                         <TableCell>
-                          <Badge variant={biz.isActive ? "default" : "secondary"}>
+                          <Badge
+                            variant={biz.isActive ? "default" : "secondary"}
+                          >
                             {biz.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => updateBusiness.mutate({ id: biz.id, updates: { isActive: !biz.isActive } })}
+                            onClick={() =>
+                              updateBusiness.mutate({
+                                id: biz.id,
+                                updates: { isActive: !biz.isActive },
+                              })
+                            }
                           >
                             {biz.isActive ? "Deactivate" : "Activate"}
                           </Button>
@@ -197,11 +241,13 @@ export default function AdminDashboard() {
             <div className="flex justify-end">
               <CreateCampaignDialog businesses={businesses || []} />
             </div>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Active Campaigns</CardTitle>
-                <CardDescription>Manage global and local advertising content.</CardDescription>
+                <CardDescription>
+                  Manage global and local advertising content.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -218,35 +264,54 @@ export default function AdminDashboard() {
                   <TableBody>
                     {campaigns?.map((camp: any) => (
                       <TableRow key={camp.id}>
-                        <TableCell className="font-medium">{camp.title}</TableCell>
+                        <TableCell className="font-medium">
+                          {camp.title}
+                        </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="capitalize">{camp.type}</Badge>
+                          <Badge variant="outline" className="capitalize">
+                            {camp.type}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {camp.businessId ? (
                             <span className="text-sm">Single Business</span>
                           ) : (
-                            <span className="text-sm">{camp.targetBusinessIds?.length || 0} Businesses</span>
+                            <span className="text-sm">
+                              {camp.targetBusinessIds?.length || 0} Businesses
+                            </span>
                           )}
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
                             <div>{camp.views} views</div>
-                            <div className="text-muted-foreground">{camp.clicks} clicks</div>
+                            <div className="text-muted-foreground">
+                              {camp.clicks} clicks
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={camp.isActive ? "default" : "secondary"}>
+                          <Badge
+                            variant={camp.isActive ? "default" : "secondary"}
+                          >
                             {camp.isActive ? "Live" : "Paused"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
-                            onClick={() => updateCampaign.mutate({ id: camp.id, updates: { isActive: !camp.isActive } })}
+                            onClick={() =>
+                              updateCampaign.mutate({
+                                id: camp.id,
+                                updates: { isActive: !camp.isActive },
+                              })
+                            }
                           >
-                            {camp.isActive ? <XCircle className="w-4 h-4 mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                            {camp.isActive ? (
+                              <XCircle className="w-4 h-4 mr-2" />
+                            ) : (
+                              <CheckCircle2 className="w-4 h-4 mr-2" />
+                            )}
                             {camp.isActive ? "Pause" : "Resume"}
                           </Button>
                         </TableCell>
@@ -293,24 +358,34 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
       duration: 5,
       isActive: true,
       targetBusinessIds: [],
-    }
+    },
   });
 
   const createCampaign = useMutation({
     mutationFn: async (data: any) => {
+      const validated = api.campaigns.create.input.parse(data);
       const res = await fetch(api.campaigns.create.path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        method: api.campaigns.create.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+        credentials: "include",
       });
-      return res.json();
+      if (!res.ok) throw new Error("Failed to create campaign");
+      return api.campaigns.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
       toast({ title: "Campaign created successfully" });
       setOpen(false);
       form.reset();
-    }
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
   });
 
   return (
@@ -324,17 +399,24 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>New Ad Campaign</DialogTitle>
-          <DialogDescription>Create an ad campaign to run across multiple businesses.</DialogDescription>
+          <DialogDescription>
+            Create an ad campaign to run across multiple businesses.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => createCampaign.mutate(data))} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit((data) => createCampaign.mutate(data))}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Campaign Title</FormLabel>
-                  <FormControl><Input placeholder="Summer Sale 2024" {...field} /></FormControl>
+                  <FormControl>
+                    <Input placeholder="Summer Sale 2024" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -346,7 +428,10 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ad Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
@@ -368,7 +453,15 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Duration (s)</FormLabel>
-                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -380,7 +473,9 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Image/Video URL</FormLabel>
-                  <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                  <FormControl>
+                    <Input placeholder="https://..." {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -394,15 +489,24 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
                   <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-[150px] overflow-y-auto">
                     {businesses.map((biz) => (
                       <div key={biz.id} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`biz-${biz.id}`} 
+                        <Checkbox
+                          id={`biz-${biz.id}`}
                           checked={field.value?.includes(biz.id)}
                           onCheckedChange={(checked) => {
-                            const current = field.value || [];
-                            field.onChange(checked ? [...current, biz.id] : current.filter(id => id !== biz.id));
+                            const current = (field.value as number[]) || [];
+                            field.onChange(
+                              checked
+                                ? [...current, biz.id]
+                                : current.filter((id: number) => id !== biz.id),
+                            );
                           }}
                         />
-                        <label htmlFor={`biz-${biz.id}`} className="text-sm font-medium leading-none">{biz.name}</label>
+                        <label
+                          htmlFor={`biz-${biz.id}`}
+                          className="text-sm font-medium leading-none"
+                        >
+                          {biz.name}
+                        </label>
                       </div>
                     ))}
                   </div>

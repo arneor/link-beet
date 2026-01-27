@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type CreateCampaignRequest } from "@shared/routes";
+import { api, buildUrl } from "@shared/routes";
+import type { CreateCampaignRequest } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export function useCampaigns(businessId: number) {
@@ -39,17 +40,28 @@ export function useCreateCampaign() {
       return api.campaigns.create.responses[201].parse(await res.json());
     },
     onSuccess: (data) => {
+      // Always invalidate global list (admin view)
+      queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
+
       // Invalidate the specific business's campaign list
       if (data.businessId) {
-        const listUrl = buildUrl(api.campaigns.list.path, { businessId: data.businessId });
+        const listUrl = buildUrl(api.campaigns.list.path, {
+          businessId: data.businessId,
+        });
         queryClient.invalidateQueries({ queryKey: [listUrl] });
         // Also simpler key invalidation strategy if URL matching is tricky
-        queryClient.invalidateQueries({ queryKey: [api.campaigns.list.path, data.businessId] });
+        queryClient.invalidateQueries({
+          queryKey: [api.campaigns.list.path, data.businessId],
+        });
       }
       toast({ title: "Campaign Created", description: "Your ad is now live." });
     },
     onError: (err) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
     },
   });
 }
@@ -59,15 +71,29 @@ export function useDeleteCampaign() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, businessId }: { id: number; businessId: number }) => {
+    mutationFn: async ({
+      id,
+      businessId,
+    }: {
+      id: number;
+      businessId: number;
+    }) => {
       const url = buildUrl(api.campaigns.delete.path, { id });
-      const res = await fetch(url, { method: api.campaigns.delete.method, credentials: "include" });
+      const res = await fetch(url, {
+        method: api.campaigns.delete.method,
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to delete campaign");
       return businessId;
     },
     onSuccess: (businessId) => {
-      queryClient.invalidateQueries({ queryKey: [api.campaigns.list.path, businessId] });
-      toast({ title: "Deleted", description: "Campaign removed successfully." });
+      queryClient.invalidateQueries({
+        queryKey: [api.campaigns.list.path, businessId],
+      });
+      toast({
+        title: "Deleted",
+        description: "Campaign removed successfully.",
+      });
     },
   });
 }

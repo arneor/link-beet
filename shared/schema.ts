@@ -1,4 +1,12 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,7 +17,9 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role", { enum: ["admin", "business", "user"] }).default("user").notNull(),
+  role: text("role", { enum: ["admin", "business", "user"] })
+    .default("user")
+    .notNull(),
   name: text("name"),
   email: text("email"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -20,11 +30,26 @@ export const businesses = pgTable("businesses", {
   id: serial("id").primaryKey(),
   ownerId: integer("owner_id").notNull(), // Links to users.id
   name: text("name").notNull(),
+  category: text("category"),
   address: text("address"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  description: text("description"),
+  operatingHours: jsonb("operating_hours"),
   logoUrl: text("logo_url"),
   primaryColor: text("primary_color").default("#000000"),
   wifiSsid: text("wifi_ssid"),
-  profileType: text("profile_type", { enum: ["private", "public"] }).default("private"),
+  wifiSessionDurationMinutes: integer("wifi_session_duration_minutes"),
+  bandwidthKbps: integer("bandwidth_kbps"),
+  maxConcurrentConnections: integer("max_concurrent_connections"),
+  autoReconnect: boolean("auto_reconnect").default(true),
+  profileType: text("profile_type", { enum: ["private", "public"] }).default(
+    "private",
+  ),
+  photos: jsonb("photos"),
+  banners: jsonb("banners"),
+  videoUrl: text("video_url"),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -59,10 +84,24 @@ export const sessions = pgTable("sessions", {
 
 // === SCHEMAS ===
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
-export const insertBusinessSchema = createInsertSchema(businesses).omit({ id: true, createdAt: true });
-export const insertCampaignSchema = createInsertSchema(campaigns).omit({ id: true, createdAt: true, views: true, clicks: true });
-export const insertSessionSchema = createInsertSchema(sessions).omit({ id: true, connectedAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertBusinessSchema = createInsertSchema(businesses).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertCampaignSchema = createInsertSchema(campaigns).omit({
+  id: true,
+  createdAt: true,
+  views: true,
+  clicks: true,
+});
+export const insertSessionSchema = createInsertSchema(sessions).omit({
+  id: true,
+  connectedAt: true,
+});
 
 // === EXPLICIT TYPES ===
 
@@ -79,7 +118,7 @@ export type Session = typeof sessions.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 
 // Request/Response Types
-export type LoginRequest = { username: string; }; // Simple mock login
+export type LoginRequest = { username: string }; // Simple mock login
 export type AuthResponse = User & { business?: Business };
 
 export type CreateBusinessRequest = InsertBusiness;

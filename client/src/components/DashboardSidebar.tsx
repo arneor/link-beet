@@ -1,5 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Store, Megaphone, LogOut, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Store,
+  Megaphone,
+  LogOut,
+  Menu,
+  Wand2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -13,9 +20,26 @@ export function DashboardSidebar({ businessId }: SidebarProps) {
   const [open, setOpen] = useState(false);
 
   const links = [
-    { href: `/business/${businessId}`, label: "Overview", icon: LayoutDashboard },
-    { href: `/business/${businessId}/profile`, label: "Business Profile", icon: Store },
-    { href: `/business/${businessId}/campaigns`, label: "Ad Campaigns", icon: Megaphone },
+    {
+      href: `/business/${businessId}`,
+      label: "Overview",
+      icon: LayoutDashboard,
+    },
+    {
+      href: `/business/${businessId}/onboarding`,
+      label: "Setup Wizard",
+      icon: Wand2,
+    },
+    {
+      href: `/business/${businessId}/profile`,
+      label: "Business Profile",
+      icon: Store,
+    },
+    {
+      href: `/business/${businessId}/campaigns`,
+      label: "Ad Campaigns",
+      icon: Megaphone,
+    },
   ];
 
   const NavContent = () => (
@@ -40,10 +64,17 @@ export function DashboardSidebar({ businessId }: SidebarProps) {
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer group",
                   isActive
                     ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <link.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                <link.icon
+                  className={cn(
+                    "w-5 h-5",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
+                  )}
+                />
                 {link.label}
               </div>
             </Link>

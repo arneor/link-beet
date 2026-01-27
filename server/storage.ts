@@ -1,12 +1,13 @@
-import { db } from "./db";
 import {
-  users, businesses, campaigns, sessions,
-  type User, type InsertUser,
-  type Business, type InsertBusiness, type UpdateBusinessRequest,
-  type Campaign, type InsertCampaign,
-  type DashboardStats
+  type User,
+  type InsertUser,
+  type Business,
+  type InsertBusiness,
+  type UpdateBusinessRequest,
+  type Campaign,
+  type InsertCampaign,
+  type DashboardStats,
 } from "@shared/schema";
-import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -19,115 +20,206 @@ export interface IStorage {
   getBusinessByOwnerId(ownerId: number): Promise<Business | undefined>;
   createBusiness(business: InsertBusiness): Promise<Business>;
   updateBusiness(id: number, updates: UpdateBusinessRequest): Promise<Business>;
-  getAllBusinesses(): Promise<Business[] & { connectionCount: number; emailCount: number }[]>;
+  getAllBusinesses(): Promise<
+    Business[] & { connectionCount: number; emailCount: number }[]
+  >;
 
   // Campaigns
   getCampaignsByBusiness(businessId: number): Promise<Campaign[]>;
   getAllCampaigns(): Promise<Campaign[]>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
-  updateCampaign(id: number, updates: Partial<InsertCampaign>): Promise<Campaign>;
+  updateCampaign(
+    id: number,
+    updates: Partial<InsertCampaign>,
+  ): Promise<Campaign>;
   deleteCampaign(id: number): Promise<void>;
 
   // Analytics
-  getDashboardStats(businessId: number): Promise<DashboardStats & { connectionsHistory: any[] }>;
+  getDashboardStats(
+    businessId: number,
+  ): Promise<DashboardStats & { connectionsHistory: any[] }>;
   getAdminStats(): Promise<{
     totalBusinesses: number;
     totalConnections: number;
     totalActiveCampaigns: number;
     totalEmailsCollected: number;
   }>;
-  logSession(businessId: number, deviceType?: string, email?: string): Promise<void>;
+  logSession(
+    businessId: number,
+    deviceType?: string,
+    email?: string,
+  ): Promise<void>;
 }
 
-export class DatabaseStorage implements IStorage {
+// In-memory storage with dummy data
+export class MemoryStorage implements IStorage {
+  private users: User[] = [];
+  private businesses: Business[] = [];
+  private campaigns: Campaign[] = [];
+  private sessions: {
+    id: number;
+    businessId: number;
+    userId?: number;
+    email?: string;
+    durationMinutes?: number;
+    deviceType?: string;
+    connectedAt: Date;
+  }[] = [];
+
+  private userIdCounter = 1;
+  private businessIdCounter = 1;
+  private campaignIdCounter = 1;
+  private sessionIdCounter = 1;
+
   // Users
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return this.users.find((u) => u.id === id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return this.users.find((u) => u.username === username);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const user: User = {
+      id: this.userIdCounter++,
+      username: insertUser.username,
+      password: insertUser.password,
+      role: insertUser.role || "user",
+      name: insertUser.name || null,
+      email: insertUser.email || null,
+      createdAt: new Date(),
+    };
+    this.users.push(user);
     return user;
   }
 
   // Businesses
   async getBusiness(id: number): Promise<Business | undefined> {
-    const [business] = await db.select().from(businesses).where(eq(businesses.id, id));
-    return business;
+    return this.businesses.find((b) => b.id === id);
   }
 
   async getBusinessByOwnerId(ownerId: number): Promise<Business | undefined> {
-    const [business] = await db.select().from(businesses).where(eq(businesses.ownerId, ownerId));
-    return business;
+    return this.businesses.find((b) => b.ownerId === ownerId);
   }
 
   async createBusiness(business: InsertBusiness): Promise<Business> {
-    const [newBusiness] = await db.insert(businesses).values(business).returning();
+    const newBusiness: Business = {
+      id: this.businessIdCounter++,
+      ownerId: business.ownerId,
+      name: business.name,
+      category: (business as any).category ?? null,
+      address: business.address || null,
+      contactEmail: (business as any).contactEmail ?? null,
+      contactPhone: (business as any).contactPhone ?? null,
+      description: (business as any).description ?? null,
+      operatingHours: (business as any).operatingHours ?? null,
+      logoUrl: business.logoUrl || null,
+      primaryColor: business.primaryColor || "#000000",
+      wifiSsid: business.wifiSsid || null,
+      wifiSessionDurationMinutes:
+        (business as any).wifiSessionDurationMinutes ?? null,
+      bandwidthKbps: (business as any).bandwidthKbps ?? null,
+      maxConcurrentConnections:
+        (business as any).maxConcurrentConnections ?? null,
+      autoReconnect: (business as any).autoReconnect ?? true,
+      profileType: business.profileType || "private",
+      photos: (business as any).photos ?? null,
+      banners: (business as any).banners ?? null,
+      videoUrl: (business as any).videoUrl ?? null,
+      onboardingCompleted: (business as any).onboardingCompleted ?? false,
+      isActive: business.isActive ?? true,
+      createdAt: new Date(),
+    };
+    this.businesses.push(newBusiness);
     return newBusiness;
   }
 
-  async updateBusiness(id: number, updates: UpdateBusinessRequest): Promise<Business> {
-    const [updated] = await db.update(businesses)
-      .set(updates)
-      .where(eq(businesses.id, id))
-      .returning();
-    return updated;
+  async updateBusiness(
+    id: number,
+    updates: UpdateBusinessRequest,
+  ): Promise<Business> {
+    const index = this.businesses.findIndex((b) => b.id === id);
+    if (index === -1) throw new Error("Business not found");
+    this.businesses[index] = { ...this.businesses[index], ...updates };
+    return this.businesses[index];
   }
 
-  async getAllBusinesses(): Promise<Business[] & { connectionCount: number; emailCount: number }[]> {
-    const bizs = await db.select().from(businesses);
-    const results = [];
-    for (const biz of bizs) {
-      const connections = await db.select({ count: sql<number>`count(*)` }).from(sessions).where(eq(sessions.businessId, biz.id));
-      const emails = await db.select({ count: sql<number>`count(*)` }).from(sessions).where(sql`${sessions.businessId} = ${biz.id} AND ${sessions.email} IS NOT NULL`);
-      results.push({
-        ...biz,
-        connectionCount: Number(connections[0]?.count || 0),
-        emailCount: Number(emails[0]?.count || 0)
-      });
-    }
-    return results as any;
+  async getAllBusinesses(): Promise<
+    Business[] & { connectionCount: number; emailCount: number }[]
+  > {
+    return this.businesses.map((biz) => {
+      const connectionCount = this.sessions.filter(
+        (s) => s.businessId === biz.id,
+      ).length;
+      const emailCount = this.sessions.filter(
+        (s) => s.businessId === biz.id && s.email,
+      ).length;
+      return { ...biz, connectionCount, emailCount };
+    }) as any;
   }
 
   // Campaigns
   async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
-    return await db.select().from(campaigns)
-      .where(eq(campaigns.businessId, businessId))
-      .orderBy(desc(campaigns.createdAt));
+    return this.campaigns
+      .filter((c) => c.businessId === businessId)
+      .sort(
+        (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0),
+      );
   }
 
   async getAllCampaigns(): Promise<Campaign[]> {
-    return await db.select().from(campaigns).orderBy(desc(campaigns.createdAt));
+    return [...this.campaigns].sort(
+      (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0),
+    );
   }
 
   async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
+    const newCampaign: Campaign = {
+      id: this.campaignIdCounter++,
+      businessId: campaign.businessId ?? null,
+      title: campaign.title,
+      type: campaign.type,
+      contentUrl: campaign.contentUrl,
+      duration: campaign.duration ?? 5,
+      isActive: campaign.isActive ?? true,
+      startDate: campaign.startDate || null,
+      endDate: campaign.endDate || null,
+      targetBusinessIds: campaign.targetBusinessIds || null,
+      views: 0,
+      clicks: 0,
+      createdAt: new Date(),
+    };
+    this.campaigns.push(newCampaign);
     return newCampaign;
   }
 
-  async updateCampaign(id: number, updates: Partial<InsertCampaign>): Promise<Campaign> {
-    const [updated] = await db.update(campaigns)
-      .set(updates)
-      .where(eq(campaigns.id, id))
-      .returning();
-    return updated;
+  async updateCampaign(
+    id: number,
+    updates: Partial<InsertCampaign>,
+  ): Promise<Campaign> {
+    const index = this.campaigns.findIndex((c) => c.id === id);
+    if (index === -1) throw new Error("Campaign not found");
+    this.campaigns[index] = { ...this.campaigns[index], ...updates };
+    return this.campaigns[index];
   }
 
   async deleteCampaign(id: number): Promise<void> {
-    await db.delete(campaigns).where(eq(campaigns.id, id));
+    const index = this.campaigns.findIndex((c) => c.id === id);
+    if (index !== -1) {
+      this.campaigns.splice(index, 1);
+    }
   }
 
-  // Analytics (Mocked/Simple implementation)
-  async getDashboardStats(businessId: number): Promise<DashboardStats & { connectionsHistory: any[] }> {
-    // In a real app, these would be complex aggregation queries
-    const connections = await db.select({ count: sql<number>`count(*)` }).from(sessions).where(eq(sessions.businessId, businessId));
-    
+  // Analytics
+  async getDashboardStats(
+    businessId: number,
+  ): Promise<DashboardStats & { connectionsHistory: any[] }> {
+    const businessSessions = this.sessions.filter(
+      (s) => s.businessId === businessId,
+    );
+    const totalConnections = businessSessions.length;
+
     // Mock history data for charts
     const history = [];
     const now = new Date();
@@ -136,16 +228,16 @@ export class DatabaseStorage implements IStorage {
       d.setDate(now.getDate() - i);
       history.push({
         date: d.toISOString(),
-        count: Math.floor(Math.random() * 100) + 20
+        count: Math.floor(Math.random() * 100) + 20,
       });
     }
 
     return {
-      totalConnections: Number(connections[0]?.count || 0),
-      activeUsers: Math.floor(Math.random() * 20) + 5, // Mock
-      totalAdsServed: Number(connections[0]?.count || 0) * 3, // Approx 3 ads per session
-      revenue: Number(connections[0]?.count || 0) * 0.15, // $0.15 per session
-      connectionsHistory: history
+      totalConnections,
+      activeUsers: Math.floor(Math.random() * 20) + 5,
+      totalAdsServed: totalConnections * 3,
+      revenue: totalConnections * 0.15,
+      connectionsHistory: history,
     };
   }
 
@@ -155,27 +247,28 @@ export class DatabaseStorage implements IStorage {
     totalActiveCampaigns: number;
     totalEmailsCollected: number;
   }> {
-    const totalBiz = await db.select({ count: sql<number>`count(*)` }).from(businesses);
-    const totalConn = await db.select({ count: sql<number>`count(*)` }).from(sessions);
-    const totalCampaigns = await db.select({ count: sql<number>`count(*)` }).from(campaigns).where(eq(campaigns.isActive, true));
-    const totalEmails = await db.select({ count: sql<number>`count(*)` }).from(sessions).where(sql`${sessions.email} IS NOT NULL`);
-
     return {
-      totalBusinesses: Number(totalBiz[0]?.count || 0),
-      totalConnections: Number(totalConn[0]?.count || 0),
-      totalActiveCampaigns: Number(totalCampaigns[0]?.count || 0),
-      totalEmailsCollected: Number(totalEmails[0]?.count || 0)
+      totalBusinesses: this.businesses.length,
+      totalConnections: this.sessions.length,
+      totalActiveCampaigns: this.campaigns.filter((c) => c.isActive).length,
+      totalEmailsCollected: this.sessions.filter((s) => s.email).length,
     };
   }
 
-  async logSession(businessId: number, deviceType: string = 'mobile', email?: string): Promise<void> {
-    await db.insert(sessions).values({
+  async logSession(
+    businessId: number,
+    deviceType: string = "mobile",
+    email?: string,
+  ): Promise<void> {
+    this.sessions.push({
+      id: this.sessionIdCounter++,
       businessId,
       deviceType,
       email,
-      durationMinutes: 30
+      durationMinutes: 30,
+      connectedAt: new Date(),
     });
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemoryStorage();
