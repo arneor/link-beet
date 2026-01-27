@@ -3,6 +3,7 @@ import { api, buildUrl } from "@shared/routes";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useState } from "react";
+import { demoStore } from "@/lib/demoStore";
 import {
   Users,
   Wifi,
@@ -68,34 +69,76 @@ import { insertCampaignSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
+function isJsonResponse(res: Response) {
+  const ct = res.headers.get("content-type") || "";
+  return ct.includes("application/json");
+}
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const { data: statsData } = useQuery({
     queryKey: [api.admin.stats.path],
+    queryFn: async () => {
+      try {
+        const res = await fetch(api.admin.stats.path, {
+          credentials: "include",
+        });
+        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
+        return api.admin.stats.responses[200].parse(await res.json());
+      } catch {
+        return demoStore.adminStats();
+      }
+    },
   });
   const stats = statsData as any;
 
   const { data: businessesData } = useQuery({
     queryKey: [api.businesses.list.path],
+    queryFn: async () => {
+      try {
+        const res = await fetch(api.businesses.list.path, {
+          credentials: "include",
+        });
+        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
+        return api.businesses.list.responses[200].parse(await res.json());
+      } catch {
+        return demoStore.listBusinesses();
+      }
+    },
   });
   const businesses = businessesData as any[];
 
   const { data: campaignsData } = useQuery({
     queryKey: [api.campaigns.listAll.path],
+    queryFn: async () => {
+      try {
+        const res = await fetch(api.campaigns.listAll.path, {
+          credentials: "include",
+        });
+        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
+        return api.campaigns.listAll.responses[200].parse(await res.json());
+      } catch {
+        return demoStore.listAllCampaigns();
+      }
+    },
   });
   const campaigns = campaignsData as any[];
 
   const updateBusiness = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
       const validated = api.businesses.update.input.parse(updates);
-      const res = await fetch(buildUrl(api.businesses.update.path, { id }), {
-        method: api.businesses.update.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to update business");
-      return api.businesses.update.responses[200].parse(await res.json());
+      try {
+        const res = await fetch(buildUrl(api.businesses.update.path, { id }), {
+          method: api.businesses.update.method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(validated),
+          credentials: "include",
+        });
+        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
+        return api.businesses.update.responses[200].parse(await res.json());
+      } catch {
+        return demoStore.updateBusiness(id, validated as any);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.businesses.list.path] });
@@ -106,14 +149,18 @@ export default function AdminDashboard() {
   const updateCampaign = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
       const validated = api.campaigns.update.input.parse(updates);
-      const res = await fetch(buildUrl(api.campaigns.update.path, { id }), {
-        method: api.campaigns.update.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to update campaign");
-      return api.campaigns.update.responses[200].parse(await res.json());
+      try {
+        const res = await fetch(buildUrl(api.campaigns.update.path, { id }), {
+          method: api.campaigns.update.method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(validated),
+          credentials: "include",
+        });
+        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
+        return api.campaigns.update.responses[200].parse(await res.json());
+      } catch {
+        return demoStore.updateCampaign(id, validated as any);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
@@ -364,14 +411,20 @@ function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
   const createCampaign = useMutation({
     mutationFn: async (data: any) => {
       const validated = api.campaigns.create.input.parse(data);
-      const res = await fetch(api.campaigns.create.path, {
-        method: api.campaigns.create.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to create campaign");
-      return api.campaigns.create.responses[201].parse(await res.json());
+
+      try {
+        const res = await fetch(api.campaigns.create.path, {
+          method: api.campaigns.create.method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(validated),
+          credentials: "include",
+        });
+
+        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
+        return api.campaigns.create.responses[201].parse(await res.json());
+      } catch {
+        return demoStore.createCampaign(validated as any);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
