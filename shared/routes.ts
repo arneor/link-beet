@@ -45,6 +45,13 @@ export const api = {
 
   // Businesses
   businesses: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/businesses',
+      responses: {
+        200: z.array(z.custom<typeof businesses.$inferSelect>()),
+      },
+    },
     get: {
       method: 'GET' as const,
       path: '/api/businesses/:id',
@@ -86,6 +93,13 @@ export const api = {
         200: z.array(z.custom<typeof campaigns.$inferSelect>()),
       },
     },
+    listAll: {
+      method: 'GET' as const,
+      path: '/api/campaigns',
+      responses: {
+        200: z.array(z.custom<typeof campaigns.$inferSelect>()),
+      },
+    },
     create: {
       method: 'POST' as const,
       path: '/api/campaigns',
@@ -95,12 +109,37 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/campaigns/:id',
+      input: insertCampaignSchema.partial(),
+      responses: {
+        200: z.custom<typeof campaigns.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
     delete: {
       method: 'DELETE' as const,
       path: '/api/campaigns/:id',
       responses: {
         204: z.void(),
         404: errorSchemas.notFound,
+      },
+    },
+  },
+
+  // Admin
+  admin: {
+    stats: {
+      method: 'GET' as const,
+      path: '/api/admin/stats',
+      responses: {
+        200: z.object({
+          totalBusinesses: z.number(),
+          totalConnections: z.number(),
+          totalActiveCampaigns: z.number(),
+          totalEmailsCollected: z.number(),
+        }),
       },
     },
   },

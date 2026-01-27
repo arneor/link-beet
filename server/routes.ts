@@ -52,6 +52,11 @@ export async function registerRoutes(
   });
 
   // Business Routes
+  app.get(api.businesses.list.path, async (req, res) => {
+    const businesses = await storage.getAllBusinesses();
+    res.json(businesses);
+  });
+
   app.get(api.businesses.get.path, async (req, res) => {
     const business = await storage.getBusiness(Number(req.params.id));
     if (!business) return res.status(404).json({ message: "Business not found" });
@@ -75,15 +80,32 @@ export async function registerRoutes(
     res.json(campaigns);
   });
 
+  app.get(api.campaigns.listAll.path, async (req, res) => {
+    const campaigns = await storage.getAllCampaigns();
+    res.json(campaigns);
+  });
+
   app.post(api.campaigns.create.path, async (req, res) => {
     const input = api.campaigns.create.input.parse(req.body);
     const campaign = await storage.createCampaign(input);
     res.status(201).json(campaign);
   });
 
+  app.patch(api.campaigns.update.path, async (req, res) => {
+    const updates = api.campaigns.update.input.parse(req.body);
+    const campaign = await storage.updateCampaign(Number(req.params.id), updates);
+    res.json(campaign);
+  });
+
   app.delete(api.campaigns.delete.path, async (req, res) => {
     await storage.deleteCampaign(Number(req.params.id));
     res.status(204).send();
+  });
+
+  // Admin Routes
+  app.get(api.admin.stats.path, async (req, res) => {
+    const stats = await storage.getAdminStats();
+    res.json(stats);
   });
 
   // Splash Routes

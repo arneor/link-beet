@@ -25,18 +25,22 @@ export const businesses = pgTable("businesses", {
   primaryColor: text("primary_color").default("#000000"),
   wifiSsid: text("wifi_ssid"),
   profileType: text("profile_type", { enum: ["private", "public"] }).default("private"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Ad Campaigns
 export const campaigns = pgTable("campaigns", {
   id: serial("id").primaryKey(),
-  businessId: integer("business_id"), // Nullable if system-wide ad
+  businessId: integer("business_id"), // Nullable if system-wide ad (Admin created)
   title: text("title").notNull(),
   type: text("type", { enum: ["banner", "video", "static"] }).notNull(),
   contentUrl: text("content_url").notNull(),
   duration: integer("duration").default(5), // Seconds for carousel/video
   isActive: boolean("is_active").default(true),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  targetBusinessIds: integer("target_business_ids").array(), // For admin-created global campaigns
   views: integer("views").default(0),
   clicks: integer("clicks").default(0),
   createdAt: timestamp("created_at").defaultNow(),
@@ -47,6 +51,7 @@ export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
   businessId: integer("business_id").notNull(),
   userId: integer("user_id"), // Optional if anonymous
+  email: text("email"), // Collected during session
   durationMinutes: integer("duration_minutes"),
   deviceType: text("device_type"),
   connectedAt: timestamp("connected_at").defaultNow(),
@@ -88,4 +93,11 @@ export type DashboardStats = {
   activeUsers: number;
   totalAdsServed: number;
   revenue: number; // Mocked
+};
+
+export type AdminStats = {
+  totalBusinesses: number;
+  totalConnections: number;
+  totalActiveCampaigns: number;
+  totalEmailsCollected: number;
 };
