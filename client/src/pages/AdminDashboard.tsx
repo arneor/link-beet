@@ -64,17 +64,20 @@ import { format } from "date-fns";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const { data: stats } = useQuery({
+  const { data: statsData } = useQuery({
     queryKey: [api.admin.stats.path],
   });
+  const stats = statsData as any;
 
-  const { data: businesses } = useQuery({
+  const { data: businessesData } = useQuery({
     queryKey: [api.businesses.list.path],
   });
+  const businesses = businessesData as any[];
 
-  const { data: campaigns } = useQuery({
+  const { data: campaignsData } = useQuery({
     queryKey: [api.campaigns.listAll.path],
   });
+  const campaigns = campaignsData as any[];
 
   const updateBusiness = useMutation({
     mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
@@ -281,7 +284,7 @@ function StatsCard({ title, value, icon: Icon }: any) {
 function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
-  const form = useForm({
+  const form = useForm<any>({
     resolver: zodResolver(insertCampaignSchema),
     defaultValues: {
       title: "",

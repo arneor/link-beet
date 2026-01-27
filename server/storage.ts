@@ -30,7 +30,12 @@ export interface IStorage {
 
   // Analytics
   getDashboardStats(businessId: number): Promise<DashboardStats & { connectionsHistory: any[] }>;
-  getAdminStats(): Promise<AdminStats>;
+  getAdminStats(): Promise<{
+    totalBusinesses: number;
+    totalConnections: number;
+    totalActiveCampaigns: number;
+    totalEmailsCollected: number;
+  }>;
   logSession(businessId: number, deviceType?: string, email?: string): Promise<void>;
 }
 
@@ -144,7 +149,12 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getAdminStats(): Promise<AdminStats> {
+  async getAdminStats(): Promise<{
+    totalBusinesses: number;
+    totalConnections: number;
+    totalActiveCampaigns: number;
+    totalEmailsCollected: number;
+  }> {
     const totalBiz = await db.select({ count: sql<number>`count(*)` }).from(businesses);
     const totalConn = await db.select({ count: sql<number>`count(*)` }).from(sessions);
     const totalCampaigns = await db.select({ count: sql<number>`count(*)` }).from(campaigns).where(eq(campaigns.isActive, true));

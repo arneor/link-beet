@@ -15,6 +15,7 @@ export default function Splash() {
   const { data, isLoading, error } = useSplashData(id);
   const connectMutation = useConnectWifi();
   const { toast } = useToast();
+  const [email, setEmail] = useState("");
   const [connectStep, setConnectStep] = useState<"idle" | "connecting" | "success">("idle");
 
   if (isLoading) {
@@ -40,7 +41,7 @@ export default function Splash() {
   const handleConnect = () => {
     setConnectStep("connecting");
     connectMutation.mutate(
-      { businessId: id, deviceType: "mobile" },
+      { businessId: id, deviceType: "mobile", email: email || undefined },
       {
         onSuccess: (res) => {
           setConnectStep("success");
@@ -116,7 +117,29 @@ export default function Splash() {
                     <Facebook className="w-5 h-5 mr-2 text-blue-600" /> Facebook
                   </Button>
                   <Button variant="outline" className="h-12 rounded-xl" onClick={() => handleConnect()}>
-                    <Mail className="w-5 h-5 mr-2 text-gray-600" /> Email
+                    <Mail className="w-5 h-5 mr-2 text-gray-600" /> Google
+                  </Button>
+                </div>
+
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-muted-foreground">Or connect with email</span></div>
+                </div>
+
+                <div className="space-y-3">
+                  <Input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 rounded-xl"
+                  />
+                  <Button 
+                    onClick={handleConnect}
+                    disabled={!email || !email.includes('@')}
+                    className="w-full h-12 text-md font-semibold rounded-xl transition-all"
+                  >
+                    Connect with Email
                   </Button>
                 </div>
               </motion.div>
