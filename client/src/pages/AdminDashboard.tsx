@@ -263,18 +263,50 @@ export default function AdminDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              updateBusiness.mutate({
-                                id: biz.id,
-                                updates: { isActive: !biz.isActive },
-                              })
-                            }
-                          >
-                            {biz.isActive ? "Deactivate" : "Activate"}
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                window.open(
+                                  `/splash/${biz.id}`,
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                )
+                              }
+                            >
+                              Splash
+                              <ExternalLink className="w-4 h-4 ml-2" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                window.open(
+                                  `/business/${biz.id}/profile`,
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                )
+                              }
+                            >
+                              Profile
+                              <ExternalLink className="w-4 h-4 ml-2" />
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                updateBusiness.mutate({
+                                  id: biz.id,
+                                  updates: { isActive: !biz.isActive },
+                                })
+                              }
+                            >
+                              {biz.isActive ? "Deactivate" : "Activate"}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
