@@ -91,7 +91,13 @@ export default function DashboardOverview() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="date" 
-                      tickFormatter={(str) => format(new Date(str), "MMM d")}
+                      tickFormatter={(str) => {
+                        try {
+                          return format(new Date(str), "MMM d");
+                        } catch (e) {
+                          return str;
+                        }
+                      }}
                       stroke="#888888"
                       fontSize={12}
                       tickLine={false}
@@ -106,7 +112,13 @@ export default function DashboardOverview() {
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      labelFormatter={(label) => format(new Date(label), "MMMM d, yyyy")}
+                      labelFormatter={(label) => {
+                        try {
+                          return format(new Date(label), "MMMM d, yyyy");
+                        } catch (e) {
+                          return label;
+                        }
+                      }}
                     />
                     <Area 
                       type="monotone" 

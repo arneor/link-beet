@@ -98,15 +98,16 @@ export class DatabaseStorage implements IStorage {
     const connections = await db.select({ count: sql<number>`count(*)` }).from(sessions).where(eq(sessions.businessId, businessId));
     
     // Mock history data for charts
-    const history = [
-      { date: "Mon", count: 45 },
-      { date: "Tue", count: 52 },
-      { date: "Wed", count: 38 },
-      { date: "Thu", count: 65 },
-      { date: "Fri", count: 89 },
-      { date: "Sat", count: 120 },
-      { date: "Sun", count: 95 },
-    ];
+    const history = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+      history.push({
+        date: d.toISOString(),
+        count: Math.floor(Math.random() * 100) + 20
+      });
+    }
 
     return {
       totalConnections: Number(connections[0]?.count || 0),
