@@ -33,7 +33,7 @@ export default function DashboardOverview() {
     <div className="flex min-h-screen bg-gray-50/50">
       <DashboardSidebar businessId={businessId} />
 
-      <main className="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto">
+      <main className="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto pt-20">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
