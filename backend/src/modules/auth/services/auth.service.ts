@@ -169,8 +169,12 @@ export class AuthService {
         // Compliance Log
         await this.logCompliance(user, macAddress);
 
-        // Check business
+        // Get business info for the JWT payload (don't block login based on status)
         const business = await this.businessModel.findOne({ ownerId: user._id });
+
+        // NOTE: Business status restrictions (pending, rejected, suspended) are no longer 
+        // enforced at login. Users can always login and see their dashboard.
+        // Status restrictions only apply to operational features like splash pages.
 
         // Generate Token
         const payload = {

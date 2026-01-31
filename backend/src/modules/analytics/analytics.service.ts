@@ -50,6 +50,26 @@ export class AnalyticsService {
         // Using setImmediate to not block the event loop
         setImmediate(async () => {
             try {
+
+                // Prevent spamming LIKES (simple rate limit)
+                if (dto.interactionType === 'LIKE') {
+                    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+                    const existingLike = await this.analyticsModel.findOne({
+                        adId: new Types.ObjectId(dto.adId),
+                        interactionType: 'LIKE',
+                        $or: [
+                            { ipAddress: ipAddress },
+                            { sessionId: dto.sessionId }
+                        ],
+                        timestamp: { $gte: oneMinuteAgo }
+                    });
+
+                    if (existingLike) {
+                        this.logger.warn(`Duplicate LIKE rejected for ad ${dto.adId} from IP ${ipAddress}`);
+                        return;
+                    }
+                }
+
                 // Create analytics log
                 const log = new this.analyticsModel({
                     adId: new Types.ObjectId(dto.adId),
@@ -61,6 +81,7 @@ export class AnalyticsService {
                     ipAddress,
                     userAgent,
                     sessionId: dto.sessionId,
+                    email: dto.email,
                     timestamp: new Date(),
                 });
 
@@ -71,6 +92,12 @@ export class AnalyticsService {
                     await this.incrementAdViews(dto.businessId, dto.adId);
                 } else if (dto.interactionType === 'click') {
                     await this.incrementAdClicks(dto.businessId, dto.adId);
+                } else if (dto.interactionType === 'LIKE') {
+                    await this.incrementAdLikes(dto.businessId, dto.adId);
+                } else if (dto.interactionType === 'SHARE') {
+                    await this.incrementAdShares(dto.businessId, dto.adId);
+                } else if (dto.interactionType === 'GALLERY_EXPAND') {
+                    await this.incrementAdExpands(dto.businessId, dto.adId);
                 }
 
                 this.logger.debug(`Tracked ${dto.interactionType} for ad ${dto.adId}`);
@@ -79,6 +106,36 @@ export class AnalyticsService {
                 // Don't throw - this is async and shouldn't affect the user
             }
         });
+    }
+
+    /**
+     * Increment ad likes (atomic update)
+     */
+    private async incrementAdLikes(businessId: string, adId: string): Promise<void> {
+        await this.businessModel.updateOne(
+            { _id: businessId, 'ads.id': new Types.ObjectId(adId) },
+            { $inc: { 'ads.$.likesCount': 1 } }
+        );
+    }
+
+    /**
+     * Increment ad shares (atomic update)
+     */
+    private async incrementAdShares(businessId: string, adId: string): Promise<void> {
+        await this.businessModel.updateOne(
+            { _id: businessId, 'ads.id': new Types.ObjectId(adId) },
+            { $inc: { 'ads.$.sharesCount': 1 } }
+        );
+    }
+
+    /**
+     * Increment ad expands (atomic update)
+     */
+    private async incrementAdExpands(businessId: string, adId: string): Promise<void> {
+        await this.businessModel.updateOne(
+            { _id: businessId, 'ads.id': new Types.ObjectId(adId) },
+            { $inc: { 'ads.$.expandsCount': 1 } }
+        );
     }
 
     /**
@@ -264,4 +321,44 @@ export class AnalyticsService {
 
         return results;
     }
+
+    /**
+     * Link all anonymous logs for a session to a specific user/email
+     */
+    async linkSessionToUser(sessionId: string, userId: string, email: string) {
+        if (!sessionId) return;
+
+        // Run as background task (don't await)
+        setImmediate(async () => {
+            try {
+                const result = await this.analyticsModel.updateMany(
+                    { sessionId: sessionId, email: { $exists: false } }, // Only update anonymous ones
+                    {
+                        $set: {
+                            userId: new Types.ObjectId(userId),
+                            email: email
+                        }
+                    }
+                );
+                this.logger.debug(`Linked ${result.modifiedCount} logs to user ${email} for session ${sessionId}`);
+            } catch (err) {
+                this.logger.error(`Failed to link session ${sessionId} to user ${email}`, err);
+            }
+        });
+    }
+
+    /**
+     * Get detailed interaction logs for a specific ad
+     */
+    async getInteractionDetails(adId: string, interactionType: string, limit: number = 50) {
+        return this.analyticsModel.find({
+            adId: new Types.ObjectId(adId),
+            interactionType: interactionType
+        })
+            .sort({ timestamp: -1 })
+            .limit(limit)
+            .select('email timestamp deviceType ipAddress userAgent')
+            .lean();
+    }
 }
+

@@ -93,7 +93,7 @@ export default function BusinessOnboarding() {
     <div className="flex min-h-screen bg-gray-50/50">
       <DashboardSidebar businessId={businessId} />
 
-      <main className="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto">
+      <main className="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto pt-20">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="space-y-2">
             <h1 className="text-3xl font-display font-bold text-gray-900">

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Wifi, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBusiness, useUpdateBusiness } from "@/hooks/use-businesses";
-import type { Business } from "@/lib/api";
+import { businessApi, type Business } from "@/lib/api";
 
 // Profile Components
 import { EditModeProvider, useEditMode } from "@/components/profile/EditModeContext";
@@ -21,6 +21,7 @@ interface LocalProfileData {
   logoUrl?: string;
   description?: string;
   primaryColor?: string;
+  logoFile?: File;
 }
 
 function BusinessProfileContent() {
@@ -31,7 +32,7 @@ function BusinessProfileContent() {
   const { data: business, isLoading, error } = useBusiness(businessId);
   const updateBusiness = useUpdateBusiness();
 
-  const { setHasUnsavedChanges, setIsSaving, isEditMode } = useEditMode();
+  const { setHasUnsavedChanges, setIsSaving, isEditMode, setIsEditMode } = useEditMode();
 
   // Local state for profile data
   // Mapped to internal component state names (name, address) vs API (businessName, location)
@@ -85,32 +86,19 @@ function BusinessProfileContent() {
       }
 
       // Parse posts from business data
+      // Parse ads from business data
       const loadedPosts: PostItem[] = [];
+      const ads = (business as any).ads || [];
 
-      // Banners
-      const banners = (business as any).banners || [];
-      const photos = (business as any).photos || [];
-
-      if (Array.isArray(banners)) {
-        banners.forEach((b: any, idx: number) => {
+      if (Array.isArray(ads)) {
+        ads.forEach((ad: any, idx: number) => {
           loadedPosts.push({
-            id: `banner-${idx}`,
-            type: "banner",
-            url: b.url,
-            title: b.title,
-            isFeatured: true,
-          });
-        });
-      }
-
-      if (Array.isArray(photos)) {
-        photos.forEach((p: any, idx: number) => {
-          loadedPosts.push({
-            id: `photo-${idx}`,
-            type: "image",
-            url: p.url,
-            title: p.title,
-            isFeatured: false,
+            id: ad.id || ad._id || `ad-${idx}`,
+            type: (ad.placement === 'BANNER' ? 'banner' : 'image') as any, // Cast to any to avoid strict union check if PostItem differs slightly, but logic holds.
+            url: ad.mediaUrl,
+            title: ad.title,
+            isFeatured: ad.placement === 'BANNER',
+            s3Key: ad.s3Key,
           });
         });
       }
@@ -136,12 +124,57 @@ function BusinessProfileContent() {
 
   // Handle save/publish
   const handleSave = async () => {
-    if (!business) return;
-
-    setIsSaving(true);
-
     try {
-      // Prepare data for API
+      setIsSaving(true);
+
+      // 1. Upload Logo if pending
+      let finalLogoUrl = profileData.logoUrl;
+
+      if (profileData.logoFile) {
+        try {
+          const { url } = await businessApi.uploadMedia(businessId, profileData.logoFile, 'branding');
+          finalLogoUrl = url;
+        } catch (e: any) {
+          console.error("Logo upload failed", e);
+          if (e.status === 403 || e.message?.includes('403')) {
+            throw new Error("S3 Access Denied. Check Bucket Policy.");
+          }
+          throw new Error("Failed to upload logo");
+        }
+      }
+
+      // 2. Upload pending posts (banners/gallery) in parallel for speed
+      const finalPosts = [...posts];
+
+      await Promise.all(finalPosts.map(async (post, index) => {
+        if (post.file) {
+          try {
+            const { url, key } = await businessApi.uploadMedia(
+              businessId,
+              post.file,
+              post.isFeatured ? 'banner' : 'gallery'
+            );
+            // Update the post with S3 data
+            finalPosts[index] = {
+              ...post,
+              url,
+              s3Key: key,
+              file: undefined // Clear file so we don't re-upload
+            };
+          } catch (e: any) {
+            console.error(`Post upload failed: ${post.title}`, e);
+            if (e.status === 403 || e.message?.includes('403')) {
+              throw new Error("S3 Access Denied. Check Bucket Policy.");
+            }
+            throw new Error(`Failed to upload ${post.title}`);
+          }
+        }
+      }));
+
+      // Update local state with uploaded posts (so UI reflects S3 URLs)
+      setPosts(finalPosts);
+
+      // 3. Prepare data for API
       // Remap local fields to API fields
       const updateData = {
         id: businessId,
@@ -149,21 +182,25 @@ function BusinessProfileContent() {
         location: profileData.location,
         description: profileData.description,
         primaryColor: profileData.primaryColor,
-        logoUrl: profileData.logoUrl,
-        googleReviewUrl: googlePlaceUrl, // Include this in update
-        // Convert posts to photos/banners format for API
-        photos: posts
-          .filter((p) => p.type === "image" && !p.isFeatured)
-          .map((p) => ({ url: p.url, title: p.title })),
-        banners: posts
-          .filter((p) => p.isFeatured)
-          .map((p) => ({ url: p.url, title: p.title, type: p.type })),
+        logoUrl: finalLogoUrl?.startsWith('blob:') ? undefined : finalLogoUrl, // Should be S3 URL now
+        googleReviewUrl: googlePlaceUrl,
+
+        // Map photos/banners to unified 'ads' structure
+        ads: finalPosts.map((p) => ({
+          title: p.title || 'Untitled Ad',
+          mediaUrl: p.url,
+          mediaType: p.type === 'banner' ? 'image' : (p.type || 'image'),
+          placement: p.isFeatured ? 'BANNER' : 'GALLERY',
+          ctaUrl: googlePlaceUrl,
+          s3Key: p.s3Key,
+        })),
       };
 
 
       await updateBusiness.mutateAsync(updateData as any);
 
       setHasUnsavedChanges(false);
+      setIsEditMode(false);
       toast({
         title: "Profile Published!",
         description: "Your changes are now live.",
@@ -171,7 +208,7 @@ function BusinessProfileContent() {
     } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to save changes. Please try again.",
+        description: err instanceof Error ? err.message : "Failed to save changes. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -274,6 +311,7 @@ function BusinessProfileContent() {
                   setPosts(newPosts);
                 }}
                 maxPosts={10}
+                businessId={businessId!}
               />
             </motion.div>
 

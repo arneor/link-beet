@@ -13,9 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Business } from "@/lib/api";
 
+interface HeaderUpdate extends Partial<Business> {
+    logoFile?: File;
+}
+
 interface EditableProfileHeaderProps {
     business: Business;
-    onUpdate: (updates: Partial<Business>) => void;
+    onUpdate: (updates: HeaderUpdate) => void;
 }
 
 export function EditableProfileHeader({
@@ -38,9 +42,8 @@ export function EditableProfileHeader({
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // In a real app, upload to server and get URL
             const url = URL.createObjectURL(file);
-            onUpdate({ logoUrl: url });
+            onUpdate({ logoUrl: url, logoFile: file });
         }
     };
 

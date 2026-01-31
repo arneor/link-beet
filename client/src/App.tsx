@@ -12,6 +12,8 @@ import BusinessProfile from "@/pages/BusinessProfile";
 import BusinessOnboarding from "@/pages/BusinessOnboarding";
 import Splash from "@/pages/Splash";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminBusinessDetails from "@/pages/AdminBusinessDetails";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,8 +32,10 @@ function Router() {
       {/* End User Splash Page */}
       <Route path="/splash/:businessId" component={Splash} />
 
-      {/* Admin Route */}
+      {/* Admin Routes */}
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/business/:id" component={AdminBusinessDetails} />
 
       <Route component={NotFound} />
     </Switch>

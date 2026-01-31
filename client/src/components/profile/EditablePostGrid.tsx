@@ -23,28 +23,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+
 export interface PostItem {
     id: string;
     type: "image" | "banner";
     url: string;
     title: string;
     isFeatured: boolean;
+    s3Key?: string;
+    file?: File;
 }
 
 interface EditablePostGridProps {
     posts: PostItem[];
     onPostsChange: (posts: PostItem[]) => void;
     maxPosts?: number;
+    businessId: string;
 }
 
 export function EditablePostGrid({
     posts,
     onPostsChange,
     maxPosts = 10,
+    businessId,
 }: EditablePostGridProps) {
     const { isEditMode, setHasUnsavedChanges } = useEditMode();
     const [editingPost, setEditingPost] = useState<PostItem | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,25 +64,32 @@ export function EditablePostGrid({
         const files = e.target.files;
         if (!files) return;
 
+        const newPosts: PostItem[] = [];
         Array.from(files).forEach((file) => {
-            if (posts.length >= maxPosts) {
+            if (posts.length + newPosts.length >= maxPosts) {
                 alert(`Maximum ${maxPosts} total posts allowed`);
+                return;
+            }
+            if (posts.filter(p => p.isFeatured).length + newPosts.filter(p => p.isFeatured).length >= 3) {
+                alert("Maximum 3 banners allowed");
                 return;
             }
 
             const url = URL.createObjectURL(file);
-
-            const newPost: PostItem = {
+            newPosts.push({
                 id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 type: "banner",
                 url,
                 title: file.name.replace(/\.[^/.]+$/, ""),
                 isFeatured: true,
-            };
-
-            onPostsChange([...posts, newPost]);
-            setHasUnsavedChanges(true);
+                file: file
+            });
         });
+
+        if (newPosts.length > 0) {
+            onPostsChange([...posts, ...newPosts]);
+            setHasUnsavedChanges(true);
+        }
 
         e.target.value = "";
     };
@@ -137,24 +148,26 @@ export function EditablePostGrid({
         const files = e.target.files;
         if (!files) return;
 
+        const newPosts: PostItem[] = [];
         Array.from(files).forEach((file) => {
-            if (posts.length >= maxPosts) return;
+            if (posts.length + newPosts.length >= maxPosts) return;
 
             const url = URL.createObjectURL(file);
-
-            const newPost: PostItem = {
+            newPosts.push({
                 id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 type: "image",
                 url,
                 title: file.name.replace(/\.[^/.]+$/, ""),
                 isFeatured: false,
-            };
-
-            onPostsChange([...posts, newPost]);
-            setHasUnsavedChanges(true);
+                file: file
+            });
         });
 
-        // Reset input
+        if (newPosts.length > 0) {
+            onPostsChange([...posts, ...newPosts]);
+            setHasUnsavedChanges(true);
+        }
+
         e.target.value = "";
     };
 
@@ -422,6 +435,8 @@ export function EditablePostGrid({
                     )}
                 </DialogContent>
             </Dialog>
+
+
         </div>
     );
 }

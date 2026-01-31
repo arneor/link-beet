@@ -4,6 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
+// Common Module
+import { CommonModule } from './common/common.module';
+
 // Feature Modules
 import { AuthModule } from './modules/auth/auth.module';
 import { BusinessModule } from './modules/business/business.module';
@@ -12,6 +15,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
 import { HealthModule } from './modules/health/health.module';
+import { SplashModule } from './modules/splash/splash.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
     imports: [
@@ -44,6 +49,9 @@ import { HealthModule } from './modules/health/health.module';
             inject: [ConfigService],
         }),
 
+        // Common Module (Global - Email Service, etc.)
+        CommonModule,
+
         // Feature Modules
         AuthModule,
         BusinessModule,
@@ -52,6 +60,8 @@ import { HealthModule } from './modules/health/health.module';
         AdminModule,
         ComplianceModule,
         HealthModule,
+        SplashModule,
+        MediaModule,
     ],
     providers: [
         // Global Throttler Guard

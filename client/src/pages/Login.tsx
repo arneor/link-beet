@@ -130,11 +130,25 @@ export default function Login() {
     const onSubmitOtp = async (data: OtpValues) => {
         setIsLoading(true);
         try {
-            // Verify OTP
+            // Verify OTP - this stores the token via tokenStorage.setToken
+            console.log("Verifying OTP for:", email);
             const authResponse = await authApi.verifyOtp(email, data.otp);
+            console.log("OTP verified, auth response:", authResponse);
 
-            // Check if user has a business
-            const businessResponse = await businessApi.getMyBusiness();
+            // Try to get user's business
+            let businessId: string | null = null;
+            try {
+                console.log("Fetching user business...");
+                const businessResponse = await businessApi.getMyBusiness();
+                console.log("Business response:", businessResponse);
+                if (businessResponse) {
+                    // Handle both id and _id from backend
+                    businessId = businessResponse.id || (businessResponse as any)._id;
+                    console.log("Business ID found:", businessId);
+                }
+            } catch (bizError) {
+                console.log("No business found for user:", bizError);
+            }
 
             setStep("success");
 
@@ -144,16 +158,24 @@ export default function Login() {
             });
 
             // Redirect based on user's business status
+            // Using a slightly longer delay to ensure token is fully set
             setTimeout(() => {
-                if (businessResponse && businessResponse.id) {
+                if (businessId) {
                     // User has a business - go to dashboard
-                    setNavLocation(`/business/${businessResponse.id}`);
+                    console.log("Navigating to:", `/business/${businessId}`);
+                    setNavLocation(`/business/${businessId}`);
                 } else {
                     // User doesn't have a business - redirect to signup to create one
+                    console.log("No business, navigating to signup");
+                    toast({
+                        title: "Create Your Business",
+                        description: "Let's set up your business profile.",
+                    });
                     setNavLocation("/signup");
                 }
             }, 1500);
         } catch (error: any) {
+            console.error("Login OTP verification error:", error);
             toast({
                 title: "Verification Failed",
                 description: error.message || "Invalid or expired OTP",

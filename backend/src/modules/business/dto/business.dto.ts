@@ -12,6 +12,43 @@ import {
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
+export class AdDto {
+    @ApiProperty({ description: 'Ad title' })
+    @IsString()
+    @IsNotEmpty()
+    title: string;
+
+    @ApiProperty({ description: 'Media URL' })
+    @IsString()
+    @IsNotEmpty()
+    mediaUrl: string;
+
+    @ApiProperty({ description: 'Media type', enum: ['image', 'video'] })
+    @IsString()
+    @IsEnum(['image', 'video'])
+    mediaType: string;
+
+    @ApiProperty({ description: 'Ad placement', enum: ['BANNER', 'GALLERY'] })
+    @IsString()
+    @IsOptional()
+    placement?: string;
+
+    @ApiProperty({ description: 'Ad source' })
+    @IsString()
+    @IsOptional()
+    source?: string;
+
+    @ApiProperty({ description: 'S3 Key' })
+    @IsString()
+    @IsOptional()
+    s3Key?: string;
+
+    @ApiProperty({ description: 'Call to action URL' })
+    @IsString()
+    @IsOptional()
+    ctaUrl?: string;
+}
+
 export class CreateBusinessDto {
     @ApiProperty({ description: 'Business name', example: "Joe's Coffee House" })
     @IsString()
@@ -44,7 +81,7 @@ export class CreateBusinessDto {
     contactPhone?: string;
 
     @ApiProperty({ description: 'Logo URL', required: false })
-    @IsUrl()
+    @IsString()
     @IsOptional()
     logoUrl?: string;
 
@@ -59,7 +96,7 @@ export class CreateBusinessDto {
     wifiSsid?: string;
 
     @ApiProperty({ description: 'Google Review URL for CTA redirects' })
-    @IsUrl()
+    @IsString()
     @IsOptional()
     googleReviewUrl?: string;
 
@@ -84,7 +121,14 @@ export class UpdateBusinessDto extends PartialType(CreateBusinessDto) {
     @IsBoolean()
     @IsOptional()
     onboardingCompleted?: boolean;
+
+    @ApiProperty({ description: 'Ads/Banners list', type: [AdDto] })
+    @IsOptional()
+    @ValidateNested({ each: true })
+    @Type(() => AdDto)
+    ads?: AdDto[];
 }
+
 
 export class BusinessResponseDto {
     @ApiProperty({ description: 'Business ID' })

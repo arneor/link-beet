@@ -17,8 +17,8 @@ export class TrackInteractionDto {
     @IsNotEmpty()
     businessId: string;
 
-    @ApiProperty({ description: 'Interaction type', enum: ['view', 'click'] })
-    @IsEnum(['view', 'click'])
+    @ApiProperty({ description: 'Interaction type', enum: ['view', 'click', 'LIKE', 'SHARE', 'GALLERY_EXPAND'] })
+    @IsEnum(['view', 'click', 'LIKE', 'SHARE', 'GALLERY_EXPAND'])
     interactionType: string;
 
     @ApiProperty({ description: 'User ID (optional)', required: false })
@@ -40,6 +40,11 @@ export class TrackInteractionDto {
     @IsString()
     @IsOptional()
     sessionId?: string;
+
+    @ApiProperty({ description: 'User email (optional lead capture)', required: false })
+    @IsString()
+    @IsOptional()
+    email?: string;
 }
 
 export class ConnectWifiDto {

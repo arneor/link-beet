@@ -6,8 +6,13 @@ import {
     Body,
     Param,
     UseGuards,
-    HttpStatus,
+    ForbiddenException,
+    Req,
+    UseInterceptors,
+    UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
 import {
     ApiTags,
     ApiOperation,
@@ -16,11 +21,10 @@ import {
     ApiParam,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Request } from 'express';
 import { BusinessService } from './business.service';
 import { CreateBusinessDto, UpdateBusinessDto, BusinessResponseDto, DashboardStatsDto } from './dto/business.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Business')
@@ -33,9 +37,9 @@ export class BusinessController {
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({
         summary: 'Register new business',
-        description: 'Create a new business profile for the authenticated user'
+        description: 'Create a new business profile for the authenticated user. Business will be in pending_approval status.'
     })
-    @ApiResponse({ status: 201, description: 'Business created successfully' })
+    @ApiResponse({ status: 201, description: 'Business created successfully (pending approval)' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     async register(
         @CurrentUser('userId') userId: string,
@@ -49,8 +53,10 @@ export class BusinessController {
             location: business.location,
             contactEmail: business.contactEmail,
             category: business.category,
+            status: business.status,
             isActive: business.isActive,
             onboardingCompleted: business.onboardingCompleted,
+            message: 'Business registered successfully. Pending admin approval.',
         };
     }
 
@@ -82,9 +88,12 @@ export class BusinessController {
             wifiSsid: business.wifiSsid,
             googleReviewUrl: business.googleReviewUrl,
             profileType: business.profileType,
+            status: business.status,
             isActive: business.isActive,
             onboardingCompleted: business.onboardingCompleted,
             adsCount: business.ads.length,
+            rejectionReason: business.rejectionReason,
+            suspensionReason: business.suspensionReason,
         };
     }
 
@@ -121,9 +130,22 @@ export class BusinessController {
     @ApiOperation({ summary: 'Get business by ID' })
     @ApiParam({ name: 'id', description: 'Business ID' })
     @ApiResponse({ status: 200, description: 'Business profile' })
+    @ApiResponse({ status: 403, description: 'Access denied' })
     @ApiResponse({ status: 404, description: 'Business not found' })
-    async getById(@Param('id') id: string) {
+    async getById(
+        @Param('id') id: string,
+        @CurrentUser() user: any
+    ) {
         const business = await this.businessService.findById(id);
+
+        // Check ownership (admins can access any business)
+        const isAdmin = user.type === 'admin' || user.role === 'super_admin' || user.role === 'admin';
+        const isOwner = business.ownerId.toString() === user.userId;
+
+        if (!isAdmin && !isOwner) {
+            throw new ForbiddenException('You do not have permission to access this business');
+        }
+
         return {
             id: business._id,
             businessName: business.businessName,
@@ -135,8 +157,10 @@ export class BusinessController {
             wifiSsid: business.wifiSsid,
             googleReviewUrl: business.googleReviewUrl,
             profileType: business.profileType,
+            status: business.status,
             isActive: business.isActive,
             adsCount: business.ads.length,
+            ads: business.ads, // Expose ads for editing
         };
     }
 
@@ -150,18 +174,48 @@ export class BusinessController {
     @ApiResponse({ status: 404, description: 'Business not found' })
     async update(
         @Param('id') id: string,
-        @CurrentUser('userId') userId: string,
+        @CurrentUser() user: any,
         @Body() dto: UpdateBusinessDto,
     ) {
-        const business = await this.businessService.update(id, userId, dto);
+        // Admins can update any business, owners can only update their own
+        const isAdmin = user.type === 'admin' || user.role === 'super_admin' || user.role === 'admin';
+        const business = await this.businessService.update(id, user.userId, dto, isAdmin);
+
         return {
             id: business._id,
             businessName: business.businessName,
             location: business.location,
             contactEmail: business.contactEmail,
+            status: business.status,
             isActive: business.isActive,
             onboardingCompleted: business.onboardingCompleted,
         };
+    }
+
+    @Post(':id/upload')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiOperation({ summary: 'Upload media (logo, banners, gallery)' })
+    @ApiParam({ name: 'id', description: 'Business ID' })
+    @ApiResponse({ status: 201, description: 'File uploaded and profile updated' })
+    async upload(
+        @Param('id') id: string,
+        @CurrentUser() user: any,
+        @UploadedFile() file: Express.Multer.File,
+        @Body('placement') placement: string
+    ) {
+        if (!file) {
+            throw new ForbiddenException('No file uploaded');
+        }
+
+        // Normalize placement
+        if (!placement || !['branding', 'banner', 'gallery'].includes(placement)) {
+            placement = 'gallery';
+        }
+
+        const isAdmin = user.type === 'admin' || user.role === 'super_admin' || user.role === 'admin';
+        return this.businessService.uploadMedia(id, file, placement, user.userId, isAdmin);
     }
 
     @Get(':id/stats')
@@ -173,21 +227,36 @@ export class BusinessController {
     @ApiResponse({ status: 200, description: 'Dashboard statistics', type: DashboardStatsDto })
     async getStats(
         @Param('id') id: string,
-        @CurrentUser('userId') userId: string,
+        @CurrentUser() user: any,
     ) {
-        return this.businessService.getDashboardStats(id, userId);
+        // Admins can view any business stats
+        const isAdmin = user.type === 'admin' || user.role === 'super_admin' || user.role === 'admin';
+        return this.businessService.getDashboardStats(id, user.userId, isAdmin);
     }
 
-    // Public endpoint for captive portal
-    @Get('splash/:id')
+    @Get(':id/access-logs')
+    @UseGuards(JwtAuthGuard)
     @SkipThrottle()
+    @ApiBearerAuth('JWT-auth')
     @ApiOperation({
-        summary: 'Get splash page data (public)',
-        description: 'Get business and ads data for captive portal display'
+        summary: 'Get admin access logs for business',
+        description: 'Business owners can see when admins accessed their data (transparency)'
     })
     @ApiParam({ name: 'id', description: 'Business ID' })
-    @ApiResponse({ status: 200, description: 'Splash page data' })
-    async getSplash(@Param('id') id: string) {
-        return this.businessService.getSplashData(id);
+    @ApiResponse({ status: 200, description: 'Access logs' })
+    async getAccessLogs(
+        @Param('id') id: string,
+        @CurrentUser() user: any,
+    ) {
+        // Verify ownership
+        const business = await this.businessService.findById(id);
+        if (business.ownerId.toString() !== user.userId) {
+            throw new ForbiddenException('You can only view access logs for your own business');
+        }
+
+        return this.businessService.getAdminAccessLogs(id);
     }
+
+    // Public endpoint for captive portal - MOVED TO SPLASH MODULE
+    // @Get('splash/:id') is now handled by SplashController
 }

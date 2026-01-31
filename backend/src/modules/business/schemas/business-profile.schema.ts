@@ -45,9 +45,33 @@ export class Ad {
     @Prop({ default: 0 })
     clicks: number;
 
+    @ApiProperty({ description: 'Total likes' })
+    @Prop({ default: 0 })
+    likesCount: number;
+
+    @ApiProperty({ description: 'Total shares' })
+    @Prop({ default: 0 })
+    sharesCount: number;
+
+    @ApiProperty({ description: 'Total gallery expands/taps' })
+    @Prop({ default: 0 })
+    expandsCount: number;
+
     @ApiProperty({ description: 'Created timestamp' })
     @Prop({ default: Date.now })
     createdAt: Date;
+
+    @ApiProperty({ description: 'Ad placement type', enum: ['BANNER', 'GALLERY'] })
+    @Prop({ type: String, enum: ['BANNER', 'GALLERY'], required: true, default: 'GALLERY' })
+    placement: string;
+
+    @ApiProperty({ description: 'Ad source', enum: ['INTERNAL', 'THIRD_PARTY'] })
+    @Prop({ type: String, enum: ['INTERNAL', 'THIRD_PARTY'], default: 'INTERNAL' })
+    source: string;
+
+    @ApiProperty({ description: 'S3 Key for file management' })
+    @Prop()
+    s3Key?: string;
 }
 
 export const AdSchema = SchemaFactory.createForClass(Ad);
@@ -91,6 +115,10 @@ export class BusinessProfile {
     @Prop()
     logoUrl?: string;
 
+    @ApiProperty({ description: 'S3 Key for logo' })
+    @Prop()
+    logoS3Key?: string;
+
     @ApiProperty({ description: 'Primary brand color' })
     @Prop({ default: '#000000' })
     primaryColor: string;
@@ -123,6 +151,42 @@ export class BusinessProfile {
     @Prop({ default: true })
     isActive: boolean;
 
+    @ApiProperty({ description: 'Business approval status', enum: ['pending_approval', 'active', 'suspended', 'rejected'] })
+    @Prop({ type: String, enum: ['pending_approval', 'active', 'suspended', 'rejected'], default: 'pending_approval' })
+    status: string;
+
+    @ApiProperty({ description: 'Admin ID who activated the business' })
+    @Prop({ type: Types.ObjectId, ref: 'Admin' })
+    activatedBy?: Types.ObjectId;
+
+    @ApiProperty({ description: 'Timestamp when business was activated' })
+    @Prop()
+    activatedAt?: Date;
+
+    @ApiProperty({ description: 'Reason for rejection (if rejected)' })
+    @Prop()
+    rejectionReason?: string;
+
+    @ApiProperty({ description: 'Reason for suspension (if suspended)' })
+    @Prop()
+    suspensionReason?: string;
+
+    @ApiProperty({ description: 'History of status changes' })
+    @Prop({
+        type: [{
+            status: String,
+            changedBy: Types.ObjectId,
+            changedAt: Date,
+            reason: String
+        }], default: []
+    })
+    statusHistory: Array<{
+        status: string;
+        changedBy?: Types.ObjectId;
+        changedAt: Date;
+        reason?: string;
+    }>;
+
     @ApiProperty({ description: 'Created timestamp' })
     createdAt?: Date;
 
@@ -136,4 +200,6 @@ export const BusinessProfileSchema = SchemaFactory.createForClass(BusinessProfil
 BusinessProfileSchema.index({ businessName: 'text' });
 BusinessProfileSchema.index({ category: 1 });
 BusinessProfileSchema.index({ isActive: 1 });
+BusinessProfileSchema.index({ status: 1 });
+
 

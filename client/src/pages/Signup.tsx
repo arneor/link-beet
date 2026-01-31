@@ -146,6 +146,13 @@ export default function Signup() {
           contactEmail: signupData.email,
         });
 
+        // Get the business ID (handle both id and _id from backend)
+        const businessId = business.id || (business as any)._id;
+
+        if (!businessId) {
+          throw new Error("Business registration failed - no ID returned");
+        }
+
         setStep("success");
 
         toast({
@@ -153,12 +160,13 @@ export default function Signup() {
           description: "Your business account has been created successfully.",
         });
 
-        // Redirect to onboarding after a short delay
+        // Redirect to business dashboard after a short delay
         setTimeout(() => {
-          setNavLocation(`/business/${business.id}/onboarding`);
+          setNavLocation(`/business/${businessId}`);
         }, 2000);
       }
     } catch (error: any) {
+      console.error("Signup OTP verification error:", error);
       toast({
         title: "Verification Failed",
         description: error.message || "Invalid or expired OTP",

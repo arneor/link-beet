@@ -21,8 +21,12 @@ export class AnalyticsLog {
     @Prop({ type: Types.ObjectId, ref: 'User' })
     userId?: Types.ObjectId;
 
-    @ApiProperty({ description: 'Interaction type', enum: ['view', 'click'] })
-    @Prop({ type: String, enum: ['view', 'click'], required: true })
+    @ApiProperty({ description: 'User Email (optional)' })
+    @Prop()
+    email?: string;
+
+    @ApiProperty({ description: 'Interaction type', enum: ['view', 'click', 'LIKE', 'SHARE', 'GALLERY_EXPAND'] })
+    @Prop({ type: String, enum: ['view', 'click', 'LIKE', 'SHARE', 'GALLERY_EXPAND'], required: true })
     interactionType: string;
 
     @ApiProperty({ description: 'Device type' })
