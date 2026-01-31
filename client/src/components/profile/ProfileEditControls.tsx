@@ -13,7 +13,7 @@ import { useLocation } from "wouter";
 
 interface ProfileEditControlsProps {
     onSave: () => void;
-    businessId: number;
+    businessId: string;
 }
 
 export function ProfileEditControls({

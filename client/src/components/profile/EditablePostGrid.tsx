@@ -235,20 +235,14 @@ export function EditablePostGrid({
                         <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                             <SplashCarousel
                                 campaigns={featuredPosts.map(p => ({
-                                    id: 0, // dummy id
+                                    id: "preview-" + p.id,
                                     title: p.title,
-                                    contentUrl: p.url,
-                                    type: 'banner',
-                                    isActive: true,
-                                    // other required props mocked
-                                    businessId: 0,
+                                    mediaUrl: p.url,
+                                    mediaType: 'image',
+                                    status: 'active',
                                     duration: 5,
                                     views: 0,
                                     clicks: 0,
-                                    startDate: null,
-                                    endDate: null,
-                                    createdAt: null,
-                                    targetBusinessIds: []
                                 } as any))}
                             />
                         </div>

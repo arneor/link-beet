@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
-import type { Campaign } from "@shared/schema";
+import type { Ad } from "@/lib/api";
 
 interface SplashCarouselProps {
-  campaigns: Campaign[];
+  campaigns: Ad[];
 }
 
 export function SplashCarousel({ campaigns }: SplashCarouselProps) {
@@ -12,7 +12,7 @@ export function SplashCarousel({ campaigns }: SplashCarouselProps) {
   const [direction, setDirection] = useState(0);
 
   // Filter only banner/static type campaigns for the carousel
-  const carouselItems = campaigns.filter((c) => c.type !== "video" && c.isActive);
+  const carouselItems = campaigns.filter((c) => c.mediaType !== "video" && c.status === "active");
 
   useEffect(() => {
     if (carouselItems.length <= 1) return;
@@ -116,7 +116,7 @@ export function SplashCarousel({ campaigns }: SplashCarouselProps) {
           >
             {/* Image */}
             <img
-              src={carouselItems[currentIndex].contentUrl}
+              src={carouselItems[currentIndex].mediaUrl}
               alt={carouselItems[currentIndex].title}
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -183,8 +183,8 @@ export function SplashCarousel({ campaigns }: SplashCarouselProps) {
                 key={idx}
                 onClick={() => goToSlide(idx)}
                 className={`h-2 rounded-full transition-all duration-500 ${idx === currentIndex
-                    ? "w-8 bg-[#9EE53B] shadow-lg shadow-[#9EE53B]/50"
-                    : "w-2 bg-white/40 hover:bg-white/60"
+                  ? "w-8 bg-[#9EE53B] shadow-lg shadow-[#9EE53B]/50"
+                  : "w-2 bg-white/40 hover:bg-white/60"
                   }`}
               />
             ))}

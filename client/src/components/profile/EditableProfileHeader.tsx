@@ -11,7 +11,7 @@ import { useState, useRef } from "react";
 import { useEditMode } from "./EditModeContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { Business } from "@shared/schema";
+import type { Business } from "@/lib/api";
 
 interface EditableProfileHeaderProps {
     business: Business;
@@ -25,8 +25,8 @@ export function EditableProfileHeader({
     const { isEditMode } = useEditMode();
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
-    const [tempName, setTempName] = useState(business.name);
-    const [tempAddress, setTempAddress] = useState(business.address || "");
+    const [tempName, setTempName] = useState(business.businessName);
+    const [tempAddress, setTempAddress] = useState(business.location || "");
     const logoInputRef = useRef<HTMLInputElement>(null);
 
     const handleLogoClick = () => {
@@ -45,22 +45,22 @@ export function EditableProfileHeader({
     };
 
     const saveName = () => {
-        onUpdate({ name: tempName });
+        onUpdate({ businessName: tempName });
         setIsEditingName(false);
     };
 
     const saveAddress = () => {
-        onUpdate({ address: tempAddress });
+        onUpdate({ location: tempAddress });
         setIsEditingAddress(false);
     };
 
     const cancelName = () => {
-        setTempName(business.name);
+        setTempName(business.businessName);
         setIsEditingName(false);
     };
 
     const cancelAddress = () => {
-        setTempAddress(business.address || "");
+        setTempAddress(business.location || "");
         setIsEditingAddress(false);
     };
 
@@ -82,7 +82,7 @@ export function EditableProfileHeader({
                     {business.logoUrl ? (
                         <img
                             src={business.logoUrl}
-                            alt={business.name}
+                            alt={business.businessName}
                             className="w-full h-full object-cover"
                         />
                     ) : (
@@ -127,7 +127,7 @@ export function EditableProfileHeader({
                         onClick={() => isEditMode && setIsEditingName(true)}
                     >
                         <h1 className="text-2xl font-display font-extrabold text-white">
-                            {business.name}
+                            {business.businessName}
                         </h1>
                         {isEditMode && (
                             <Pencil className="w-4 h-4 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -174,7 +174,7 @@ export function EditableProfileHeader({
                         onClick={() => isEditMode && setIsEditingAddress(true)}
                     >
                         <MapPin className="w-3.5 h-3.5" />
-                        <span>{business.address || "Add your location"}</span>
+                        <span>{business.location || "Add your location"}</span>
                         {isEditMode && (
                             <Pencil className="w-3 h-3 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity" />
                         )}

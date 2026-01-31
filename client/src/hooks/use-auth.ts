@@ -1,73 +1,83 @@
-import { useMutation } from "@tanstack/react-query";
-import { api, type LoginRequest, type SignupRequest } from "@shared/routes";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authApi, type User, type AuthResponse } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
-export function useLogin() {
+export function useRequestOtp() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (credentials: LoginRequest) => {
-      const res = await fetch(api.auth.login.path, {
-        method: api.auth.login.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Invalid username");
-        throw new Error("Login failed");
-      }
-
-      return api.auth.login.responses[200].parse(await res.json());
+    mutationFn: async ({ email, password }: { email: string; password?: string }) => {
+      return authApi.login({ email, password: password || "" });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
-        title: "Login Failed",
-        description: error.message,
+        title: "Request Failed",
+        description: error.message || "Failed to send OTP",
         variant: "destructive",
       });
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
-        title: `Welcome back, ${data.username}!`,
-        description: "You have successfully logged in.",
+        title: "OTP Sent",
+        description: "Please check your email for the verification code.",
       });
     },
   });
 }
 
-export function useSignup() {
+export function useVerifyOtp() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: SignupRequest) => {
-      const res = await fetch(api.auth.signup.path, {
-        method: api.auth.signup.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const message = "Signup failed";
-        throw new Error(message);
-      }
-
-      return api.auth.signup.responses[201].parse(await res.json());
+    mutationFn: async ({ email, otp }: { email: string; otp: string }) => {
+      return authApi.verifyOtp(email, otp);
     },
-    onError: (error) => {
+    onSuccess: (data: AuthResponse) => {
       toast({
-        title: "Signup Failed",
-        description: error.message,
+        title: "Welcome back!",
+        description: "You have successfully verified your account.",
+      });
+      // Invalidate user query to fetch fresh data
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid OTP",
         variant: "destructive",
       });
     },
-    onSuccess: (data) => {
-      toast({
-        title: `Welcome, ${data.username}!`,
-        description: "Your business account has been created.",
-      });
-    },
   });
+}
+
+export function useUser() {
+  return useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      try {
+        return await authApi.getMe();
+      } catch (e) {
+        return null;
+      }
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useLogout() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return () => {
+    authApi.logout();
+    queryClient.setQueryData(["user"], null);
+    queryClient.clear(); // Clear all cache
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+    window.location.href = "/";
+  };
 }

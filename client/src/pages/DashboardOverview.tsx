@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Wifi, DollarSign, Megaphone } from "lucide-react";
+import { Users, Wifi, DollarSign, Megaphone, Loader2 } from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -12,21 +12,32 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format } from "date-fns";
+import { useBusinessStats, useBusiness } from "@/hooks/use-businesses";
 
 export default function DashboardOverview() {
   const { id } = useParams();
-  const businessId = parseInt(id || "0");
+  const businessId = id || "";
 
-  const stats = {
-    totalConnections: 1245,
-    activeUsers: 18,
-    totalAdsServed: 3620,
-    revenue: 186.5,
-    connectionsHistory: Array.from({ length: 7 }).map((_, idx) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - idx));
-      return { date: d.toISOString(), count: 20 + idx * 12 };
-    }),
+  const { data: business, isLoading: isLoadingBusiness } = useBusiness(businessId);
+  const { data: stats, isLoading: isLoadingStats } = useBusinessStats(businessId);
+
+  const isLoading = isLoadingBusiness || isLoadingStats;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50/50">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Fallback stats if API fails or returns null (though hook handles null)
+  const displayStats = stats || {
+    totalConnections: 0,
+    activeUsers: 0,
+    totalAdsServed: 0,
+    revenue: 0,
+    connectionsHistory: [],
   };
 
   return (
@@ -38,7 +49,7 @@ export default function DashboardOverview() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-3xl font-display font-bold text-gray-900">
-                Overview
+                {business?.businessName || "Overview"}
               </h1>
               <p className="text-muted-foreground mt-1">
                 Here's what's happening with your WiFi network today.
@@ -46,39 +57,36 @@ export default function DashboardOverview() {
             </div>
             <div className="px-4 py-2 bg-white border rounded-full text-sm font-medium text-gray-600 shadow-sm">
               Status:{" "}
-              <span className="text-green-500 font-bold ml-1">● Online</span>
+              {business?.isActive ? (
+                <span className="text-green-500 font-bold ml-1">● Online</span>
+              ) : (
+                <span className="text-gray-400 font-bold ml-1">● Offline</span>
+              )}
             </div>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatsCard
               title="Total Connections"
-              value={stats.totalConnections.toLocaleString()}
+              value={displayStats.totalConnections.toLocaleString()}
               icon={Wifi}
-              trend="+12% from last week"
+              trend=""
               color="text-blue-500"
             />
             <StatsCard
               title="Active Users"
-              value={stats.activeUsers.toString()}
+              value={displayStats.activeUsers.toString()}
               icon={Users}
               trend="Currently online"
               color="text-green-500"
             />
             <StatsCard
               title="Ads Served"
-              value={stats.totalAdsServed.toLocaleString()}
+              value={displayStats.totalAdsServed.toLocaleString()}
               icon={Megaphone}
-              trend="+8% from last week"
+              trend=""
               color="text-purple-500"
-            />
-            <StatsCard
-              title="Est. Revenue"
-              value={`$${stats.revenue.toLocaleString()}`}
-              icon={DollarSign}
-              trend="Mock revenue data"
-              color="text-orange-500"
             />
           </div>
 
@@ -89,79 +97,87 @@ export default function DashboardOverview() {
             </CardHeader>
             <CardContent>
               <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats.connectionsHistory}>
-                    <defs>
-                      <linearGradient
-                        id="colorCount"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="hsl(var(--primary))"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="hsl(var(--primary))"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="hsl(var(--border))"
-                    />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(str) => {
-                        try {
-                          return format(new Date(str), "MMM d");
-                        } catch (e) {
-                          return str;
-                        }
-                      }}
-                      stroke="#888888"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#888888"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `${value}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        border: "1px solid #e5e7eb",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                      labelFormatter={(label) => {
-                        try {
-                          return format(new Date(label), "MMMM d, yyyy");
-                        } catch (e) {
-                          return label;
-                        }
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="count"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#colorCount)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {displayStats.connectionsHistory.length === 0 || displayStats.connectionsHistory.every(h => h.count === 0) ? (
+                  <div className="h-full w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+                    <Wifi className="h-10 w-10 text-gray-300 mb-2" />
+                    <p className="text-gray-500 font-medium">No connection data available</p>
+                    <p className="text-sm text-gray-400">Activity will appear here once users connect.</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={displayStats.connectionsHistory}>
+                      <defs>
+                        <linearGradient
+                          id="colorCount"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="hsl(var(--border))"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(str) => {
+                          try {
+                            return format(new Date(str), "MMM d");
+                          } catch (e) {
+                            return str;
+                          }
+                        }}
+                        stroke="#888888"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        stroke="#888888"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `${value}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          borderRadius: "8px",
+                          border: "1px solid #e5e7eb",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                        labelFormatter={(label) => {
+                          try {
+                            return format(new Date(label), "MMMM d, yyyy");
+                          } catch (e) {
+                            return label;
+                          }
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="count"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorCount)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>

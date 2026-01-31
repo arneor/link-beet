@@ -16,6 +16,7 @@ import {
   Mail,
   TrendingUp,
   Star,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,8 +142,8 @@ export default function Landing() {
       setLocation("/admin");
       return;
     }
-    // For demo/mock flow
-    setLocation("/business/1");
+    // Redirect to signup for new users
+    setLocation("/signup");
   };
 
   return (
@@ -258,10 +259,10 @@ export default function Landing() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => setLocation("/splash/1")}
+                  onClick={() => window.open("https://docs.markmorph.com/demo", "_blank")}
                   className="h-14 px-8 text-lg font-bold rounded-full bg-white/10 text-white border-2 border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300"
                 >
-                  View Demo
+                  Learn More
                 </Button>
               </motion.div>
             </motion.div>
@@ -294,83 +295,40 @@ export default function Landing() {
                 </CardHeader>
 
                 <CardContent className="px-8 pb-8">
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-5"
+                  <div className="space-y-6">
+                    <p className="text-gray-500 text-center">
+                      Join thousands of businesses using MarkMorph to grow their customer base.
+                    </p>
+
+                    <Button
+                      onClick={() => setLocation("/login")}
+                      className="w-full h-14 text-lg font-bold rounded-xl gradient-lime-cyan text-[#222] hover:opacity-90 shadow-lg shadow-[#9EE53B]/30 transition-all duration-300 hover:scale-[1.02]"
                     >
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-700 font-semibold">
-                              Email
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="owner@business.com"
-                                type="email"
-                                {...field}
-                                className="h-14 text-lg rounded-xl border-2 border-gray-200 focus:border-[#9EE53B] focus:ring-[#9EE53B]/20 transition-all"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <Smartphone className="w-5 h-5 mr-2" />
+                      Sign In with Email
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
 
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-700 font-semibold">
-                              Password
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="••••••••"
-                                type="password"
-                                {...field}
-                                className="h-14 text-lg rounded-xl border-2 border-gray-200 focus:border-[#9EE53B] focus:ring-[#9EE53B]/20 transition-all"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Button
-                        type="submit"
-                        className="w-full h-14 text-lg font-bold rounded-xl gradient-lime-cyan text-[#222] hover:opacity-90 shadow-lg shadow-[#9EE53B]/30 transition-all duration-300 hover:scale-[1.02]"
-                      >
-                        Sign In
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full h-14 text-lg font-semibold rounded-xl border-2 border-gray-200 hover:border-[#9EE53B] hover:bg-[#9EE53B]/5 transition-all"
-                        onClick={() => setLocation("/signup")}
-                      >
-                        Create business account
-                      </Button>
-                    </form>
-                  </Form>
+                    <Button
+                      variant="outline"
+                      className="w-full h-14 text-lg font-semibold rounded-xl border-2 border-gray-200 hover:border-[#9EE53B] hover:bg-[#9EE53B]/5 transition-all"
+                      onClick={() => setLocation("/signup")}
+                    >
+                      Create Account
+                    </Button>
+                  </div>
 
                   <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                     <p className="text-sm text-gray-500 mb-3">
-                      Or try the demo splash page
+                      Ready to get started?
                     </p>
                     <Button
                       variant="ghost"
                       className="w-full h-12 rounded-xl text-[#A855F7] hover:bg-[#A855F7]/10 font-semibold transition-all"
-                      onClick={() => setLocation("/splash/1")}
+                      onClick={() => setLocation("/signup")}
                     >
                       <Globe className="w-4 h-4 mr-2" />
-                      View Mobile Splash Page
+                      Create Your Portal Now
                     </Button>
                   </div>
                 </CardContent>
@@ -642,10 +600,10 @@ export default function Landing() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => setLocation("/splash/1")}
+                onClick={() => setLocation("/signup")}
                 className="h-16 px-10 text-xl font-bold rounded-full bg-white/10 text-white border-2 border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300"
               >
-                View Live Demo
+                Start Free Trial
               </Button>
             </div>
 

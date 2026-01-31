@@ -13,24 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -39,26 +22,22 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Wifi } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBusiness, useUpdateBusiness } from "@/hooks/use-businesses";
 
-type WizardStep = 1 | 2;
+type WizardStep = 1; // Only 1 step now
 
 const wizardSchema = z.object({
   name: z.string().min(1, "Business name is required"),
+  contactEmail: z.string().email("Invalid email address").optional().or(z.literal('')),
   address: z.string().optional(),
-  wifiSsid: z.string().optional(),
-  profileType: z.enum(["private", "public"]).optional(),
 });
 
 type WizardValues = z.infer<typeof wizardSchema>;
 
-
-
 export default function BusinessOnboarding() {
   const { id } = useParams();
-  const businessId = parseInt(id || "0");
+  const businessId = id || "";
   const [, setLocation] = useLocation();
 
   const { toast } = useToast();
@@ -73,49 +52,29 @@ export default function BusinessOnboarding() {
     defaultValues: {
       name: "",
       address: "",
-      wifiSsid: "",
-      profileType: "private",
+      contactEmail: "",
     },
   });
 
   useEffect(() => {
     if (!business) return;
     form.reset({
-      name: business.name || "",
-      address: business.address || "",
-      wifiSsid: business.wifiSsid || "",
-      profileType: (business.profileType as any) || "private",
+      name: business.businessName || "",
+      address: business.location || "",
+      contactEmail: business.contactEmail || "",
     });
   }, [business, form]);
 
-  const progress = useMemo(() => {
-    const idx = step - 1;
-    return Math.round(((idx + 1) / 2) * 100);
-  }, [step]);
-
-  const saveCurrent = (next?: WizardStep) => {
-    if (next) setStep(next);
-  };
-
-  const onNext = () => {
-    if (step === 1) return saveCurrent(2);
-    return undefined;
-  };
-
-  const onBack = () => {
-    if (step === 2) setStep(1);
-  };
-
-  const previewValues = form.watch();
+  // No multi-step, so progress is 100%
+  const progress = 100;
 
   const onFinish = form.handleSubmit((values) => {
     updateBusiness.mutate(
       {
         id: businessId,
-        name: values.name,
-        address: values.address?.trim() ? values.address.trim() : null,
-        wifiSsid: values.wifiSsid?.trim() ? values.wifiSsid.trim() : null,
-        profileType: values.profileType || "private",
+        businessName: values.name,
+        location: values.address?.trim() ? values.address.trim() : null,
+        contactEmail: values.contactEmail?.trim() ? values.contactEmail.trim() : null,
         onboardingCompleted: true,
       } as any,
       {
@@ -124,7 +83,6 @@ export default function BusinessOnboarding() {
             title: "Setup Complete",
             description: "Your business profile has been saved.",
           });
-          saveCurrent(2);
           setLocation(`/business/${businessId}`);
         },
       },
@@ -149,143 +107,67 @@ export default function BusinessOnboarding() {
 
           <Card className="border-border/60 shadow-lg shadow-black/5">
             <CardHeader>
-              <CardTitle>
-                {step === 1 && "Step 1: Basic Information"}
-                {step === 2 && "Step 2: Configuration"}
-              </CardTitle>
+              <CardTitle>Business Information</CardTitle>
               <CardDescription>
-                {step === 1 && "Tell us about your venue."}
-                {step === 2 && "Configure WiFi and Ad settings."}
+                Tell us about your venue.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form className="space-y-6">
-                  {step === 1 && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business name</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Your business name"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Your business name"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormField
-                        control={form.control}
-                        name="address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Address</FormLabel>
-                            <FormControl>
-                              <Input placeholder="123 Main St" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </>
-                  )}
+                  <FormField
+                    control={form.control}
+                    name="contactEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="contact@business.com" type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                  {step === 2 && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="wifiSsid"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Network SSID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Guest_WiFi" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123 Main St" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormField
-                        control={form.control}
-                        name="profileType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Profile mode</FormLabel>
-                            <Select
-                              value={field.value || "private"}
-                              onValueChange={field.onChange}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select mode" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="private">
-                                  Private (only your ads)
-                                </SelectItem>
-                                <SelectItem value="public">
-                                  Public (mix + revenue sharing)
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="rounded-md border p-4 bg-background">
-                        {form.watch("profileType") === "private" ? (
-                          <div className="space-y-2">
-                            <p className="font-medium">Private profile mode</p>
-                            <p className="text-sm text-muted-foreground">
-                              Your splash page will show only your own campaigns
-                              and branding.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <p className="font-medium">Public profile mode</p>
-                            <p className="text-sm text-muted-foreground">
-                              Your splash page can show your content + platform
-                              ads with revenue sharing.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex justify-between pt-4">
+                  <div className="flex justify-end pt-4">
                     <Button
                       type="button"
-                      variant="outline"
-                      onClick={onBack}
-                      disabled={step === 1}
+                      onClick={onFinish}
+                      disabled={updateBusiness.isPending}
                     >
-                      Back
+                      {updateBusiness.isPending ? "Saving..." : "Finish"}
                     </Button>
-
-                    {step < 2 ? (
-                      <Button type="button" onClick={onNext}>
-                        Next
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={onFinish}
-                        disabled={updateBusiness.isPending}
-                      >
-                        {updateBusiness.isPending ? "Saving..." : "Finish"}
-                      </Button>
-                    )}
                   </div>
                 </form>
               </Form>

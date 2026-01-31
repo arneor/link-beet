@@ -1,52 +1,52 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type UpdateBusinessRequest } from "@shared/routes";
+import { businessApi, type Business, type DashboardStats } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { demoStore } from "@/lib/demoStore";
 
-function isJsonResponse(res: Response) {
-  const ct = res.headers.get("content-type") || "";
-  return ct.includes("application/json");
-}
-
-export function useBusiness(id: number) {
+export function useBusiness(id: string) {
   return useQuery({
-    queryKey: [api.businesses.get.path, id],
+    queryKey: ["business", id],
     queryFn: async () => {
-      const url = buildUrl(api.businesses.get.path, { id });
-
+      // If we don't have an ID (e.g. during initial load/redirect), return null
+      // or if ID is "new", we might handle it differently.
+      if (!id || id === "new") return null;
       try {
-        const res = await fetch(url, { credentials: "include" });
-        if (res.status === 404) return null;
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.businesses.get.responses[200].parse(await res.json());
-      } catch {
-        return demoStore.getBusiness(id);
+        return await businessApi.getById(id);
+      } catch (error: any) {
+        if (error.statusCode === 404) return null;
+        throw error;
       }
     },
-    enabled: !!id,
+    enabled: !!id && id !== "new",
   });
 }
 
-export function useBusinessStats(id: number) {
+// Hook to get the current user's business
+export function useMyBusiness() {
   return useQuery({
-    queryKey: [api.businesses.dashboardStats.path, id],
+    queryKey: ["my-business"],
     queryFn: async () => {
-      const url = buildUrl(api.businesses.dashboardStats.path, { id });
+      return await businessApi.getMyBusiness();
+    },
+  });
+}
 
+export function useBusinessStats(id: string) {
+  return useQuery({
+    queryKey: ["business-stats", id],
+    queryFn: async () => {
       try {
-        const res = await fetch(url, { credentials: "include" });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.businesses.dashboardStats.responses[200].parse(
-          await res.json(),
-        );
+        return await businessApi.getDashboardStats(id);
       } catch {
         return {
           totalConnections: 0,
           activeUsers: 0,
           totalAdsServed: 0,
+          totalViews: 0,
+          totalClicks: 0,
+          ctr: 0,
           revenue: 0,
           connectionsHistory: [],
-        };
+        } as DashboardStats;
       }
     },
     enabled: !!id,
@@ -61,26 +61,15 @@ export function useUpdateBusiness() {
     mutationFn: async ({
       id,
       ...updates
-    }: { id: number } & UpdateBusinessRequest) => {
-      const url = buildUrl(api.businesses.update.path, { id });
-
-      try {
-        const res = await fetch(url, {
-          method: api.businesses.update.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updates),
-          credentials: "include",
-        });
-
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.businesses.update.responses[200].parse(await res.json());
-      } catch {
-        return demoStore.updateBusiness(id, updates as any);
-      }
+    }: { id: string } & Partial<Business>) => {
+      return await businessApi.update(id, updates);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: [api.businesses.get.path, data.id],
+        queryKey: ["business", data.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["my-business"],
       });
       toast({
         title: "Profile Updated",
@@ -91,6 +80,39 @@ export function useUpdateBusiness() {
       toast({
         title: "Error",
         description: "Failed to update profile.",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useRegisterBusiness() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (data: {
+      businessName: string;
+      location?: string;
+      category?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+    }) => {
+      return await businessApi.register(data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["my-business"],
+      });
+      toast({
+        title: "Business Registered",
+        description: "Your business has been successfully created.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Failed to register business.",
         variant: "destructive",
       });
     },

@@ -10,13 +10,16 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 
+import { useLogout } from "@/hooks/use-auth";
+
 interface SidebarProps {
-  businessId: number;
+  businessId: string;
 }
 
 export function DashboardSidebar({ businessId }: SidebarProps) {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
+  const logout = useLogout();
 
   const links = [
     {
@@ -78,12 +81,13 @@ export function DashboardSidebar({ businessId }: SidebarProps) {
       </nav>
 
       <div className="px-4 mt-auto">
-        <Link href="/">
-          <div className="flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/5 rounded-xl transition-colors cursor-pointer">
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
-          </div>
-        </Link>
+        <div
+          onClick={() => logout()}
+          className="flex items-center gap-3 px-4 py-3 text-destructive hover:bg-destructive/5 rounded-xl transition-colors cursor-pointer"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="font-medium">Sign Out</span>
+        </div>
       </div>
     </div>
   );

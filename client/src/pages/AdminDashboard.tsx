@@ -1,22 +1,15 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import { queryClient } from "@/lib/queryClient";
-import { useLocation } from "wouter";
-import { useState } from "react";
-import { demoStore } from "@/lib/demoStore";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminApi, businessApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 import {
   Users,
   Wifi,
   Megaphone,
   Mail,
   Building2,
-  Plus,
   Search,
-  Filter,
-  MoreVertical,
   CheckCircle2,
   XCircle,
-  Calendar,
   ExternalLink,
 } from "lucide-react";
 import {
@@ -38,133 +31,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertCampaignSchema } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-
-function isJsonResponse(res: Response) {
-  const ct = res.headers.get("content-type") || "";
-  return ct.includes("application/json");
-}
 
 export default function AdminDashboard() {
   const { toast } = useToast();
-  const { data: statsData } = useQuery({
-    queryKey: [api.admin.stats.path],
-    queryFn: async () => {
-      try {
-        const res = await fetch(api.admin.stats.path, {
-          credentials: "include",
-        });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.admin.stats.responses[200].parse(await res.json());
-      } catch {
-        return demoStore.adminStats();
-      }
-    },
-  });
-  const stats = statsData as any;
+  const queryClient = useQueryClient();
 
-  const { data: businessesData } = useQuery({
-    queryKey: [api.businesses.list.path],
+  const { data: stats } = useQuery({
+    queryKey: ["admin-stats"],
     queryFn: async () => {
       try {
-        const res = await fetch(api.businesses.list.path, {
-          credentials: "include",
-        });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.businesses.list.responses[200].parse(await res.json());
+        return await adminApi.getStats();
       } catch {
-        return demoStore.listBusinesses();
+        return {
+          totalBusinesses: 0,
+          totalConnections: 0,
+          totalActiveCampaigns: 0,
+          totalEmailsCollected: 0,
+        };
       }
     },
   });
-  const businesses = businessesData as any[];
 
-  const { data: campaignsData } = useQuery({
-    queryKey: [api.campaigns.listAll.path],
+  const { data: businesses } = useQuery({
+    queryKey: ["admin-businesses"],
     queryFn: async () => {
       try {
-        const res = await fetch(api.campaigns.listAll.path, {
-          credentials: "include",
-        });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.campaigns.listAll.responses[200].parse(await res.json());
+        return await adminApi.getBusinesses();
       } catch {
-        return demoStore.listAllCampaigns();
+        return [];
       }
     },
   });
-  const campaigns = campaignsData as any[];
 
   const updateBusiness = useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
-      const validated = api.businesses.update.input.parse(updates);
-      try {
-        const res = await fetch(buildUrl(api.businesses.update.path, { id }), {
-          method: api.businesses.update.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(validated),
-          credentials: "include",
-        });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.businesses.update.responses[200].parse(await res.json());
-      } catch {
-        return demoStore.updateBusiness(id, validated as any);
-      }
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      // Trying to use businessApi.update. Note: Backend might restrict this to owner.
+      // If admin has a global role, this might work if the service checks role.
+      return businessApi.update(id, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.businesses.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["admin-businesses"] });
       toast({ title: "Business updated" });
     },
-  });
-
-  const updateCampaign = useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
-      const validated = api.campaigns.update.input.parse(updates);
-      try {
-        const res = await fetch(buildUrl(api.campaigns.update.path, { id }), {
-          method: api.campaigns.update.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(validated),
-          credentials: "include",
-        });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.campaigns.update.responses[200].parse(await res.json());
-      } catch {
-        return demoStore.updateCampaign(id, validated as any);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
-      toast({ title: "Campaign updated" });
+    onError: (err: any) => {
+      toast({ title: "Update failed", description: err.message || "Could not update business", variant: "destructive" });
     },
   });
 
@@ -207,7 +117,7 @@ export default function AdminDashboard() {
         <Tabs defaultValue="businesses" className="space-y-6">
           <TabsList>
             <TabsTrigger value="businesses">Business Management</TabsTrigger>
-            <TabsTrigger value="campaigns">Ad Campaigns</TabsTrigger>
+            {/* <TabsTrigger value="campaigns">Ad Campaigns</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="businesses" className="space-y-4">
@@ -234,9 +144,8 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Business</TableHead>
-                      <TableHead>SSID</TableHead>
-                      <TableHead>Connections</TableHead>
-                      <TableHead>Emails</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead>Metrics</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -247,14 +156,24 @@ export default function AdminDashboard() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                              {biz.name.substring(0, 2).toUpperCase()}
+                              {biz.businessName?.substring(0, 2).toUpperCase() || "??"}
                             </div>
-                            {biz.name}
+                            <div>
+                              <div>{biz.businessName}</div>
+                              <div className="text-xs text-muted-foreground">{biz.ownerPhone}</div>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>{biz.wifiSsid}</TableCell>
-                        <TableCell>{biz.connectionCount}</TableCell>
-                        <TableCell>{biz.emailCount}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">{biz.location || "No Location"}</div>
+                          <div className="text-xs text-muted-foreground">{biz.category}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-xs">
+                            <div>Ads: {biz.adsCount}</div>
+                            <div>Conns: {biz.connectionCount}</div>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant={biz.isActive ? "default" : "secondary"}
@@ -316,91 +235,11 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="campaigns" className="space-y-4">
-            <div className="flex justify-end">
-              <CreateCampaignDialog businesses={businesses || []} />
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Campaigns</CardTitle>
-                <CardDescription>
-                  Manage global and local advertising content.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Campaign</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Targets</TableHead>
-                      <TableHead>Views/Clicks</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {campaigns?.map((camp: any) => (
-                      <TableRow key={camp.id}>
-                        <TableCell className="font-medium">
-                          {camp.title}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {camp.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {camp.businessId ? (
-                            <span className="text-sm">Single Business</span>
-                          ) : (
-                            <span className="text-sm">
-                              {camp.targetBusinessIds?.length || 0} Businesses
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{camp.views} views</div>
-                            <div className="text-muted-foreground">
-                              {camp.clicks} clicks
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={camp.isActive ? "default" : "secondary"}
-                          >
-                            {camp.isActive ? "Live" : "Paused"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              updateCampaign.mutate({
-                                id: camp.id,
-                                updates: { isActive: !camp.isActive },
-                              })
-                            }
-                          >
-                            {camp.isActive ? (
-                              <XCircle className="w-4 h-4 mr-2" />
-                            ) : (
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                            )}
-                            {camp.isActive ? "Pause" : "Resume"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* <TabsContent value="campaigns" className="space-y-4">
+             <div className="p-10 text-center text-muted-foreground">
+                Global Campaign Management is coming soon.
+             </div>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>
@@ -414,7 +253,7 @@ function StatsCard({ title, value, icon: Icon }: any) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value.toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-1">{value?.toLocaleString()}</p>
           </div>
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
             <Icon className="w-6 h-6" />
@@ -422,191 +261,5 @@ function StatsCard({ title, value, icon: Icon }: any) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function CreateCampaignDialog({ businesses }: { businesses: any[] }) {
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
-  const form = useForm<any>({
-    resolver: zodResolver(insertCampaignSchema),
-    defaultValues: {
-      title: "",
-      type: "banner",
-      contentUrl: "",
-      duration: 5,
-      isActive: true,
-      targetBusinessIds: [],
-    },
-  });
-
-  const createCampaign = useMutation({
-    mutationFn: async (data: any) => {
-      const validated = api.campaigns.create.input.parse(data);
-
-      try {
-        const res = await fetch(api.campaigns.create.path, {
-          method: api.campaigns.create.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(validated),
-          credentials: "include",
-        });
-
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.campaigns.create.responses[201].parse(await res.json());
-      } catch {
-        return demoStore.createCampaign(validated as any);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
-      toast({ title: "Campaign created successfully" });
-      setOpen(false);
-      form.reset();
-    },
-    onError: (err: any) => {
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="font-medium">
-          <Plus className="w-4 h-4 mr-2" />
-          Create Global Campaign
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>New Ad Campaign</DialogTitle>
-          <DialogDescription>
-            Create an ad campaign to run across multiple businesses.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) => createCampaign.mutate(data))}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Campaign Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Summer Sale 2024" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ad Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="banner">Carousel Banner</SelectItem>
-                        <SelectItem value="video">Video Ad</SelectItem>
-                        <SelectItem value="static">Static Image</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Duration (s)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="contentUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image/Video URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="targetBusinessIds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Target Businesses</FormLabel>
-                  <div className="grid grid-cols-2 gap-2 border rounded-md p-3 max-h-[150px] overflow-y-auto">
-                    {businesses.map((biz) => (
-                      <div key={biz.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`biz-${biz.id}`}
-                          checked={field.value?.includes(biz.id)}
-                          onCheckedChange={(checked) => {
-                            const current = (field.value as number[]) || [];
-                            field.onChange(
-                              checked
-                                ? [...current, biz.id]
-                                : current.filter((id: number) => id !== biz.id),
-                            );
-                          }}
-                        />
-                        <label
-                          htmlFor={`biz-${biz.id}`}
-                          className="text-sm font-medium leading-none"
-                        >
-                          {biz.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit" disabled={createCampaign.isPending}>
-                {createCampaign.isPending ? "Creating..." : "Launch Campaign"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
   );
 }

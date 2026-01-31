@@ -1,26 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import type { CreateCampaignRequest } from "@shared/schema";
+import { adsApi, type Ad } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { demoStore } from "@/lib/demoStore";
 
-function isJsonResponse(res: Response) {
-  const ct = res.headers.get("content-type") || "";
-  return ct.includes("application/json");
-}
-
-export function useCampaigns(businessId: number) {
+export function useCampaigns(businessId: string) {
   return useQuery({
-    queryKey: [api.campaigns.list.path, businessId],
+    queryKey: ["campaigns", businessId],
     queryFn: async () => {
-      const url = buildUrl(api.campaigns.list.path, { businessId });
-
+      if (!businessId) return [];
       try {
-        const res = await fetch(url, { credentials: "include" });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-        return api.campaigns.list.responses[200].parse(await res.json());
+        return await adsApi.getByBusiness(businessId);
       } catch {
-        return demoStore.listCampaignsByBusiness(businessId);
+        return [];
       }
     },
     enabled: !!businessId,
@@ -32,50 +22,62 @@ export function useCreateCampaign() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreateCampaignRequest) => {
-      const validated = api.campaigns.create.input.parse(data);
-
-      try {
-        const res = await fetch(api.campaigns.create.path, {
-          method: api.campaigns.create.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(validated),
-          credentials: "include",
-        });
-
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-
-        if (res.status === 400) {
-          const error = await res.json();
-          throw new Error(error.message || "Validation failed");
-        }
-
-        return api.campaigns.create.responses[201].parse(await res.json());
-      } catch {
-        return demoStore.createCampaign(validated as any);
-      }
+    mutationFn: async ({
+      businessId,
+      ...data
+    }: {
+      businessId: string;
+      title: string;
+      mediaUrl: string;
+      mediaType: 'image' | 'video';
+      ctaUrl?: string;
+      description?: string;
+      duration?: number;
+    }) => {
+      return await adsApi.create(businessId, data);
     },
-    onSuccess: (data) => {
-      // Always invalidate global list (admin view)
-      queryClient.invalidateQueries({ queryKey: [api.campaigns.listAll.path] });
-
+    onSuccess: (data, variables) => {
       // Invalidate the specific business's campaign list
-      if (data.businessId) {
-        const listUrl = buildUrl(api.campaigns.list.path, {
-          businessId: data.businessId,
-        });
-        queryClient.invalidateQueries({ queryKey: [listUrl] });
-        // Also simpler key invalidation strategy if URL matching is tricky
-        queryClient.invalidateQueries({
-          queryKey: [api.campaigns.list.path, data.businessId],
-        });
-      }
+      queryClient.invalidateQueries({
+        queryKey: ["campaigns", variables.businessId],
+      });
       toast({ title: "Campaign Created", description: "Your ad is now live." });
     },
-    onError: (err) => {
+    onError: (err: any) => {
       toast({
         title: "Error",
-        description: err.message,
+        description: err.message || "Failed to create campaign",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useUpdateCampaign() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      businessId,
+      adId,
+      ...data
+    }: {
+      businessId: string;
+      adId: string;
+    } & Partial<Ad>) => {
+      return await adsApi.update(businessId, adId, data);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["campaigns", variables.businessId],
+      });
+      toast({ title: "Campaign Updated", description: "Changes saved successfully." });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update campaign",
         variant: "destructive",
       });
     },
@@ -88,33 +90,46 @@ export function useDeleteCampaign() {
 
   return useMutation({
     mutationFn: async ({
-      id,
+      id, // adId
       businessId,
     }: {
-      id: number;
-      businessId: number;
+      id: string;
+      businessId: string;
     }) => {
-      const url = buildUrl(api.campaigns.delete.path, { id });
-
-      try {
-        const res = await fetch(url, {
-          method: api.campaigns.delete.method,
-          credentials: "include",
-        });
-        if (!res.ok || !isJsonResponse(res)) throw new Error("API_UNAVAILABLE");
-      } catch {
-        demoStore.deleteCampaign(id);
-      }
-      return businessId;
+      return await adsApi.delete(businessId, id);
     },
-    onSuccess: (businessId) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [api.campaigns.list.path, businessId],
+        queryKey: ["campaigns", variables.businessId],
       });
       toast({
         title: "Deleted",
         description: "Campaign removed successfully.",
       });
     },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to delete campaign",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useUploadMedia() {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      return await adsApi.uploadMedia(file);
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Upload Failed",
+        description: err.message || "Failed to upload media",
+        variant: "destructive",
+      });
+    }
   });
 }

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Wifi, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useBusiness, useUpdateBusiness } from "@/hooks/use-businesses";
-import type { Business } from "@shared/schema";
+import type { Business } from "@/lib/api";
 
 // Profile Components
 import { EditModeProvider, useEditMode } from "@/components/profile/EditModeContext";
@@ -14,42 +14,18 @@ import { EditableReviewSection } from "@/components/profile/EditableReviewSectio
 import { ProfileEditControls } from "@/components/profile/ProfileEditControls";
 import { EditableOfferCard, SpecialOffer } from "@/components/profile/EditableOfferCard";
 
-// Dummy posts data (banners can have multiple featured images)
-const DUMMY_POSTS: PostItem[] = [
-  {
-    id: "b1",
-    type: "banner",
-    url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop",
-    title: "Morning Pastry Deal",
-    isFeatured: true,
-  },
-  {
-    id: "b2",
-    type: "banner",
-    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=300&fit=crop",
-    title: "Happy Hour Special",
-    isFeatured: true,
-  },
-  {
-    id: "p1",
-    type: "image",
-    url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=500&fit=crop",
-    title: "Premium Coffee Selection",
-    isFeatured: false,
-  },
-  {
-    id: "p2",
-    type: "image",
-    url: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&h=500&fit=crop",
-    title: "Cozy Atmosphere",
-    isFeatured: false,
-  },
-];
-
 // Inner component that uses EditMode context
+interface LocalProfileData {
+  businessName: string;
+  location: string;
+  logoUrl?: string;
+  description?: string;
+  primaryColor?: string;
+}
+
 function BusinessProfileContent() {
   const { id } = useParams();
-  const businessId = parseInt(id || "0");
+  const businessId = id || "";
   const { toast } = useToast();
 
   const { data: business, isLoading, error } = useBusiness(businessId);
@@ -58,8 +34,12 @@ function BusinessProfileContent() {
   const { setHasUnsavedChanges, setIsSaving, isEditMode } = useEditMode();
 
   // Local state for profile data
-  const [profileData, setProfileData] = useState<Partial<Business>>({});
-  const [posts, setPosts] = useState<PostItem[]>(DUMMY_POSTS);
+  // Mapped to internal component state names (name, address) vs API (businessName, location)
+  const [profileData, setProfileData] = useState<LocalProfileData>({
+    businessName: "",
+    location: "",
+  });
+  const [posts, setPosts] = useState<PostItem[]>([]);
   const [googlePlaceUrl, setGooglePlaceUrl] = useState("");
 
   // Special Offer State
@@ -92,22 +72,30 @@ function BusinessProfileContent() {
   useEffect(() => {
     if (business) {
       setProfileData({
-        name: business.name,
-        address: business.address,
+        businessName: business.businessName,
+        location: business.location || "",
         logoUrl: business.logoUrl,
         description: business.description,
         primaryColor: business.primaryColor,
       });
 
+      // Initialize Google Review URL from backend
+      if (business.googleReviewUrl) {
+        setGooglePlaceUrl(business.googleReviewUrl);
+      }
+
       // Parse posts from business data
       const loadedPosts: PostItem[] = [];
 
       // Banners
-      if (business.banners && Array.isArray(business.banners)) {
-        (business.banners as any[]).forEach((b: any, idx: number) => {
+      const banners = (business as any).banners || [];
+      const photos = (business as any).photos || [];
+
+      if (Array.isArray(banners)) {
+        banners.forEach((b: any, idx: number) => {
           loadedPosts.push({
             id: `banner-${idx}`,
-            type: "banner", // Explicitly set as banner
+            type: "banner",
             url: b.url,
             title: b.title,
             isFeatured: true,
@@ -115,9 +103,8 @@ function BusinessProfileContent() {
         });
       }
 
-      // Photos
-      if (business.photos && Array.isArray(business.photos)) {
-        (business.photos as any[]).forEach((p: any, idx: number) => {
+      if (Array.isArray(photos)) {
+        photos.forEach((p: any, idx: number) => {
           loadedPosts.push({
             id: `photo-${idx}`,
             type: "image",
@@ -128,33 +115,21 @@ function BusinessProfileContent() {
         });
       }
 
-      // If no content (new user), clear defaults or set minimal default
-      if (loadedPosts.length > 0) {
-        setPosts(loadedPosts);
-      } else {
-        // Just keep dummy posts for demo businesses (id 1 usually) if desired,
-        // OR better: if it's a fresh signup (no posts), give them a clean starting point
-        // but with at least ONE banner as required by the UI rules.
-        const defaultBanner: PostItem = {
-          id: 'default-welcome',
-          type: 'banner',
-          url: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=600&fit=crop',
-          title: 'Welcome',
-          isFeatured: true
-        };
-        setPosts([defaultBanner]);
-      }
+      setPosts(loadedPosts);
     }
   }, [business]);
 
   // Merged business data (original + edits)
   const mergedBusiness = useMemo(() => {
     if (!business) return null;
-    return { ...business, ...profileData };
+    return {
+      ...business,
+      ...profileData
+    };
   }, [business, profileData]);
 
   // Handle profile updates
-  const handleProfileUpdate = (updates: Partial<Business>) => {
+  const handleProfileUpdate = (updates: Partial<LocalProfileData>) => {
     setProfileData((prev) => ({ ...prev, ...updates }));
     setHasUnsavedChanges(true);
   };
@@ -167,9 +142,15 @@ function BusinessProfileContent() {
 
     try {
       // Prepare data for API
+      // Remap local fields to API fields
       const updateData = {
         id: businessId,
-        ...profileData,
+        businessName: profileData.businessName,
+        location: profileData.location,
+        description: profileData.description,
+        primaryColor: profileData.primaryColor,
+        logoUrl: profileData.logoUrl,
+        googleReviewUrl: googlePlaceUrl, // Include this in update
         // Convert posts to photos/banners format for API
         photos: posts
           .filter((p) => p.type === "image" && !p.isFeatured)
@@ -178,6 +159,7 @@ function BusinessProfileContent() {
           .filter((p) => p.isFeatured)
           .map((p) => ({ url: p.url, title: p.title, type: p.type })),
       };
+
 
       await updateBusiness.mutateAsync(updateData as any);
 
@@ -240,6 +222,8 @@ function BusinessProfileContent() {
     );
   }
 
+  const displayBusiness = mergedBusiness;
+
   return (
     <div className="min-h-screen flex justify-center relative overflow-hidden">
       {/* Vibrant animated gradient background */}
@@ -272,7 +256,7 @@ function BusinessProfileContent() {
         >
           {/* Editable Header / Brand Area */}
           <EditableProfileHeader
-            business={mergedBusiness}
+            business={displayBusiness as any}
             onUpdate={handleProfileUpdate}
           />
 

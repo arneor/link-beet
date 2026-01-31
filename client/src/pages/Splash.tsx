@@ -27,7 +27,7 @@ const AD_VIEW_COUNTDOWN = 5;
 export default function Splash() {
   const { businessId } = useParams();
   const [, setLocation] = useLocation();
-  const id = parseInt(businessId || "0");
+  const id = businessId || "";
   const { toast } = useToast();
   const [connectStep, setConnectStep] = useState<
     "idle" | "connecting" | "success"
@@ -62,7 +62,14 @@ export default function Splash() {
   const connectMutation = useConnectWifi();
 
   const business = data?.business;
-  const campaigns = (data?.campaigns || []).filter((c) => c.isActive && c.type !== "video");
+  // Map ads to campaigns structure
+  const campaigns = (data?.ads || [])
+    .map((ad: any) => ({
+      ...ad,
+      contentUrl: ad.mediaUrl,
+      type: ad.mediaType
+    }))
+    .filter((c: any) => c.type !== "video" && c.status !== "archived");
 
   // Countdown timer for ad viewing
   useEffect(() => {
@@ -246,7 +253,7 @@ export default function Splash() {
                 {/* Location */}
                 <div className="flex items-center justify-center gap-1.5 text-white/70 text-sm mb-3">
                   <MapPin className="w-3.5 h-3.5" />
-                  <span>{business.address || "Free Guest WiFi"}</span>
+                  <span>{(business as any).location || "Free Guest WiFi"}</span>
                 </div>
 
                 {/* Tags */}
@@ -342,7 +349,7 @@ export default function Splash() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    {campaigns.slice(0, 4).map((c, index) => (
+                    {campaigns.slice(0, 4).map((c: any, index: number) => (
                       <motion.div
                         key={c.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -404,7 +411,7 @@ export default function Splash() {
                       </span>
                     </div>
                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-                      {campaigns.slice(4).map((c, index) => (
+                      {campaigns.slice(4).map((c: any, index: number) => (
                         <motion.div
                           key={c.id}
                           initial={{ opacity: 0, scale: 0.9 }}
