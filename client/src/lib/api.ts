@@ -4,9 +4,8 @@
  */
 
 // API Base URL
-export const API_BASE_URL = import.meta.env.DEV
-  ? import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"
-  : "/api";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://localhost:3001/api" : "https://mark-morph.onrender.com/api");
 
 // Token storage key
 const TOKEN_KEY = "mm_auth_token";
