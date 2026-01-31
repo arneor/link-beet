@@ -100,6 +100,26 @@ export class CreateBusinessDto {
     @IsOptional()
     googleReviewUrl?: string;
 
+    @ApiProperty({ description: 'Welcome banner title on splash screen', example: 'Welcome! Connect for Free WiFi' })
+    @IsString()
+    @IsOptional()
+    welcomeTitle?: string;
+
+    @ApiProperty({ description: 'CTA Button text on splash screen', example: 'View Offers' })
+    @IsString()
+    @IsOptional()
+    ctaButtonText?: string;
+
+    @ApiProperty({ description: 'CTA Button URL on splash screen', example: 'https://example.com/menu' })
+    @IsString()
+    @IsOptional()
+    ctaButtonUrl?: string;
+
+    @ApiProperty({ description: 'Whether to show welcome banner on splash screen', default: true })
+    @IsBoolean()
+    @IsOptional()
+    showWelcomeBanner?: boolean;
+
     @ApiProperty({ description: 'Operating hours', required: false })
     @IsObject()
     @IsOptional()

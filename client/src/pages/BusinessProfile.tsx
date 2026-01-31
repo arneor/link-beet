@@ -12,7 +12,7 @@ import { EditableProfileHeader } from "@/components/profile/EditableProfileHeade
 import { EditablePostGrid, PostItem } from "@/components/profile/EditablePostGrid";
 import { EditableReviewSection } from "@/components/profile/EditableReviewSection";
 import { ProfileEditControls } from "@/components/profile/ProfileEditControls";
-import { EditableOfferCard, SpecialOffer } from "@/components/profile/EditableOfferCard";
+import { EditableOfferCard, SplashCustomization } from "@/components/profile/EditableOfferCard";
 
 // Inner component that uses EditMode context
 interface LocalProfileData {
@@ -22,6 +22,11 @@ interface LocalProfileData {
   description?: string;
   primaryColor?: string;
   logoFile?: File;
+  // Splash screen customization
+  welcomeTitle?: string;
+  ctaButtonText?: string;
+  ctaButtonUrl?: string;
+  showWelcomeBanner?: boolean;
 }
 
 function BusinessProfileContent() {
@@ -43,29 +48,9 @@ function BusinessProfileContent() {
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [googlePlaceUrl, setGooglePlaceUrl] = useState("");
 
-  // Special Offer State
-  const [specialOffer, setSpecialOffer] = useState<SpecialOffer>({
-    title: "Connect & Get 15% Off!",
-    description: "Exclusive discount on your first order when you connect",
-    isActive: true
-  });
-
-  // Load special offer from local storage
-  useEffect(() => {
-    const savedOffer = localStorage.getItem("mark-morph-special-offer");
-    if (savedOffer) {
-      try {
-        setSpecialOffer(JSON.parse(savedOffer));
-      } catch (e) {
-        console.error("Failed to parse special offer", e);
-      }
-    }
-  }, []);
-
-  const handleOfferUpdate = (updates: Partial<SpecialOffer>) => {
-    const newOffer = { ...specialOffer, ...updates };
-    setSpecialOffer(newOffer);
-    localStorage.setItem("mark-morph-special-offer", JSON.stringify(newOffer));
+  // Handle splash customization updates (welcomeTitle, ctaButtonText, ctaButtonUrl)
+  const handleSplashUpdate = (updates: Partial<LocalProfileData>) => {
+    setProfileData(prev => ({ ...prev, ...updates }));
     setHasUnsavedChanges(true);
   };
 
@@ -78,6 +63,11 @@ function BusinessProfileContent() {
         logoUrl: business.logoUrl,
         description: business.description,
         primaryColor: business.primaryColor,
+        // Splash screen customization
+        welcomeTitle: business.welcomeTitle,
+        ctaButtonText: business.ctaButtonText,
+        ctaButtonUrl: business.ctaButtonUrl,
+        showWelcomeBanner: business.showWelcomeBanner !== false,
       });
 
       // Initialize Google Review URL from backend
@@ -184,6 +174,11 @@ function BusinessProfileContent() {
         primaryColor: profileData.primaryColor,
         logoUrl: finalLogoUrl?.startsWith('blob:') ? undefined : finalLogoUrl, // Should be S3 URL now
         googleReviewUrl: googlePlaceUrl,
+        // Splash screen customization
+        welcomeTitle: profileData.welcomeTitle,
+        ctaButtonText: profileData.ctaButtonText,
+        ctaButtonUrl: profileData.ctaButtonUrl,
+        showWelcomeBanner: profileData.showWelcomeBanner,
 
         // Map photos/banners to unified 'ads' structure
         ads: finalPosts.map((p) => ({
@@ -325,12 +320,19 @@ function BusinessProfileContent() {
                 {/* Only show header in edit mode to avoid duplication since card has one */}
                 {isEditMode && (
                   <h3 className="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">
-                    Limited Time Offer
+                    Splash Screen Customization
                   </h3>
                 )}
                 <EditableOfferCard
-                  offer={specialOffer}
-                  onUpdate={handleOfferUpdate}
+                  data={{
+                    welcomeTitle: profileData.welcomeTitle,
+                    description: profileData.description,
+                    ctaButtonText: profileData.ctaButtonText,
+                    ctaButtonUrl: profileData.ctaButtonUrl,
+                    showWelcomeBanner: profileData.showWelcomeBanner,
+                  }}
+                  businessName={profileData.businessName}
+                  onUpdate={handleSplashUpdate}
                   isEditMode={!!isEditMode}
                 />
               </div>

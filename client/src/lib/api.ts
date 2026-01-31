@@ -34,6 +34,10 @@ export interface Business {
   primaryColor: string;
   wifiSsid?: string;
   googleReviewUrl?: string;
+  welcomeTitle?: string;
+  ctaButtonText?: string;
+  ctaButtonUrl?: string;
+  showWelcomeBanner?: boolean;
   operatingHours?: Record<string, string>;
   profileType: "private" | "public";
   onboardingCompleted: boolean;
@@ -294,13 +298,7 @@ export const businessApi = {
   },
 
   async getSplashData(id: string): Promise<{
-    business: {
-      id: string;
-      name: string;
-      logoUrl?: string;
-      primaryColor?: string;
-      googleReviewUrl?: string;
-    };
+    business: Business;
     ads: Array<{
       id: string;
       title: string;

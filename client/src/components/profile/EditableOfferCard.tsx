@@ -1,26 +1,34 @@
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Sparkles, Eye, Pencil } from "lucide-react";
+import { motion } from "framer-motion";
+import { Zap, Sparkles, Eye, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
-export interface SpecialOffer {
-    title: string;
-    description: string;
-    isActive: boolean;
+export interface SplashCustomization {
+    welcomeTitle?: string;
+    description?: string;
+    ctaButtonText?: string;
+    ctaButtonUrl?: string;
+    showWelcomeBanner?: boolean;
 }
 
 interface EditableOfferCardProps {
-    offer: SpecialOffer;
-    onUpdate: (updates: Partial<SpecialOffer>) => void;
+    data: SplashCustomization;
+    businessName: string;
+    onUpdate: (updates: Partial<SplashCustomization>) => void;
     isEditMode: boolean;
 }
 
-export function EditableOfferCard({ offer, onUpdate, isEditMode }: EditableOfferCardProps) {
-    if (!offer.isActive && !isEditMode) return null;
+export function EditableOfferCard({ data, businessName, onUpdate, isEditMode }: EditableOfferCardProps) {
+    const isActive = data.showWelcomeBanner !== false; // Default true
+    const welcomeTitle = data.welcomeTitle || "Connect & Enjoy Free WiFi!";
+    const description = data.description || `Explore exclusive offers from ${businessName}`;
+    const ctaText = data.ctaButtonText || "View Offers";
+
+    // If not active and not in edit mode, don't render
+    if (!isActive && !isEditMode) return null;
 
     return (
         <div className="space-y-4">
@@ -28,18 +36,18 @@ export function EditableOfferCard({ offer, onUpdate, isEditMode }: EditableOffer
                 <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-[#FFD93D]" />
                     <span className="text-xs font-bold text-white/80 uppercase tracking-wide">
-                        Limited Time Offer
+                        Splash Screen Preview
                     </span>
                 </div>
                 {isEditMode && (
                     <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
-                        <Label htmlFor="offer-active" className="text-xs font-medium text-white cursor-pointer">
-                            {offer.isActive ? "Active" : "Hidden"}
+                        <Label htmlFor="banner-active" className="text-xs font-medium text-white cursor-pointer">
+                            {isActive ? "Active" : "Hidden"}
                         </Label>
                         <Switch
-                            id="offer-active"
-                            checked={offer.isActive}
-                            onCheckedChange={(checked) => onUpdate({ isActive: checked })}
+                            id="banner-active"
+                            checked={isActive}
+                            onCheckedChange={(checked) => onUpdate({ showWelcomeBanner: checked })}
                             className="scale-75"
                         />
                     </div>
@@ -48,65 +56,90 @@ export function EditableOfferCard({ offer, onUpdate, isEditMode }: EditableOffer
 
             <motion.div
                 layout
-                className={`relative overflow-hidden rounded-2xl gradient-purple-pink p-5 group transition-all duration-300 ${!offer.isActive && isEditMode ? 'opacity-50 grayscale' : ''}`}
+                className={`relative overflow-hidden rounded-2xl gradient-purple-pink p-5 group transition-all duration-300 ${!isActive && isEditMode ? 'opacity-50 grayscale' : ''}`}
             >
                 <div className="absolute top-2 right-2 opacity-20 group-hover:opacity-40 transition-opacity pointer-events-none">
                     <Sparkles className="w-20 h-20 text-white" />
                 </div>
 
                 <div className="relative z-10 space-y-3">
-                    {/* Header Label - Fixed */}
+                    {/* Welcome Label */}
                     <div className="flex items-center gap-2">
-                        {!isEditMode && <Zap className="w-5 h-5 text-[#FFD93D]" />}
-                        {/* In edit mode we show the header above the card with the switch, but inside we can keep a static label or just hide it */}
-                        {!isEditMode && (
-                            <span className="text-xs font-bold text-white/80 uppercase tracking-wide">
-                                Limited Time Offer
-                            </span>
-                        )}
+                        <Zap className="w-5 h-5 text-[#FFD93D]" />
+                        <span className="text-xs font-bold text-white/80 uppercase tracking-wide">
+                            Welcome to {businessName}
+                        </span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                        {/* Welcome Title */}
                         {isEditMode ? (
                             <div className="space-y-1">
-                                <label className="text-[10px] uppercase tracking-wider text-white/60 font-bold ml-1">Title</label>
+                                <label className="text-[10px] uppercase tracking-wider text-white/60 font-bold ml-1">Welcome Title</label>
                                 <Input
-                                    value={offer.title}
-                                    onChange={(e) => onUpdate({ title: e.target.value })}
+                                    value={data.welcomeTitle || ""}
+                                    onChange={(e) => onUpdate({ welcomeTitle: e.target.value })}
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 font-display font-bold text-lg h-auto py-2 focus-visible:ring-1 focus-visible:ring-white/50"
-                                    placeholder="Enter offer title..."
+                                    placeholder="Connect & Enjoy Free WiFi!"
                                 />
                             </div>
                         ) : (
                             <h3 className="text-xl font-display font-bold text-white leading-tight">
-                                {offer.title}
+                                {welcomeTitle}
                             </h3>
                         )}
 
+                        {/* Description */}
                         {isEditMode ? (
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase tracking-wider text-white/60 font-bold ml-1">Description</label>
                                 <Textarea
-                                    value={offer.description}
+                                    value={data.description || ""}
                                     onChange={(e) => onUpdate({ description: e.target.value })}
                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 text-sm min-h-[60px] resize-none focus-visible:ring-1 focus-visible:ring-white/50"
-                                    placeholder="Enter offer details..."
+                                    placeholder="Enter your business description..."
                                 />
                             </div>
                         ) : (
                             <p className="text-sm text-white/80 leading-relaxed">
-                                {offer.description}
+                                {description}
                             </p>
                         )}
-                    </div>
 
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold hover:bg-white/30 transition-colors cursor-pointer">
-                        <Eye className="w-4 h-4" />
-                        View Offer
+                        {/* CTA Button */}
+                        {isEditMode ? (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase tracking-wider text-white/60 font-bold ml-1">Button Text</label>
+                                    <Input
+                                        value={data.ctaButtonText || ""}
+                                        onChange={(e) => onUpdate({ ctaButtonText: e.target.value })}
+                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 text-sm h-auto py-2 focus-visible:ring-1 focus-visible:ring-white/50"
+                                        placeholder="View Offers"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase tracking-wider text-white/60 font-bold ml-1">Button Link</label>
+                                    <Input
+                                        value={data.ctaButtonUrl || ""}
+                                        onChange={(e) => onUpdate({ ctaButtonUrl: e.target.value })}
+                                        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 text-sm h-auto py-2 focus-visible:ring-1 focus-visible:ring-white/50"
+                                        placeholder="https://your-menu.com"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold cursor-pointer hover:bg-white/30 transition-colors">
+                                <Eye className="w-4 h-4" />
+                                {ctaText}
+                                {data.ctaButtonUrl && <ExternalLink className="w-3 h-3 opacity-60" />}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {isEditMode && !offer.isActive && (
+                {/* Overlay when hidden */}
+                {isEditMode && !isActive && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] z-20 pointer-events-none">
                         <span className="bg-black/80 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20">
                             Currently Hidden
@@ -116,4 +149,11 @@ export function EditableOfferCard({ offer, onUpdate, isEditMode }: EditableOffer
             </motion.div>
         </div>
     );
+}
+
+// Keep backward compatibility export
+export interface SpecialOffer {
+    title: string;
+    description: string;
+    isActive: boolean;
 }

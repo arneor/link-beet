@@ -131,6 +131,22 @@ export class BusinessProfile {
     @Prop()
     googleReviewUrl?: string;
 
+    @ApiProperty({ description: 'Welcome banner title' })
+    @Prop()
+    welcomeTitle?: string;
+
+    @ApiProperty({ description: 'CTA Button text on splash screen' })
+    @Prop({ default: 'View Offers' })
+    ctaButtonText?: string;
+
+    @ApiProperty({ description: 'CTA Button URL on splash screen' })
+    @Prop()
+    ctaButtonUrl?: string;
+
+    @ApiProperty({ description: 'Whether to show the welcome banner on splash screen' })
+    @Prop({ default: true })
+    showWelcomeBanner?: boolean;
+
     @ApiProperty({ description: 'Operating hours as JSON' })
     @Prop({ type: Object })
     operatingHours?: Record<string, string>;

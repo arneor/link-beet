@@ -35,6 +35,13 @@ import { splashApi, analyticsApi } from "@/lib/api";
 // Ad view countdown seconds before connect is enabled
 const AD_VIEW_COUNTDOWN = 5;
 
+// Helper to ensure URL is external (has protocol)
+const ensureExternalUrl = (url: string | undefined): string | null => {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+};
+
 export default function Splash() {
   const { businessId } = useParams();
   const [, setLocation] = useLocation();
@@ -76,13 +83,6 @@ export default function Splash() {
   const [adViews, setAdViews] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Special Offer State
-  const [specialOffer, setSpecialOffer] = useState<{
-    title: string;
-    description: string;
-    isActive: boolean;
-  } | null>(null);
-
   // Load liked ads from local storage
   useEffect(() => {
     const savedLikes = localStorage.getItem(`mm_liked_ads_${id}`);
@@ -95,29 +95,13 @@ export default function Splash() {
     }
   }, [id]);
 
-  useEffect(() => {
-    const savedOffer = localStorage.getItem("mark-morph-special-offer");
-    if (savedOffer) {
-      try {
-        setSpecialOffer(JSON.parse(savedOffer));
-      } catch (e) {
-        console.error("Failed to parse special offer", e);
-      }
-    }
-  }, []);
-
   const { data, isLoading, error } = useSplashData(id);
   const connectMutation = useConnectWifi();
 
   const business = data?.business;
   // Map ads to campaigns structure and separate by placement
   const allAds = (data?.ads || [])
-    .map((ad: any) => ({
-      ...ad,
-      contentUrl: ad.mediaUrl,
-      type: ad.mediaType
-    }))
-    .filter((c: any) => c.type !== "video" && c.status !== "archived");
+    .filter((ad: any) => ad.mediaType !== "video" && ad.status === "active");
 
   const featuredCampaigns = allAds.filter((c: any) => c.placement === 'BANNER');
   const galleryCampaigns = allAds.filter((c: any) => c.placement !== 'BANNER');
@@ -262,11 +246,10 @@ export default function Splash() {
   };
 
   const handleReview = () => {
-    window.open(
-      "https://www.google.com/search?q=coffee+shop+reviews",
-      "_blank",
-      "noopener,noreferrer",
-    );
+    const rawUrl = (business as any)?.googleReviewUrl;
+    const reviewUrl = ensureExternalUrl(rawUrl) ||
+      `https://www.google.com/search?q=${encodeURIComponent(business?.businessName || '')}+reviews`;
+    window.open(reviewUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleAdClick = (campaignId: number) => {
@@ -326,7 +309,7 @@ export default function Splash() {
       try {
         await navigator.share({
           title: ad.title,
-          text: `Check out this deal at ${business?.name}!`,
+          text: `Check out this deal at ${business?.businessName}!`,
           url: window.location.href, // Or a specific deep link if we had one
         });
       } catch (err) {
@@ -490,7 +473,7 @@ export default function Splash() {
                     {business.logoUrl ? (
                       <img
                         src={business.logoUrl}
-                        alt={business.name}
+                        alt={business.businessName}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -501,7 +484,7 @@ export default function Splash() {
 
                 {/* Business Name */}
                 <h1 className="text-2xl font-display font-extrabold text-white mb-1">
-                  {business.name}
+                  {business.businessName}
                 </h1>
 
                 {/* Location */}
@@ -557,14 +540,13 @@ export default function Splash() {
                   <SplashCarousel campaigns={featuredCampaigns as any} />
                 </motion.div>
 
-                {/* Premium Ad Banner */}
-                {(!specialOffer || specialOffer.isActive) && ( // Show if active or if no data (default behavior fallback)
+                {/* Premium Ad Banner - Shows by default, hidden only if showWelcomeBanner is explicitly false */}
+                {(business as any)?.showWelcomeBanner !== false && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    onClick={() => handleAdClick(0)}
-                    className="relative overflow-hidden rounded-2xl gradient-purple-pink p-5 cursor-pointer group"
+                    className="relative overflow-hidden rounded-2xl gradient-purple-pink p-5 group"
                   >
                     <div className="absolute top-2 right-2 opacity-20 group-hover:opacity-40 transition-opacity">
                       <Sparkles className="w-20 h-20 text-white" />
@@ -573,18 +555,30 @@ export default function Splash() {
                       <div className="flex items-center gap-2 mb-2">
                         <Zap className="w-5 h-5 text-[#FFD93D]" />
                         <span className="text-xs font-bold text-white/80 uppercase tracking-wide">
-                          Limited Time Offer
+                          Welcome to {business?.businessName || (business as any)?.businessName}
                         </span>
                       </div>
                       <h3 className="text-xl font-display font-bold text-white mb-1">
-                        {specialOffer ? specialOffer.title : "Connect & Get 15% Off!"}
+                        {(business as any)?.welcomeTitle || "Connect & Enjoy Free WiFi!"}
                       </h3>
                       <p className="text-sm text-white/80 mb-3">
-                        {specialOffer ? specialOffer.description : "Exclusive discount on your first order when you connect"}
+                        {(business as any)?.description || `Explore exclusive offers from ${business?.businessName || (business as any)?.businessName}`}
                       </p>
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold hover:bg-white/30 transition-colors">
+
+                      {/* CTA Button - Directly open backend link */}
+                      <div
+                        onClick={() => {
+                          const rawUrl = (business as any)?.ctaButtonUrl;
+                          const url = ensureExternalUrl(rawUrl);
+                          if (url) {
+                            handleAdClick(0); // Still count as engagement
+                            window.open(url, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold hover:bg-white/30 transition-colors cursor-pointer"
+                      >
                         <Eye className="w-4 h-4" />
-                        View Offer
+                        {(business as any)?.ctaButtonText || "View Offers"}
                       </div>
                     </div>
                   </motion.div>
@@ -621,7 +615,7 @@ export default function Splash() {
                           >
                             <div className="aspect-[4/5]">
                               <img
-                                src={c.contentUrl}
+                                src={c.mediaUrl}
                                 alt={c.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               />
@@ -702,7 +696,7 @@ export default function Splash() {
                         >
                           <div className="aspect-[3/4]">
                             <img
-                              src={c.contentUrl}
+                              src={c.mediaUrl}
                               alt={c.title}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
@@ -941,7 +935,7 @@ export default function Splash() {
                         <CheckCircle2 className="w-10 h-10 text-[#9EE53B]" />
                       </div>
                       <div className="text-xl font-bold text-white mb-1">You're Connected!</div>
-                      <div className="text-white/70 text-sm">Enjoy free WiFi at {business?.name}</div>
+                      <div className="text-white/70 text-sm">Enjoy free WiFi at {business?.businessName}</div>
                       <div className="text-[#9EE53B]/70 text-xs mt-2">Redirecting...</div>
                     </motion.div>
                   )}
@@ -982,7 +976,7 @@ export default function Splash() {
               <motion.img
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                src={expandedAd.contentUrl}
+                src={expandedAd.mediaUrl}
                 alt={expandedAd.title}
                 className="max-w-full max-h-[70vh] rounded-lg shadow-2xl object-contain"
                 onClick={(e) => e.stopPropagation()}

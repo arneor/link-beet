@@ -12,7 +12,6 @@ import { ComplianceLog, ComplianceLogDocument } from '../compliance/schemas/comp
 import { CreateBusinessDto, UpdateBusinessDto, DashboardStatsDto } from './dto/business.dto';
 
 import { S3Service } from '../media/s3.service';
-import { Express } from 'express';
 
 @Injectable()
 export class BusinessService {
@@ -299,16 +298,25 @@ export class BusinessService {
                 logoUrl: business.logoUrl,
                 primaryColor: business.primaryColor,
                 googleReviewUrl: business.googleReviewUrl,
+                description: business.description,
+                category: business.category,
+                wifiSsid: business.wifiSsid,
+                welcomeTitle: business.welcomeTitle,
+                ctaButtonText: business.ctaButtonText || 'View Offers',
+                ctaButtonUrl: business.ctaButtonUrl,
+                showWelcomeBanner: business.showWelcomeBanner !== false, // Default true
             },
             ads: activeAds.map((ad: Ad) => ({
                 id: ad.id,
                 title: ad.title,
+                description: ad.description,
                 mediaUrl: ad.mediaUrl,
                 mediaType: ad.mediaType,
                 ctaUrl: ad.ctaUrl || business.googleReviewUrl,
                 duration: ad.duration,
                 placement: ad.placement,
                 status: ad.status,
+                likesCount: ad.likesCount || 0,
             })),
         };
     }
