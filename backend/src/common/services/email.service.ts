@@ -24,20 +24,26 @@ export class EmailService {
 
     private initializeTransporter(): void {
         const host = this.configService.get<string>('EMAIL_HOST');
-        const port = this.configService.get<number>('EMAIL_PORT');
+        const port = this.configService.get<number>('EMAIL_PORT') || 465;
         const user = this.configService.get<string>('EMAIL_USER');
         const pass = this.configService.get<string>('EMAIL_PASS');
+
+        this.logger.log(`📧 Email config check - Host: ${host ? 'SET' : 'MISSING'}, User: ${user ? 'SET' : 'MISSING'}, Pass: ${pass ? 'SET' : 'MISSING'}, Port: ${port}`);
 
         if (host && user && pass) {
             this.transporter = nodemailer.createTransport({
                 host,
-                port: port || 587,
-                secure: port === 465,
+                port,
+                secure: true, // Use SSL
                 auth: { user, pass },
+                connectionTimeout: 10000, // 10 seconds
+                greetingTimeout: 10000,
+                socketTimeout: 15000,
             });
-            this.logger.log(`📧 Email service configured with host: ${host}`);
+            this.logger.log(`📧 Email service configured with host: ${host}, user: ${user}, port: ${port}, secure: true`);
         } else {
             this.logger.warn('⚠️ Email credentials not found. Using MOCK email service.');
+            this.logger.warn(`   Missing: ${!host ? 'EMAIL_HOST ' : ''}${!user ? 'EMAIL_USER ' : ''}${!pass ? 'EMAIL_PASS' : ''}`);
         }
     }
 
@@ -65,7 +71,11 @@ export class EmailService {
 
                 this.logger.log(`✅ ${purpose} OTP email sent to ${email} | MessageId: ${info.messageId}`);
             } catch (error) {
-                this.logger.error(`❌ Failed to send ${purpose} OTP email to ${email}: ${error.message}`);
+                this.logger.error(`❌ Failed to send ${purpose} OTP email to ${email}`);
+                this.logger.error(`   Error name: ${error.name}`);
+                this.logger.error(`   Error message: ${error.message}`);
+                this.logger.error(`   Error code: ${error.code || 'N/A'}`);
+                this.logger.error(`   Full error: ${JSON.stringify(error, null, 2)}`);
                 throw new Error(`Failed to send verification code. Please try again.`);
             }
         } else {
