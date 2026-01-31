@@ -80,8 +80,15 @@ export default function Splash() {
   const [countdown, setCountdown] = useState(AD_VIEW_COUNTDOWN);
   const [canConnect, setCanConnect] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(true);
+
   const [adViews, setAdViews] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Sheet visibility state for desktop "Done" action
+  const [isSheetHidden, setIsSheetHidden] = useState(false);
+
+  // Check for mobile device
+  const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   // Load liked ads from local storage
   useEffect(() => {
@@ -223,6 +230,9 @@ export default function Splash() {
         // No auto-redirect. Just show success state.
         // The captive portal "Done" button (native OS) will handle closing usually,
         // or user can manually click a link if they want.
+
+        // On desktop, we might want to automatically hide the sheet after a delay?
+        // User requested manual action, so we'll wait for button click.
       }
     } catch (err: any) {
       setVerificationError(err.message || "Invalid verification code. Please try again.");
@@ -755,227 +765,238 @@ export default function Splash() {
                 </motion.div>
 
                 {/* Spacer for bottom bar */}
-                <div className="h-4" />
+                {/* Spacer for bottom bar - Increased to prevent overlap */}
+                <div className="h-32" />
               </div>
             </div>
 
             {/* Fixed Bottom Action Bar with Email Verification Flow */}
-            <div className="fixed inset-x-0 bottom-0 max-w-md mx-auto z-50">
-              {/* Glass blur background */}
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-2xl border-t border-white/10" />
+            {!isSheetHidden && (
+              <div className="fixed inset-x-0 bottom-0 max-w-md mx-auto z-50">
+                {/* Glass blur background */}
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-2xl border-t border-white/10" />
 
-              <div className="relative p-4 space-y-3">
-                {/* Step Indicator */}
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className={`w-2 h-2 rounded-full transition-colors ${verificationStep !== "email" ? "bg-[#9EE53B]" : "bg-white/30"}`} />
-                  <div className={`w-1.5 h-1.5 rounded-full transition-colors ${verificationStep === "otp" ? "bg-white" : verificationStep === "verified" ? "bg-[#9EE53B]" : "bg-white/30"}`} />
-                  <div className={`w-2 h-2 rounded-full transition-colors ${verificationStep === "verified" ? "bg-[#9EE53B]" : "bg-white/30"}`} />
-                </div>
+                <div className="relative p-4 space-y-3">
+                  {/* Step Indicator */}
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <div className={`w-2 h-2 rounded-full transition-colors ${verificationStep !== "email" ? "bg-[#9EE53B]" : "bg-white/30"}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full transition-colors ${verificationStep === "otp" ? "bg-white" : verificationStep === "verified" ? "bg-[#9EE53B]" : "bg-white/30"}`} />
+                    <div className={`w-2 h-2 rounded-full transition-colors ${verificationStep === "verified" ? "bg-[#9EE53B]" : "bg-white/30"}`} />
+                  </div>
 
-                <AnimatePresence mode="wait">
-                  {/* Countdown / wait message */}
-                  {!canConnect && verificationStep === "email" && (
-                    <motion.div
-                      key="countdown"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center justify-center gap-2 text-white/80 text-sm"
-                    >
-                      <Clock className="w-4 h-4 text-[#9EE53B]" />
-                      <span>
-                        WiFi ready in{" "}
-                        <span className="font-bold text-[#9EE53B]">{countdown}s</span>
-                      </span>
-                      <span className="text-white/50">• Explore offers!</span>
-                    </motion.div>
-                  )}
-
-                  {/* Step 1: Email Input */}
-                  {verificationStep === "email" && canConnect && (
-                    <motion.form
-                      key="email-form"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      onSubmit={handleEmailSubmit}
-                      className="space-y-3"
-                    >
-                      <div className="text-center text-sm text-white/80">
-                        <Mail className="w-5 h-5 inline-block mr-2 text-[#9EE53B]" />
-                        Enter your email to connect to WiFi
-                      </div>
-
-                      {verificationError && (
-                        <div className="text-red-400 text-xs text-center py-1">
-                          {verificationError}
-                        </div>
-                      )}
-
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                        <Input
-                          type="email"
-                          placeholder="your@email.com"
-                          value={userEmail}
-                          onChange={(e) => {
-                            setUserEmail(e.target.value);
-                            setVerificationError(null);
-                          }}
-                          className="pl-12 h-14 bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-2xl text-lg focus:border-[#9EE53B] focus:ring-[#9EE53B]"
-                          required
-                          disabled={isSubmitting}
-                        />
-                      </div>
-
-                      <Button
-                        type="submit"
-                        className="w-full h-14 text-lg font-bold rounded-2xl transition-all duration-300"
-                        style={{ background: "linear-gradient(135deg, #9EE53B, #43E660)" }}
-                        disabled={!userEmail || isSubmitting}
+                  <AnimatePresence mode="wait">
+                    {/* Countdown / wait message */}
+                    {!canConnect && verificationStep === "email" && (
+                      <motion.div
+                        key="countdown"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex items-center justify-center gap-2 text-white/80 text-sm"
                       >
-                        <span className="flex items-center justify-center gap-2 text-[#222]">
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              Sending Code...
-                            </>
-                          ) : (
-                            <>
-                              Get Verification Code
-                              <ArrowRight className="w-5 h-5" />
-                            </>
-                          )}
+                        <Clock className="w-4 h-4 text-[#9EE53B]" />
+                        <span>
+                          WiFi ready in{" "}
+                          <span className="font-bold text-[#9EE53B]">{countdown}s</span>
                         </span>
-                      </Button>
-                    </motion.form>
-                  )}
+                        <span className="text-white/50">• Explore offers!</span>
+                      </motion.div>
+                    )}
 
-                  {/* Step 2: OTP Verification */}
-                  {verificationStep === "otp" && (
-                    <motion.form
-                      key="otp-form"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      onSubmit={handleOtpSubmit}
-                      className="space-y-3"
-                    >
-                      <div className="text-center">
-                        <div className="text-sm text-white/80 mb-1">
-                          <KeyRound className="w-5 h-5 inline-block mr-2 text-[#9EE53B]" />
-                          Enter the 6-digit code sent to
-                        </div>
-                        <div className="text-[#9EE53B] font-medium text-sm">{userEmail}</div>
-                      </div>
-
-                      {verificationError && (
-                        <div className="text-red-400 text-xs text-center py-1">
-                          {verificationError}
-                        </div>
-                      )}
-
-                      <div className="relative">
-                        <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={6}
-                          placeholder="123456"
-                          value={otpCode}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                            setOtpCode(value);
-                            setVerificationError(null);
-                          }}
-                          className="pl-12 h-14 bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-2xl text-lg text-center tracking-[0.5em] font-mono focus:border-[#9EE53B] focus:ring-[#9EE53B]"
-                          required
-                          disabled={isSubmitting}
-                          autoFocus
-                        />
-                      </div>
-
-                      <Button
-                        type="submit"
-                        className="w-full h-14 text-lg font-bold rounded-2xl transition-all duration-300"
-                        style={{ background: "linear-gradient(135deg, #9EE53B, #43E660)" }}
-                        disabled={otpCode.length !== 6 || isSubmitting}
+                    {/* Step 1: Email Input */}
+                    {verificationStep === "email" && canConnect && (
+                      <motion.form
+                        key="email-form"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        onSubmit={handleEmailSubmit}
+                        className="space-y-3"
                       >
-                        <span className="flex items-center justify-center gap-2 text-[#222]">
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              Verifying...
-                            </>
-                          ) : (
-                            <>
-                              <Wifi className="w-5 h-5" />
-                              Verify & Connect
-                            </>
-                          )}
-                        </span>
-                      </Button>
+                        <div className="text-center text-sm text-white/80">
+                          <Mail className="w-5 h-5 inline-block mr-2 text-[#9EE53B]" />
+                          Enter your email to connect to WiFi
+                        </div>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <button
-                          type="button"
-                          onClick={handleBackToEmail}
-                          className="text-white/60 hover:text-white transition-colors"
-                        >
-                          ← Change email
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleResendOtp}
-                          disabled={cooldown > 0}
-                          className={`flex items-center gap-1 transition-colors ${cooldown > 0 ? "text-white/40 cursor-not-allowed" : "text-[#9EE53B] hover:text-[#B5F84F]"}`}
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
-                        </button>
-                      </div>
-                    </motion.form>
-                  )}
+                        {verificationError && (
+                          <div className="text-red-400 text-xs text-center py-1">
+                            {verificationError}
+                          </div>
+                        )}
 
-                  {/* Step 3: Success */}
-                  {verificationStep === "verified" && (
-                    <motion.div
-                      key="success"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="text-center py-4"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-[#9EE53B]/20 flex items-center justify-center mx-auto mb-3">
-                        <CheckCircle2 className="w-10 h-10 text-[#9EE53B]" />
-                      </div>
-                      <div className="text-xl font-bold text-white mb-1">You're Connected!</div>
-                      <div className="text-white/70 text-sm">Enjoy free WiFi at {business?.businessName}</div>
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                          <Input
+                            type="email"
+                            placeholder="your@email.com"
+                            value={userEmail}
+                            onChange={(e) => {
+                              setUserEmail(e.target.value);
+                              setVerificationError(null);
+                            }}
+                            className="pl-12 h-14 bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-2xl text-lg focus:border-[#9EE53B] focus:ring-[#9EE53B]"
+                            required
+                            disabled={isSubmitting}
+                          />
+                        </div>
 
-                      {/* Done Button & Auto Close */}
-                      <div className="mt-6 w-full max-w-xs mx-auto space-y-3">
                         <Button
-                          onClick={() => window.close()}
-                          className="w-full h-12 rounded-full bg-[#9EE53B] hover:bg-[#8CD035] text-[#222] font-bold text-lg transition-transform active:scale-95 shadow-lg shadow-[#9EE53B]/20"
+                          type="submit"
+                          className="w-full h-14 text-lg font-bold rounded-2xl transition-all duration-300"
+                          style={{ background: "linear-gradient(135deg, #9EE53B, #43E660)" }}
+                          disabled={!userEmail || isSubmitting}
                         >
-                          Done
+                          <span className="flex items-center justify-center gap-2 text-[#222]">
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Sending Code...
+                              </>
+                            ) : (
+                              <>
+                                Get Verification Code
+                                <ArrowRight className="w-5 h-5" />
+                              </>
+                            )}
+                          </span>
                         </Button>
-                        <p className="text-white/40 text-[10px]">
-                          Closing in a few seconds...
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </motion.form>
+                    )}
 
-                {/* Powered by */}
-                <div className="text-center">
-                  <span className="text-[11px] text-white/40 font-medium">
-                    Powered by{" "}
-                    <span className="text-[#9EE53B]/70">MarkMorph</span>
-                  </span>
+                    {/* Step 2: OTP Verification */}
+                    {verificationStep === "otp" && (
+                      <motion.form
+                        key="otp-form"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        onSubmit={handleOtpSubmit}
+                        className="space-y-3"
+                      >
+                        <div className="text-center">
+                          <div className="text-sm text-white/80 mb-1">
+                            <KeyRound className="w-5 h-5 inline-block mr-2 text-[#9EE53B]" />
+                            Enter the 6-digit code sent to
+                          </div>
+                          <div className="text-[#9EE53B] font-medium text-sm">{userEmail}</div>
+                        </div>
+
+                        {verificationError && (
+                          <div className="text-red-400 text-xs text-center py-1">
+                            {verificationError}
+                          </div>
+                        )}
+
+                        <div className="relative">
+                          <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="123456"
+                            value={otpCode}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                              setOtpCode(value);
+                              setVerificationError(null);
+                            }}
+                            className="pl-12 h-14 bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-2xl text-lg text-center tracking-[0.5em] font-mono focus:border-[#9EE53B] focus:ring-[#9EE53B]"
+                            required
+                            disabled={isSubmitting}
+                            autoFocus
+                          />
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full h-14 text-lg font-bold rounded-2xl transition-all duration-300"
+                          style={{ background: "linear-gradient(135deg, #9EE53B, #43E660)" }}
+                          disabled={otpCode.length !== 6 || isSubmitting}
+                        >
+                          <span className="flex items-center justify-center gap-2 text-[#222]">
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Verifying...
+                              </>
+                            ) : (
+                              <>
+                                <Wifi className="w-5 h-5" />
+                                Verify & Connect
+                              </>
+                            )}
+                          </span>
+                        </Button>
+
+                        <div className="flex items-center justify-between text-xs">
+                          <button
+                            type="button"
+                            onClick={handleBackToEmail}
+                            className="text-white/60 hover:text-white transition-colors"
+                          >
+                            ← Change email
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleResendOtp}
+                            disabled={cooldown > 0}
+                            className={`flex items-center gap-1 transition-colors ${cooldown > 0 ? "text-white/40 cursor-not-allowed" : "text-[#9EE53B] hover:text-[#B5F84F]"}`}
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
+                          </button>
+                        </div>
+                      </motion.form>
+                    )}
+
+                    {/* Step 3: Success */}
+                    {verificationStep === "verified" && (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center py-4"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-[#9EE53B]/20 flex items-center justify-center mx-auto mb-3">
+                          <CheckCircle2 className="w-10 h-10 text-[#9EE53B]" />
+                        </div>
+                        <div className="text-xl font-bold text-white mb-1">You're Connected!</div>
+                        <div className="text-white/70 text-sm">Enjoy free WiFi at {business?.businessName}</div>
+
+                        {/* Done Button & Auto Close */}
+                        <div className="mt-6 w-full max-w-xs mx-auto space-y-3">
+                          <Button
+                            onClick={() => {
+                              if (isMobile) {
+                                try {
+                                  window.close();
+                                } catch (e) { console.error(e); }
+                              } else {
+                                setIsSheetHidden(true);
+                              }
+                            }}
+                            className="w-full h-12 rounded-full bg-[#9EE53B] hover:bg-[#8CD035] text-[#222] font-bold text-lg transition-transform active:scale-95 shadow-lg shadow-[#9EE53B]/20"
+                          >
+                            Done
+                          </Button>
+                          <p className="text-white/40 text-[10px]">
+                            {isMobile ? "Closing in a few seconds..." : "Click Done to browse offers"}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Powered by */}
+                  <div className="text-center">
+                    <span className="text-[11px] text-white/40 font-medium">
+                      Powered by{" "}
+                      <span className="text-[#9EE53B]/70">MarkMorph</span>
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
