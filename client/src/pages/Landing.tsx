@@ -17,6 +17,10 @@ import {
   TrendingUp,
   Star,
   Smartphone,
+  Instagram,
+  Facebook,
+  Linkedin,
+  Twitter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -280,17 +284,19 @@ export default function Landing() {
 
                 <CardHeader className="space-y-2 pt-8 pb-4 px-8">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-3 rounded-2xl gradient-lime-cyan">
-                      <Wifi className="w-6 h-6 text-[#222]" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-2xl font-display text-gray-900">
-                        Welcome back
-                      </CardTitle>
-                      <CardDescription className="text-gray-500">
-                        Sign in to your dashboard
-                      </CardDescription>
-                    </div>
+                    <img
+                      src="/white_icon.webp"
+                      alt="MarkMorph"
+                      className="h-12 w-auto"
+                    />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-display text-gray-900">
+                      Welcome back
+                    </CardTitle>
+                    <CardDescription className="text-gray-500">
+                      Sign in to your dashboard
+                    </CardDescription>
                   </div>
                 </CardHeader>
 
@@ -616,39 +622,47 @@ export default function Landing() {
       </section>
 
       {/* ============================================ */}
-      {/* FOOTER */}
+      {/* FOOTER - Minimal & Modern (Linktree-inspired) */}
       {/* ============================================ */}
-      <footer className="py-12 bg-gray-900 text-white">
+      <footer className="bg-[#0d1117] py-12">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-lime-cyan flex items-center justify-center">
-                <Wifi className="w-5 h-5 text-[#222]" />
-              </div>
-              <span className="font-display font-bold text-xl">MarkMorph</span>
+          <div className="flex flex-col items-center text-center space-y-8">
+            {/* Logo - Text Wordmark */}
+            <h2 className="text-4xl md:text-5xl font-display font-extrabold tracking-tight text-white">
+              Mark<span className="text-[#9EE53B]">Morph</span><span className="text-[#9EE53B]">.</span>
+            </h2>
+
+            {/* Social Icons */}
+            <div className="flex items-center gap-5">
+              <a
+                href="https://www.instagram.com/markmorrph?igsh=ZXNsNGszMXdqcDZo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#9EE53B] hover:text-[#0d1117] transition-all duration-300"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="https://www.facebook.com/share/1CNjW7obCj/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:bg-[#9EE53B] hover:text-[#0d1117] transition-all duration-300"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
             </div>
 
-            {/* Links */}
-            <div className="flex flex-wrap items-center gap-8 text-gray-400 text-sm">
-              <a href="#" className="hover:text-white transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Terms of Service
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Contact
-              </a>
-            </div>
+            {/* Divider */}
+            <div className="w-full max-w-xs h-px bg-white/10" />
 
             {/* Copyright */}
-            <div className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-sm">
               © 2026 MarkMorph. All rights reserved.
-            </div>
+            </p>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
