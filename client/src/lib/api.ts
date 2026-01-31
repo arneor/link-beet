@@ -294,7 +294,7 @@ export const businessApi = {
   },
 
   async getDashboardStats(id: string): Promise<DashboardStats> {
-    return apiRequest(`/business/dashboard/${id}`);
+    return apiRequest(`/business/${id}/stats`);
   },
 
   async getSplashData(id: string): Promise<{

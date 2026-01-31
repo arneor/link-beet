@@ -189,6 +189,15 @@ export class SplashService {
             this.analyticsService.linkSessionToUser(dto.sessionId, wifiUser._id.toString(), email);
         }
 
+        // Log successful connection/compliance
+        await this.analyticsService.logCompliance(
+            businessId,
+            undefined, // macAddress
+            wifiUser.ipAddress,
+            'unknown', // deviceType
+            wifiUser.deviceInfo // userAgent
+        );
+
 
         return {
             success: true,

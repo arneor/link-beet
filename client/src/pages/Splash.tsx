@@ -116,6 +116,23 @@ export default function Splash() {
     }
   }, [countdown]);
 
+  // Auto-close logic when verified
+  useEffect(() => {
+    if (verificationStep === "verified") {
+      // Attempt to close automatically after 2 seconds
+      const timer = setTimeout(() => {
+        try {
+          window.close();
+          // Fallback if blocked: typically browser won't let us close unless we opened it,
+          // but Captive Portals often respect this or have their own behavior.
+        } catch (e) {
+          console.log("Could not auto-close", e);
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [verificationStep]);
+
   // Track scroll to hide hint
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -203,12 +220,9 @@ export default function Splash() {
           description: "You are now connected to WiFi.",
         });
 
-        // Redirect after success
-        setTimeout(() => {
-          if (response.redirectUrl) {
-            window.location.href = response.redirectUrl;
-          }
-        }, 2000);
+        // No auto-redirect. Just show success state.
+        // The captive portal "Done" button (native OS) will handle closing usually,
+        // or user can manually click a link if they want.
       }
     } catch (err: any) {
       setVerificationError(err.message || "Invalid verification code. Please try again.");
@@ -936,7 +950,19 @@ export default function Splash() {
                       </div>
                       <div className="text-xl font-bold text-white mb-1">You're Connected!</div>
                       <div className="text-white/70 text-sm">Enjoy free WiFi at {business?.businessName}</div>
-                      <div className="text-[#9EE53B]/70 text-xs mt-2">Redirecting...</div>
+
+                      {/* Done Button & Auto Close */}
+                      <div className="mt-6 w-full max-w-xs mx-auto space-y-3">
+                        <Button
+                          onClick={() => window.close()}
+                          className="w-full h-12 rounded-full bg-[#9EE53B] hover:bg-[#8CD035] text-[#222] font-bold text-lg transition-transform active:scale-95 shadow-lg shadow-[#9EE53B]/20"
+                        >
+                          Done
+                        </Button>
+                        <p className="text-white/40 text-[10px]">
+                          Closing in a few seconds...
+                        </p>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

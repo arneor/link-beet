@@ -175,7 +175,7 @@ export class AnalyticsService {
         const { businessId, macAddress, deviceType, email } = dto;
 
         // Log compliance data (PM-WANI requirement)
-        this.logComplianceAsync(businessId, macAddress, ipAddress, deviceType, userAgent);
+        this.logCompliance(businessId, macAddress, ipAddress, deviceType, userAgent);
 
         // Get business for redirect URL
         const business = await this.businessModel.findById(businessId);
@@ -190,30 +190,33 @@ export class AnalyticsService {
     /**
      * Async compliance logging
      */
-    private async logComplianceAsync(
+    /**
+     * Async compliance logging - Public for SplashService
+     */
+    public async logCompliance(
         businessId: string,
         macAddress?: string,
         ipAddress?: string,
         deviceType?: string,
         userAgent?: string,
     ): Promise<void> {
-        setImmediate(async () => {
-            try {
-                const log = new this.complianceModel({
-                    businessId: new Types.ObjectId(businessId),
-                    macAddress: macAddress || 'unknown',
-                    assignedIP: ipAddress,
-                    deviceType,
-                    userAgent,
-                    loginTime: new Date(),
-                });
+        try {
+            const log = new this.complianceModel({
+                businessId: new Types.ObjectId(businessId),
+                macAddress: macAddress || 'unknown',
+                assignedIP: ipAddress,
+                deviceType,
+                userAgent,
+                loginTime: new Date(),
+            });
 
-                await log.save();
-                this.logger.debug(`Logged compliance for business ${businessId}`);
-            } catch (error) {
-                this.logger.error(`Failed to log compliance: ${error.message}`);
-            }
-        });
+            await log.save();
+            this.logger.debug(`Logged compliance for business ${businessId}`);
+        } catch (error) {
+            this.logger.error(`Failed to log compliance: ${error.message}`);
+            // We might not want to throw here to avoid blocking the user flow if logging fails?
+            // But for debugging now, let's log it clearly.
+        }
     }
 
     /**
