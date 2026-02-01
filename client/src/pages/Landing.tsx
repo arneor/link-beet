@@ -272,18 +272,11 @@ export default function Landing() {
                 <div className="h-2 gradient-hero" />
 
                 <CardHeader className="space-y-2 pt-8 pb-4 px-8">
-                  <div className="flex items-center gap-3 mb-2">
-                    <img
-                      src="/white_icon.webp"
-                      alt="MarkMorph"
-                      className="h-12 w-auto"
-                    />
-                  </div>
                   <div>
-                    <CardTitle className="text-2xl font-display text-gray-900">
+                    <CardTitle className="text-2xl font-display text-gray-900 text-center">
                       Welcome back
                     </CardTitle>
-                    <CardDescription className="text-gray-500">
+                    <CardDescription className="text-gray-500 text-center">
                       Sign in to your dashboard
                     </CardDescription>
                   </div>
