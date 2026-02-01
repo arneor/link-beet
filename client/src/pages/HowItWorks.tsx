@@ -330,14 +330,24 @@ export default function HowItWorks() {
                             Setup takes just 5 minutes. No credit card required. Start
                             capturing customer data today.
                         </p>
-                        <Button
-                            size="lg"
-                            onClick={() => setLocation("/signup")}
-                            className="h-14 px-10 text-lg font-bold rounded-full bg-[#9EE53B] text-[#222] hover:bg-[#8BD42E] shadow-2xl"
-                        >
-                            Get Started Free
-                            <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
+                        <div className="flex flex-wrap justify-center gap-4">
+                            <Button
+                                size="lg"
+                                onClick={() => setLocation("/signup")}
+                                className="h-14 px-10 text-lg font-bold rounded-full bg-[#9EE53B] text-[#222] hover:bg-[#8BD42E] shadow-2xl"
+                            >
+                                Get Started Free
+                                <ArrowRight className="ml-2 w-5 h-5" />
+                            </Button>
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                onClick={() => window.open('tel:+919744880311')}
+                                className="h-14 px-10 text-lg font-bold rounded-full border-2 border-white/30 text-white hover:bg-white/10"
+                            >
+                                📞 Call +91 97448 80311
+                            </Button>
+                        </div>
                     </motion.div>
                 </div>
             </section>

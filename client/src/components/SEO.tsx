@@ -135,7 +135,15 @@ export const SEO_CONFIG = {
             'author': {
                 '@type': 'Organization',
                 'name': 'MARK MORPH',
-                'url': 'https://www.markmorph.in'
+                'url': 'https://www.markmorph.in',
+                'telephone': '+91-9744880311',
+                "email": "askmarkmorph@gmail.com",
+                'contactPoint': {
+                    '@type': 'ContactPoint',
+                    'telephone': '+91-9744880311',
+                    'contactType': 'sales',
+                    'availableLanguage': ['English', 'Hindi', 'Malayalam']
+                }
             },
             'aggregateRating': {
                 '@type': 'AggregateRating',

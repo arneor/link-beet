@@ -393,6 +393,9 @@ export default function LocalLanding() {
                     "@type": "LocalBusiness",
                     "name": `Mark Morph - ${city.name}`,
                     "description": city.description,
+                    "telephone": "+91-9744880311",
+                    "email": "askmarkmorph@gmail.com",
+                    "url": "https://www.markmorph.in",
                     "areaServed": {
                         "@type": "City",
                         "name": city.name,
@@ -400,6 +403,13 @@ export default function LocalLanding() {
                             "@type": "State",
                             "name": city.state,
                         },
+                    },
+                    "contactPoint": {
+                        "@type": "ContactPoint",
+                        "telephone": "+91-9744880311",
+                        "email": "askmarkmorph@gmail.com",
+                        "contactType": "sales",
+                        "availableLanguage": ["English", "Hindi", "Malayalam"]
                     },
                     "priceRange": "Free - ₹999/month",
                     "openingHours": "Mo-Su 00:00-24:00",
@@ -674,10 +684,11 @@ export default function LocalLanding() {
                             <Button
                                 size="lg"
                                 variant="outline"
+                                onClick={() => window.open('tel:+919744880311')}
                                 className="h-14 px-10 text-lg font-bold rounded-full border-2 border-gray-300 hover:bg-gray-100"
                             >
                                 <Phone className="mr-2 w-5 h-5" />
-                                Contact Sales
+                                Call +91 97448 80311
                             </Button>
                         </div>
                     </motion.div>
