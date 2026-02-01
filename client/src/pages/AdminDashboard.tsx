@@ -20,6 +20,7 @@ import {
   Ban,
   Check,
   X,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -308,14 +309,32 @@ export default function AdminDashboard() {
               {/* Pending Approval Tab */}
               <TabsContent value="pending" className="space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-yellow-500" />
-                      Businesses Awaiting Approval
-                    </CardTitle>
-                    <CardDescription>
-                      Review and approve new business registrations.
-                    </CardDescription>
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                    <div className="space-y-1">
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-yellow-500" />
+                        Businesses Awaiting Approval
+                      </CardTitle>
+                      <CardDescription>
+                        Review and approve new business registrations.
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        queryClient.invalidateQueries({ queryKey: ["admin-pending-businesses"] });
+                        queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+                        toast({
+                          title: "Refreshed",
+                          description: "Pending approvals list has been refreshed.",
+                        });
+                      }}
+                      className="gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Refresh
+                    </Button>
                   </CardHeader>
                   <CardContent>
                     {pendingBusinesses && pendingBusinesses.length > 0 ? (
