@@ -252,18 +252,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs for Top-Level Navigation */}
-        <Tabs defaultValue="overview" className="w-full space-y-6">
+        <Tabs defaultValue="operations" className="w-full space-y-6">
           <div className="flex justify-start">
             <TabsList className="grid w-[400px] grid-cols-2">
-              <TabsTrigger value="overview">Analytics Overview</TabsTrigger>
               <TabsTrigger value="operations">Business Operations</TabsTrigger>
+              <TabsTrigger value="overview">Analytics Overview</TabsTrigger>
             </TabsList>
           </div>
-
-          {/* OVERVIEW TAB (New Analytics) */}
-          <TabsContent value="overview">
-            <AdminAnalytics />
-          </TabsContent>
 
           {/* OPERATIONS TAB (Existing Dashboard) */}
           <TabsContent value="operations" className="space-y-8">
@@ -523,6 +518,11 @@ export default function AdminDashboard() {
                 </Card>
               </TabsContent>
             </Tabs>
+          </TabsContent>
+
+          {/* OVERVIEW TAB (Analytics) */}
+          <TabsContent value="overview">
+            <AdminAnalytics />
           </TabsContent>
         </Tabs>
       </div>
