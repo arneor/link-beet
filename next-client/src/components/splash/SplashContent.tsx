@@ -106,7 +106,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
 
     // Interaction State
     const [likedAds, setLikedAds] = useState<Set<string>>(new Set());
-    const [expandedAd, setExpandedAd] = useState<any | null>(null);
+    const [expandedAd, setExpandedAd] = useState<SplashData['ads'][number] | null>(null);
     const [sessionId, setSessionId] = useState<string>("");
 
     // Initialize Session ID
@@ -143,12 +143,12 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
     }, [id]);
 
     const business = initialData.business;
-    // Map ads to campaigns structure and separate by placement
+    type SplashAd = SplashData['ads'][number];
     const allAds = (initialData.ads || [])
-        .filter((ad: any) => ad.mediaType !== "video" && ad.status === "active");
+        .filter((ad: SplashAd) => ad.mediaType !== "video" && ad.status === "active");
 
-    const featuredCampaigns = allAds.filter((c: any) => c.placement === 'BANNER');
-    const galleryCampaigns = allAds.filter((c: any) => c.placement !== 'BANNER');
+    const featuredCampaigns = allAds.filter((c: SplashAd) => c.placement === 'BANNER');
+    const galleryCampaigns = allAds.filter((c: SplashAd) => c.placement !== 'BANNER');
 
     // Countdown timer for ad viewing
     useEffect(() => {
@@ -267,11 +267,12 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                 description: result.message,
                             });
                         }
-                    } catch (err: any) {
-                        setVerificationError(err.message || "Google sign-in failed. Please try again.");
+                    } catch (err: unknown) {
+                        const error = err as Error;
+                        setVerificationError(error.message || "Google sign-in failed. Please try again.");
                         toast({
                             title: "Sign-in Failed",
-                            description: err.message || "Please try again",
+                            description: error.message || "Please try again",
                             variant: "destructive",
                         });
                     } finally {
@@ -285,6 +286,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
             });
 
             // Trigger Google One Tap or popup
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             window.google.accounts.id.prompt((notification: any) => {
                 if (notification.isNotDisplayed()) {
                     const reason = notification.getNotDisplayedReason();
@@ -314,14 +316,16 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                 }
             });
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Google Sign-In error:', err);
 
             // Check for specific error types
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const error = err as any; // Needed for specific google error properties
             let errorMessage = "Google sign-in failed. Please try again.";
-            if (err.message?.includes('idpiframe_initialization_failed') || err.message?.includes('403')) {
+            if (error.message?.includes('idpiframe_initialization_failed') || error.message?.includes('403')) {
                 errorMessage = "Google Sign-In configuration error. Please use email verification.";
-            } else if (err.message?.includes('popup_closed')) {
+            } else if (error.message?.includes('popup_closed')) {
                 errorMessage = "Sign-in popup was closed. Please try again.";
             }
 
@@ -366,11 +370,12 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                 setCooldown(response.cooldown);
                 setVerificationError(`Please wait ${response.cooldown} seconds before requesting again.`);
             }
-        } catch (err: any) {
-            setVerificationError(err.message || "Failed to send verification code. Please try again.");
+        } catch (err: unknown) {
+            const error = err as Error;
+            setVerificationError(error.message || "Failed to send verification code. Please try again.");
             toast({
                 title: "Error",
-                description: err.message || "Failed to send code",
+                description: error.message || "Failed to send code",
                 variant: "destructive",
             });
         } finally {
@@ -397,11 +402,12 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                     description: "You are now connected to WiFi.",
                 });
             }
-        } catch (err: any) {
-            setVerificationError(err.message || "Invalid verification code. Please try again.");
+        } catch (err: unknown) {
+            const error = err as Error;
+            setVerificationError(error.message || "Invalid verification code. Please try again.");
             toast({
                 title: "Verification Failed",
-                description: err.message || "Invalid code",
+                description: error.message || "Invalid code",
                 variant: "destructive",
             });
         } finally {
@@ -423,6 +429,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
     };
 
     const handleReview = () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawUrl = (business as any)?.googleReviewUrl;
         const reviewUrl = ensureExternalUrl(rawUrl) ||
             `https://www.google.com/search?q=${encodeURIComponent(business?.businessName || '')}+reviews`;
@@ -468,7 +475,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
         });
     };
 
-    const shareAd = async (e: React.MouseEvent, ad: any) => {
+    const shareAd = async (e: React.MouseEvent, ad: SplashData['ads'][number]) => {
         e.stopPropagation();
 
         // Fire API event immediately
@@ -514,7 +521,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
     useEffect(() => {
         if (!id || allAds.length === 0) return;
 
-        allAds.forEach((ad: any) => {
+        allAds.forEach((ad: SplashData['ads'][number]) => {
             if (!viewedAdsRef.current.has(ad.id)) {
                 viewedAdsRef.current.add(ad.id);
 
@@ -530,7 +537,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
         });
     }, [allAds, id]);
 
-    const handleExpand = (ad: any) => {
+    const handleExpand = (ad: SplashData['ads'][number]) => {
         setExpandedAd(ad);
 
         // Fire API event for Expand
@@ -620,7 +627,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                 {/* Location */}
                                 <div className="flex items-center justify-center gap-1.5 text-white/70 text-sm mb-3">
                                     <MapPin className="w-3.5 h-3.5" />
-                                    <span>{(business as any).location || "Free Guest WiFi"}</span>
+                                    <span>{business?.location || "Free Guest WiFi"}</span>
                                 </div>
 
                                 {/* Tags */}
@@ -667,10 +674,12 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                             Featured Offers
                                         </span>
                                     </div>
+                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                     <SplashCarousel campaigns={featuredCampaigns as any} />
                                 </motion.div>
 
                                 {/* Premium Ad Banner - Shows by default, hidden only if showWelcomeBanner is explicitly false */}
+                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                 {(business as any)?.showWelcomeBanner !== false && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
@@ -685,19 +694,20 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Zap className="w-5 h-5 text-[#FFD93D]" />
                                                 <span className="text-xs font-bold text-white/80 uppercase tracking-wide">
-                                                    Welcome to {business?.businessName || (business as any)?.businessName}
+                                                    Welcome to {business?.businessName || business?.name}
                                                 </span>
                                             </div>
                                             <h3 className="text-xl font-display font-bold text-white mb-1">
-                                                {(business as any)?.welcomeTitle || "Connect & Enjoy Free WiFi!"}
+                                                {business?.welcomeTitle || "Connect & Enjoy Free WiFi!"}
                                             </h3>
                                             <p className="text-sm text-white/80 mb-3">
-                                                {(business as any)?.description || `Explore exclusive offers from ${business?.businessName || (business as any)?.businessName}`}
+                                                {business?.description || `Explore exclusive offers from ${business?.businessName || business?.name}`}
                                             </p>
 
                                             {/* CTA Button - Directly open backend link */}
                                             <div
                                                 onClick={() => {
+                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                                     const rawUrl = (business as any)?.ctaButtonUrl;
                                                     const url = ensureExternalUrl(rawUrl);
                                                     if (url) {
@@ -708,7 +718,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-semibold hover:bg-white/30 transition-colors cursor-pointer"
                                             >
                                                 <Eye className="w-4 h-4" />
-                                                {(business as any)?.ctaButtonText || "View Offers"}
+                                                {business?.ctaButtonText || "View Offers"}
                                             </div>
                                         </div>
                                     </motion.div>
@@ -723,12 +733,12 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                     <div className="flex items-center gap-2 mb-3">
                                         <Gift className="w-4 h-4 text-[#9EE53B]" />
                                         <span className="text-xs font-bold text-white/80 uppercase tracking-wide">
-                                            Today's Deals
+                                            Today&apos;s Deals
                                         </span>
                                     </div>
                                     {galleryCampaigns.length > 0 ? (
                                         <div className="grid grid-cols-2 gap-3">
-                                            {galleryCampaigns.slice(0, 4).map((c: any, index: number) => {
+                                            {galleryCampaigns.slice(0, 4).map((c: SplashData['ads'][number], index: number) => {
                                                 const isLiked = likedAds.has(c.id);
                                                 const likes = (c.likesCount || 0) + (isLiked ? 1 : 0);
 
@@ -815,7 +825,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                             </span>
                                         </div>
                                         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-                                            {galleryCampaigns.slice(4).map((c: any, index: number) => (
+                                            {galleryCampaigns.slice(4).map((c: SplashData['ads'][number], index: number) => (
                                                 <motion.div
                                                     key={c.id}
                                                     initial={{ opacity: 0, scale: 0.9 }}
@@ -1007,7 +1017,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                                                     Use Email Verification
                                                                 </div>
                                                                 <div className="text-xs text-white/50">
-                                                                    We'll send a temporary code to your inbox
+                                                                    We&apos;ll send a temporary code to your inbox
                                                                 </div>
                                                             </div>
 

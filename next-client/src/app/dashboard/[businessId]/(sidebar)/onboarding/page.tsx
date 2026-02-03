@@ -76,6 +76,7 @@ export default function BusinessOnboarding() {
                 location: values.address?.trim() ? values.address.trim() : null,
                 contactEmail: values.contactEmail?.trim() ? values.contactEmail.trim() : null,
                 onboardingCompleted: true,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any,
             {
                 onSuccess: () => {

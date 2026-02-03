@@ -122,7 +122,7 @@ export default function AdminAnalytics() {
                     <div>
                         <h4 className="font-semibold text-blue-900">Welcome to your new Dashboard!</h4>
                         <p className="text-sm text-blue-700 mt-1">
-                            It looks like you're just getting started. Add your first business and connect a user to see this dashboard come to life.
+                            It looks like you&apos;re just getting started. Add your first business and connect a user to see this dashboard come to life.
                         </p>
                     </div>
                 </div>
@@ -273,6 +273,7 @@ export default function AdminAnalytics() {
                                         />
                                         <Tooltip
                                             cursor={{ fill: 'transparent' }}
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             content={({ active, payload }: any) => {
                                                 if (active && payload && payload.length) {
                                                     return (
@@ -389,6 +390,7 @@ function StatCard({
     chart,
     subValue,
     color = "blue"
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }: any) {
     const colors = {
         blue: "text-blue-500 bg-blue-50 border-blue-100",
@@ -431,6 +433,7 @@ function StatCard({
     );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload, label }: any) {
     if (active && payload && payload.length) {
         return (

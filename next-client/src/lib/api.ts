@@ -93,6 +93,7 @@ export interface SplashData {
     ctaButtonText?: string;
     ctaButtonUrl?: string;
     showWelcomeBanner?: boolean;
+    description?: string;
   };
   ads: Array<{
     id: string;
@@ -381,6 +382,7 @@ export const businessApi = {
     try {
       const response = await apiRequest<Business | { business: null }>("/business/me");
       // Handle case where backend returns { business: null }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (response && 'business' in response && (response as any).business === null) {
         return null;
       }

@@ -101,7 +101,8 @@ export default function AdminDashboardPage() {
         if (!adminApi.isAuthenticated()) {
             router.push('/admin/login');
         } else {
-            setIsAuthorized(true);
+            // Delay state update to avoid synchronous state update warning
+            setTimeout(() => setIsAuthorized(true), 0);
         }
     }, [router]);
 
@@ -604,6 +605,46 @@ export default function AdminDashboardPage() {
                         <AdminAnalytics />
                     </TabsContent>
                 </Tabs>
+
+                {/* Action Dialog */}
+                <Dialog open={actionDialog.open} onOpenChange={(open) => !open && setActionDialog(prev => ({ ...prev, open: false }))}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {actionDialog.type === 'reject' ? 'Reject Business' : 'Suspend Business'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to {actionDialog.type} &quot;{actionDialog.businessName}&quot;?
+                                This action will restrict access for the business owner.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <h4 className="text-sm font-medium mb-2 block">
+                                Reason for {actionDialog.type === 'reject' ? 'rejection' : 'suspension'}
+                            </h4>
+                            <Input
+                                value={actionReason}
+                                onChange={(e) => setActionReason(e.target.value)}
+                                placeholder="Enter reason..."
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setActionDialog(prev => ({ ...prev, open: false }))}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleActionSubmit}
+                                disabled={!actionReason}
+                            >
+                                Confirm {actionDialog.type === 'reject' ? 'Rejection' : 'Suspension'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );
