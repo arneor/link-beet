@@ -8,7 +8,7 @@ const protectedRoutes = ['/dashboard', '/business'];
 const adminRoutes = ['/admin/dashboard', '/admin/businesses'];
 
 // Public routes (redirect to dashboard if already authenticated)
-const publicOnlyRoutes = ['/login', '/signup'];
+const publicOnlyRoutes = ['/login', '/signup', '/'];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
@@ -47,14 +47,22 @@ export function middleware(request: NextRequest) {
     }
 
     // Redirect authenticated users away from login/signup pages
-    if (isPublicOnlyRoute && userToken) {
-        // Try to get businessId from cookie or redirect to home
-        const businessId = request.cookies.get('mm_business_id')?.value;
-        if (businessId) {
-            return NextResponse.redirect(new URL(`/dashboard/${businessId}`, request.url));
+    // Redirect authenticated users away from login/signup pages
+    if (isPublicOnlyRoute) {
+        // If admin is logged in, redirect to admin dashboard
+        if (adminToken) {
+            return NextResponse.redirect(new URL('/admin/dashboard', request.url));
         }
-        // If no businessId, let them continue to signup to create one
 
+        // If user is logged in, redirect to business dashboard
+        if (userToken) {
+            // Try to get businessId from cookie or redirect to home
+            const businessId = request.cookies.get('mm_business_id')?.value;
+            if (businessId) {
+                return NextResponse.redirect(new URL(`/dashboard/${businessId}`, request.url));
+            }
+            // If no businessId, let them continue to signup to create one
+        }
     }
 
     // Allow admin login page for unauthenticated admins
