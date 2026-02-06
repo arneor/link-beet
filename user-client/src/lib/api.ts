@@ -13,8 +13,12 @@ export interface User {
   email?: string;
   role: "business" | "user";
   name?: string;
+  displayName?: string;
+  username?: string;
+  category?: string;
   isVerified: boolean;
   businessId?: string;
+  onboardingStep?: number;
 }
 
 export interface Business {
@@ -577,7 +581,11 @@ export const authApi = {
   },
 
   async getMe(): Promise<User> {
-    return apiRequest("/auth/me");
+    const response = await apiRequest<any>("/auth/me");
+    return {
+      ...response,
+      name: response.displayName || response.name
+    };
   },
 
   logout(): void {
@@ -638,3 +646,182 @@ export const adsApi = {
 };
 
 
+
+// Helper to set tokens and user (exported for use in pages)
+export function setAuthTokens(accessToken: string, refreshToken?: string) {
+  if (typeof window !== "undefined") {
+    tokenStorage.setToken(accessToken);
+    // We might not have the full user object here yet, but we have the token.
+    // The pages should call getMe() or rely on the response from login/signup to set the user.
+  }
+}
+
+// ===== AUTH V2 API (Email + Password + OTP) =====
+export const authV2Api = {
+  // Step 1: Initiate Signup (Send OTP)
+  async signupInitiate(email: string, password: string): Promise<{ success: boolean; message: string }> {
+    return apiRequest("/auth/signup/initiate", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
+  // Step 2: Verify Signup OTP
+  async signupVerify(email: string, otp: string): Promise<any> {
+    const response = await apiRequest<any>("/auth/signup/verify", {
+      method: "POST",
+      body: JSON.stringify({ email, otp }),
+    });
+
+    if (response.tokens) {
+      setAuthTokens(response.tokens.accessToken);
+      tokenStorage.setUser({
+        id: response.user.id,
+        email: response.user.email,
+        role: response.user.category === 'BUSINESS' ? 'business' : 'user', // Map role
+        isVerified: true,
+        businessId: response.user.businessId
+      });
+    }
+
+    return response;
+  },
+
+  // Login
+  async login(email: string, password: string): Promise<any> {
+    const response = await apiRequest<any>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.tokens) {
+      setAuthTokens(response.tokens.accessToken);
+      tokenStorage.setUser({
+        id: response.user.id,
+        email: response.user.email,
+        role: response.user.category === 'BUSINESS' ? 'business' : 'user',
+        isVerified: true,
+        businessId: response.user.businessId
+      });
+    }
+
+    return response;
+  },
+
+  // (Legacy/Unused?) Send OTP (Magic Link)
+  async sendOtp(email: string, isSignup = true): Promise<{ success: boolean; message: string }> {
+    return apiRequest("/auth/otp/send", {
+      method: "POST",
+      body: JSON.stringify({ email, isSignup }),
+    });
+  },
+
+  // Exchange Supabase Session for App Token
+  async exchangeSession(accessToken: string): Promise<AuthResponse> {
+    const response = await apiRequest<AuthResponse>("/auth/session/exchange", {
+      method: "POST",
+      body: JSON.stringify({ accessToken }),
+    });
+
+    // Store token
+    tokenStorage.setToken(response.accessToken);
+
+    // Store user
+    tokenStorage.setUser({
+      id: response.userId,
+      email: response.email,
+      role: response.role,
+      isVerified: true,
+      businessId: response.businessId
+    });
+
+    return response;
+  },
+
+  // Check username availability
+  async checkUsername(username: string): Promise<{ available: boolean; message?: string }> {
+    return apiRequest("/auth/username/check", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+  },
+
+  // Claim username
+  async claimUsername(username: string): Promise<{ success: boolean }> {
+    return apiRequest("/auth/username/claim", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+  },
+
+  // Set category
+  async updateCategory(category: "creator" | "business"): Promise<{ success: boolean }> {
+    return apiRequest("/auth/onboarding/category", {
+      method: "POST",
+      body: JSON.stringify({ category }),
+    });
+  },
+
+  // Complete onboarding
+  async completeOnboarding(data: {
+    name: string;
+    location?: string;
+    description?: string;
+  }): Promise<User> {
+
+
+    // Map frontend data to backend DTO
+    let payload: any = {
+      location: data.location,
+    };
+
+    // Assuming we don't have user role here easily without checking local storage or decoding token
+    // But we can check if name looks like a business name or person name? 
+    // Or just send both `displayName` and `businessName` as the same value if we can't distinguish?
+    // Better: Helper function to get role or just infer.
+
+    const user = tokenStorage.getUser();
+    if (user?.role === 'business') {
+      payload.businessName = data.name;
+      payload.displayName = data.name; // Keep display name sync
+      payload.bio = data.description;
+    } else {
+      payload.displayName = data.name;
+      payload.bio = data.description;
+    }
+
+    const response = await apiRequest<User>("/auth/onboarding/complete", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    // Update local user data
+    const currentUser = tokenStorage.getUser();
+    if (currentUser) {
+      tokenStorage.setUser({
+        ...currentUser,
+        ...response,
+        name: response.displayName || response.name || currentUser.name,
+        role: response.role as "business" | "user" || currentUser.role
+      });
+    }
+
+    return {
+      id: response.id,
+      email: response.email,
+      role: response.role,
+      isVerified: true,
+      name: response.displayName || response.name,
+      displayName: response.displayName,
+      businessId: response.businessId,
+      username: response.username,
+      category: response.category,
+      onboardingStep: response.onboardingStep,
+    };
+  },
+
+  // Get current user (V2)
+  async getMe(): Promise<User> {
+    return apiRequest("/auth/me");
+  }
+};

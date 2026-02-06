@@ -1,221 +1,85 @@
-import {
-    IsString,
-    IsNotEmpty,
-    IsOptional,
-    IsEmail,
-    IsBoolean,
-    IsEnum,
-    IsObject,
-    ValidateNested,
-    IsUrl,
-} from 'class-validator';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsEnum, IsOptional, IsBoolean, IsUrl, IsEmail, MaxLength, IsNotEmpty } from 'class-validator';
 
-export class AdDto {
-    @ApiProperty({ description: 'Ad title' })
-    @IsString()
-    @IsNotEmpty()
-    title: string;
+// Enums matching Prisma
+export enum BusinessType {
+    RESTAURANT_CAFE = 'RESTAURANT_CAFE',
+    RETAIL_STORE = 'RETAIL_STORE',
+    SALON_SPA = 'SALON_SPA',
+    GYM_FITNESS = 'GYM_FITNESS',
+    HOTEL_HOSTEL = 'HOTEL_HOSTEL',
+    OTHER = 'OTHER',
+}
 
-    @ApiProperty({ description: 'Media URL' })
-    @IsString()
-    @IsNotEmpty()
-    mediaUrl: string;
-
-    @ApiProperty({ description: 'Media type', enum: ['image', 'video'] })
-    @IsString()
-    @IsEnum(['image', 'video'])
-    mediaType: string;
-
-    @ApiProperty({ description: 'Ad placement', enum: ['BANNER', 'GALLERY'] })
-    @IsString()
-    @IsOptional()
-    placement?: string;
-
-    @ApiProperty({ description: 'Ad source' })
-    @IsString()
-    @IsOptional()
-    source?: string;
-
-    @ApiProperty({ description: 'S3 Key' })
-    @IsString()
-    @IsOptional()
-    s3Key?: string;
-
-    @ApiProperty({ description: 'Call to action URL' })
-    @IsString()
-    @IsOptional()
-    ctaUrl?: string;
+export enum BusinessStatus {
+    PENDING_APPROVAL = 'PENDING_APPROVAL',
+    ACTIVE = 'ACTIVE',
+    SUSPENDED = 'SUSPENDED',
+    REJECTED = 'REJECTED',
 }
 
 export class CreateBusinessDto {
-    @ApiProperty({ description: 'Business name', example: "Joe's Coffee House" })
+    @ApiProperty({ description: 'Business Name', maxLength: 100 })
     @IsString()
     @IsNotEmpty()
+    @MaxLength(100)
     businessName: string;
 
-    @ApiProperty({ description: 'Business location/address', example: '123 Main St, Mumbai' })
+    @ApiProperty({ enum: BusinessType, enumName: 'BusinessType', description: 'Type of business', example: BusinessType.RESTAURANT_CAFE })
+    @IsEnum(BusinessType)
+    businessType: BusinessType;
+
+    @ApiPropertyOptional({ description: 'Location/City' })
     @IsString()
     @IsOptional()
     location?: string;
 
-    @ApiProperty({ description: 'Business category', example: 'Restaurant' })
+    @ApiPropertyOptional({ description: 'Full address' })
     @IsString()
     @IsOptional()
-    category?: string;
+    address?: string;
 
-    @ApiProperty({ description: 'Business description', required: false })
+    @ApiPropertyOptional({ description: 'Contact phone number' })
     @IsString()
     @IsOptional()
-    description?: string;
-
-    @ApiProperty({ description: 'Contact email', example: 'joe@coffee.com' })
-    @IsEmail()
-    @IsOptional()
-    contactEmail?: string;
-
-    @ApiProperty({ description: 'Contact phone', example: '+919876543210' })
-    @IsString()
-    @IsOptional()
-    contactPhone?: string;
-
-    @ApiProperty({ description: 'Logo URL', required: false })
-    @IsString()
-    @IsOptional()
-    logoUrl?: string;
-
-    @ApiProperty({ description: 'Primary brand color', example: '#4f46e5' })
-    @IsString()
-    @IsOptional()
-    primaryColor?: string;
-
-    @ApiProperty({ description: 'WiFi SSID', example: 'Joes_Free_WiFi' })
-    @IsString()
-    @IsOptional()
-    wifiSsid?: string;
-
-    @ApiProperty({ description: 'Google Review URL for CTA redirects' })
-    @IsString()
-    @IsOptional()
-    googleReviewUrl?: string;
-
-    @ApiProperty({ description: 'Welcome banner title on splash screen', example: 'Welcome! Connect for Free WiFi' })
-    @IsString()
-    @IsOptional()
-    welcomeTitle?: string;
-
-    @ApiProperty({ description: 'CTA Button text on splash screen', example: 'View Offers' })
-    @IsString()
-    @IsOptional()
-    ctaButtonText?: string;
-
-    @ApiProperty({ description: 'CTA Button URL on splash screen', example: 'https://example.com/menu' })
-    @IsString()
-    @IsOptional()
-    ctaButtonUrl?: string;
-
-    @ApiProperty({ description: 'Whether to show welcome banner on splash screen', default: true })
-    @IsBoolean()
-    @IsOptional()
-    showWelcomeBanner?: boolean;
-
-    @ApiProperty({ description: 'Operating hours', required: false })
-    @IsObject()
-    @IsOptional()
-    operatingHours?: Record<string, string>;
-
-    @ApiProperty({ description: 'Profile type', enum: ['private', 'public'], default: 'private' })
-    @IsEnum(['private', 'public'])
-    @IsOptional()
-    profileType?: string;
+    phone?: string;
 }
 
-export class UpdateBusinessDto extends PartialType(CreateBusinessDto) {
-    @ApiProperty({ description: 'Whether business is active' })
-    @IsBoolean()
+export class UpdateBusinessDto {
+    @ApiPropertyOptional({ description: 'Business Name' })
+    @IsString()
     @IsOptional()
-    isActive?: boolean;
+    @MaxLength(100)
+    businessName?: string;
 
-    @ApiProperty({ description: 'Whether onboarding is completed' })
-    @IsBoolean()
+    @ApiPropertyOptional({ enum: BusinessType })
+    @IsEnum(BusinessType)
     @IsOptional()
-    onboardingCompleted?: boolean;
+    businessType?: BusinessType;
 
-    @ApiProperty({ description: 'Ads/Banners list', type: [AdDto] })
+    @ApiPropertyOptional({ description: 'Location/City' })
+    @IsString()
     @IsOptional()
-    @ValidateNested({ each: true })
-    @Type(() => AdDto)
-    ads?: AdDto[];
-}
-
-
-export class BusinessResponseDto {
-    @ApiProperty({ description: 'Business ID' })
-    id: string;
-
-    @ApiProperty({ description: 'Business name' })
-    businessName: string;
-
-    @ApiProperty({ description: 'Owner user ID' })
-    ownerId: string;
-
-    @ApiProperty({ description: 'Location' })
     location?: string;
 
-    @ApiProperty({ description: 'Category' })
-    category?: string;
+    @ApiPropertyOptional({ description: 'Full address' })
+    @IsString()
+    @IsOptional()
+    address?: string;
 
-    @ApiProperty({ description: 'Logo URL' })
-    logoUrl?: string;
-
-    @ApiProperty({ description: 'Primary color' })
-    primaryColor: string;
-
-    @ApiProperty({ description: 'WiFi SSID' })
-    wifiSsid?: string;
-
-    @ApiProperty({ description: 'Google Review URL' })
-    googleReviewUrl?: string;
-
-    @ApiProperty({ description: 'Profile type' })
-    profileType: string;
-
-    @ApiProperty({ description: 'Active status' })
-    isActive: boolean;
-
-    @ApiProperty({ description: 'Onboarding completed' })
-    onboardingCompleted: boolean;
-
-    @ApiProperty({ description: 'Number of ads' })
-    adsCount: number;
-
-    @ApiProperty({ description: 'Created timestamp' })
-    createdAt: Date;
+    @ApiPropertyOptional({ description: 'Contact phone number' })
+    @IsString()
+    @IsOptional()
+    phone?: string;
 }
 
-export class DashboardStatsDto {
-    @ApiProperty({ description: 'Total WiFi connections' })
-    totalConnections: number;
+export class ApproveBusinessDto {
+    @ApiProperty({ enum: BusinessStatus, enumName: 'BusinessStatus', description: 'New status', example: BusinessStatus.ACTIVE })
+    @IsEnum(BusinessStatus)
+    status: BusinessStatus;
 
-    @ApiProperty({ description: 'Currently active users' })
-    activeUsers: number;
-
-    @ApiProperty({ description: 'Total ads served' })
-    totalAdsServed: number;
-
-    @ApiProperty({ description: 'Total ad views' })
-    totalViews: number;
-
-    @ApiProperty({ description: 'Total ad clicks' })
-    totalClicks: number;
-
-    @ApiProperty({ description: 'Click-through rate' })
-    ctr: number;
-
-    @ApiProperty({ description: 'Estimated revenue' })
-    revenue: number;
-
-    @ApiProperty({ description: 'Connection history for charts' })
-    connectionsHistory: Array<{ date: string; count: number }>;
+    @ApiPropertyOptional({ description: 'Reason for rejection (if rejected)' })
+    @IsString()
+    @IsOptional()
+    rejectionReason?: string;
 }

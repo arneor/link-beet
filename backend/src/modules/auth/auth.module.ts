@@ -1,24 +1,29 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
+// Controllers
 import { AuthController } from './auth.controller';
+
+// Services
 import { AuthService } from './services/auth.service';
-import { VerifyService } from './services/verify.service';
 import { EmailService } from './services/email.service';
+
+// Strategies
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { User, UserSchema } from './schemas/user.schema';
-import { BusinessProfile, BusinessProfileSchema } from '../business/schemas/business-profile.schema';
-import { ComplianceLog, ComplianceLogSchema } from '../compliance/schemas/compliance-log.schema';
+
+// Common modules
+import { UsernameModule } from '../../common/username/username.module';
+import { PrismaModule } from '../../common/prisma/prisma.module';
+import { SupabaseModule } from '../../common/supabase/supabase.module';
+import { RedisModule } from '../../common/redis/redis.module';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([
-            { name: User.name, schema: UserSchema },
-            { name: BusinessProfile.name, schema: BusinessProfileSchema },
-            { name: ComplianceLog.name, schema: ComplianceLogSchema },
-        ]),
+        PrismaModule,
+        SupabaseModule,
+        RedisModule,
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.registerAsync({
             imports: [ConfigModule],
@@ -30,9 +35,10 @@ import { ComplianceLog, ComplianceLogSchema } from '../compliance/schemas/compli
             }),
             inject: [ConfigService],
         }),
+        UsernameModule,
     ],
     controllers: [AuthController],
-    providers: [AuthService, VerifyService, EmailService, JwtStrategy],
+    providers: [AuthService, EmailService, JwtStrategy],
     exports: [AuthService, JwtStrategy, PassportModule, JwtModule],
 })
 export class AuthModule { }

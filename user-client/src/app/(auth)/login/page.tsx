@@ -3,30 +3,18 @@
 // Prevent static prerendering for client-only pages
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import NextImage from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ArrowRight,
-    Mail,
-    Lock,
     Loader2,
-    CheckCircle2,
-    RefreshCw,
-    Wifi,
+    Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import {
     Form,
     FormControl,
@@ -35,462 +23,156 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from '@/components/ui/input-otp';
-import { authApi, businessApi } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { loginSchema, type LoginInput } from '@/lib/validations/auth';
 import Link from 'next/link';
 
-// Validation schema for login credentials
-const loginSchema = z.object({
-    email: z.string().email('Please enter a valid email address'),
-    password: z.string().min(1, 'Password is required'),
-});
-
-// Validation schema for OTP
-const otpSchema = z.object({
-    otp: z.string().length(6, 'OTP must be 6 digits'),
-});
-
-type LoginValues = z.infer<typeof loginSchema>;
-type OtpValues = z.infer<typeof otpSchema>;
-
-type Step = 'credentials' | 'otp' | 'success';
-
 export default function LoginPage() {
-    const router = useRouter();
-    const { toast } = useToast();
+    const { login, isLoginLoading } = useAuth();
 
-    const [step, setStep] = useState<Step>('credentials');
-    const [isLoading, setIsLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-
-    const [countdown, setCountdown] = useState(0);
-    const [otpExpiresIn, setOtpExpiresIn] = useState(0);
-
-    // Form for credentials
-    const loginForm = useForm<LoginValues>({
+    // Form for login
+    const loginForm = useForm<LoginInput>({
         resolver: zodResolver(loginSchema),
-        defaultValues: { email: '', password: '' },
+        defaultValues: {
+            email: '',
+            password: '',
+        },
     });
 
-    // Form for OTP
-    const otpForm = useForm<OtpValues>({
-        resolver: zodResolver(otpSchema),
-        defaultValues: { otp: '' },
-    });
-
-    // Countdown timer for resend OTP
-    useEffect(() => {
-        if (countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [countdown]);
-
-    // OTP expiry timer
-    useEffect(() => {
-        if (otpExpiresIn > 0) {
-            const timer = setTimeout(() => setOtpExpiresIn(otpExpiresIn - 1), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [otpExpiresIn]);
-
-    // Handle credentials submission
-    const onSubmitCredentials = async (data: LoginValues) => {
-        setIsLoading(true);
-        try {
-            const response = await authApi.login(data);
-
-            if (response.success) {
-                setEmail(data.email);
-                setPassword(data.password);
-                setStep('otp');
-                setCountdown(60);
-                setOtpExpiresIn(600);
-
-                toast({
-                    title: 'OTP Sent!',
-                    description: `Verification code sent to ${data.email}`,
-                });
-            }
-        } catch (error: unknown) {
-            const err = error as Error;
-            toast({
-                title: 'Login Failed',
-                description: err.message || 'Invalid credentials',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Handle OTP verification
-    const onSubmitOtp = async (data: OtpValues) => {
-        setIsLoading(true);
-        try {
-            await authApi.verifyOtp(email, data.otp);
-
-            // Try to get user's business
-            let businessId: string | null = null;
-            try {
-                const businessResponse = await businessApi.getMyBusiness();
-                if (businessResponse) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    businessId = businessResponse.id || (businessResponse as any)._id;
-                }
-            } catch {
-                // No business found
-            }
-
-            setStep('success');
-
-            toast({
-                title: 'Welcome back!',
-                description: 'You have been signed in successfully.',
-            });
-
-            // Redirect based on user's business status
-            setTimeout(() => {
-                if (businessId) {
-                    router.push(`/dashboard/${businessId}`);
-                } else {
-                    toast({
-                        title: 'Create Your Business',
-                        description: "Let's set up your business profile.",
-                    });
-                    router.push('/signup');
-                }
-            }, 1500);
-        } catch (error: unknown) {
-            const err = error as Error;
-            toast({
-                title: 'Verification Failed',
-                description: err.message || 'Invalid or expired OTP',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Handle resend OTP
-    const handleResendOtp = async () => {
-        if (countdown > 0) return;
-
-        setIsLoading(true);
-        try {
-            const response = await authApi.login({ email, password });
-
-            if (response.success) {
-                setCountdown(60);
-                setOtpExpiresIn(600);
-                otpForm.reset();
-
-                toast({
-                    title: 'OTP Resent!',
-                    description: `New verification code sent to ${email}`,
-                });
-            }
-        } catch (error: unknown) {
-            const err = error as Error;
-            toast({
-                title: 'Failed to resend OTP',
-                description: err.message || 'Please try again',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Go back to credentials step
-    const handleBack = () => {
-        setStep('credentials');
-        otpForm.reset();
-    };
-
-    // Format countdown time
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    // Handle login
+    const onSubmit = (data: LoginInput) => {
+        login(data);
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
-            {/* Background decorations */}
-            <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl opacity-50" />
-            <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl opacity-50" />
+        <div className="min-h-screen w-full flex bg-[#F5F1E8]">
+            {/* Left Side - Form Section */}
+            <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[600px] bg-white border-r-2 border-black/10 relative z-10">
+                <div className="mx-auto w-full max-w-sm lg:w-96">
+                    <div className="mb-10">
+                        <Link href="/" className="inline-flex items-center gap-2 group">
+                            <div className="w-10 h-10 bg-[#D4F935] rounded-xl flex items-center justify-center border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] group-hover:translate-x-px group-hover:translate-y-px transition-all">
+                                <Sparkles className="w-5 h-5 text-[#1A3D1A]" />
+                            </div>
+                            <span className="text-2xl font-display font-black text-[#1A3D1A]">
+                                Mark<span className="text-[#5B1E5E]">Morph</span>
+                            </span>
+                        </Link>
+                    </div>
 
-            <div className="w-full max-w-md z-10">
-                <AnimatePresence mode="wait">
-                    {/* Step 1: Credentials */}
-                    {step === 'credentials' && (
+                    <AnimatePresence>
                         <motion.div
-                            key="credentials"
-                            initial={{ opacity: 0, y: 16 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -16 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <Card className="shadow-2xl shadow-primary/5 border-border/50 backdrop-blur-sm bg-card/80">
-                                <CardHeader className="space-y-1">
-                                    <CardTitle className="text-2xl font-display flex items-center gap-2">
-                                        <Wifi className="w-5 h-5 text-primary" />
-                                        Welcome back
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Sign in to your MarkMorph dashboard
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Form {...loginForm}>
-                                        <form
-                                            onSubmit={loginForm.handleSubmit(onSubmitCredentials)}
-                                            className="space-y-4"
-                                        >
-                                            {/* Email */}
-                                            <FormField
-                                                control={loginForm.control}
-                                                name="email"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="flex items-center gap-2">
-                                                            <Mail className="w-4 h-4" />
-                                                            Email Address
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                className="h-12"
-                                                                placeholder="yourname@example.com"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                            <div className="mb-8">
+                                <h1 className="text-4xl font-display font-black text-[#1A3D1A] mb-3 tracking-tight">Welcome back</h1>
+                                <p className="text-[#1A3D1A]/60 font-medium text-lg">Enter your details to sign in.</p>
+                            </div>
 
-                                            {/* Password */}
-                                            <FormField
-                                                control={loginForm.control}
-                                                name="password"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="flex items-center gap-2">
-                                                            <Lock className="w-4 h-4" />
-                                                            Password
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                className="h-12"
-                                                                type="password"
-                                                                placeholder="••••••••"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <Button
-                                                type="submit"
-                                                className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all bg-[#9EE53B] text-[#0a0a1a] hover:bg-[#8CD032]"
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading ? (
-                                                    <>
-                                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                        Verifying...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Continue{' '}
-                                                        <ArrowRight className="w-5 h-5 ml-2" />
-                                                    </>
-                                                )}
-                                            </Button>
-
-                                            <div className="pt-2 text-center">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    className="h-auto px-0"
-                                                    asChild
-                                                >
-                                                    <Link href="/signup">
-                                                        Don&apos;t have an account? Sign up
-                                                    </Link>
-                                                </Button>
-                                            </div>
-                                        </form>
-                                    </Form>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {/* Step 2: OTP Verification */}
-                    {step === 'otp' && (
-                        <motion.div
-                            key="otp"
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -16 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Card className="shadow-2xl shadow-primary/5 border-border/50 backdrop-blur-sm bg-card/80">
-                                <CardHeader className="space-y-1">
-                                    <CardTitle className="text-2xl font-display flex items-center gap-2">
-                                        <Mail className="w-5 h-5 text-primary" />
-                                        Verify your email
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Enter the 6-digit code sent to{' '}
-                                        <span className="font-medium text-foreground">
-                                            {email}
-                                        </span>
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Form {...otpForm}>
-                                        <form
-                                            onSubmit={otpForm.handleSubmit(onSubmitOtp)}
-                                            className="space-y-6"
-                                        >
-                                            {/* OTP Input */}
-                                            <FormField
-                                                control={otpForm.control}
-                                                name="otp"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col items-center">
-                                                        <FormControl>
-                                                            <InputOTP
-                                                                maxLength={6}
-                                                                value={field.value}
-                                                                onChange={field.onChange}
-                                                            >
-                                                                <InputOTPGroup>
-                                                                    <InputOTPSlot index={0} />
-                                                                    <InputOTPSlot index={1} />
-                                                                    <InputOTPSlot index={2} />
-                                                                    <InputOTPSlot index={3} />
-                                                                    <InputOTPSlot index={4} />
-                                                                    <InputOTPSlot index={5} />
-                                                                </InputOTPGroup>
-                                                            </InputOTP>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            {/* OTP expiry timer */}
-                                            {otpExpiresIn > 0 && (
-                                                <p className="text-center text-sm text-muted-foreground">
-                                                    Code expires in{' '}
-                                                    <span className="font-medium text-primary">
-                                                        {formatTime(otpExpiresIn)}
-                                                    </span>
-                                                </p>
-                                            )}
-
-                                            <Button
-                                                type="submit"
-                                                className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all bg-[#9EE53B] text-[#0a0a1a] hover:bg-[#8CD032]"
-                                                disabled={isLoading || otpForm.watch('otp').length !== 6}
-                                            >
-                                                {isLoading ? (
-                                                    <>
-                                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                        Signing in...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Sign In{' '}
-                                                        <ArrowRight className="w-5 h-5 ml-2" />
-                                                    </>
-                                                )}
-                                            </Button>
-
-                                            {/* Resend OTP */}
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    className="h-auto"
-                                                    onClick={handleResendOtp}
-                                                    disabled={countdown > 0 || isLoading}
-                                                >
-                                                    <RefreshCw
-                                                        className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''
-                                                            }`}
+                            <Form {...loginForm}>
+                                <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-5">
+                                    <FormField
+                                        control={loginForm.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">Email</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Email"
+                                                        className="h-14 rounded-xl border-2 border-transparent bg-[#F5F1E8] focus:bg-white focus:border-[#D4F935] hover:border-[#D4F935]/50 transition-all font-medium placeholder:text-[#1A3D1A]/30 text-lg px-4"
+                                                        {...field}
                                                     />
-                                                    {countdown > 0
-                                                        ? `Resend in ${countdown}s`
-                                                        : 'Resend Code'}
-                                                </Button>
+                                                </FormControl>
+                                                <FormMessage className="font-bold" />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    className="h-auto text-muted-foreground text-sm"
-                                                    onClick={handleBack}
-                                                >
-                                                    Use a different email
-                                                </Button>
-                                            </div>
-                                        </form>
-                                    </Form>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
+                                    <FormField
+                                        control={loginForm.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only">Password</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="password"
+                                                        placeholder="Password"
+                                                        className="h-14 rounded-xl border-2 border-transparent bg-[#F5F1E8] focus:bg-white focus:border-[#D4F935] hover:border-[#D4F935]/50 transition-all font-medium placeholder:text-[#1A3D1A]/30 text-lg px-4"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage className="font-bold" />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                    {/* Step 3: Success */}
-                    {step === 'success' && (
-                        <motion.div
-                            key="success"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Card className="shadow-2xl shadow-primary/5 border-border/50 backdrop-blur-sm bg-card/80">
-                                <CardContent className="pt-8 pb-8 flex flex-col items-center text-center">
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{
-                                            type: 'spring',
-                                            stiffness: 200,
-                                            damping: 15,
-                                            delay: 0.1,
-                                        }}
+                                    <Button
+                                        type="submit"
+                                        className="w-full h-14 rounded-full bg-[#D4F935] text-[#1A3D1A] font-black text-lg border-2 border-transparent hover:border-black/10 hover:shadow-lg transition-all"
+                                        disabled={isLoginLoading}
                                     >
-                                        <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
-                                    </motion.div>
-                                    <h2 className="text-2xl font-display font-semibold mb-2">
-                                        Welcome Back!
-                                    </h2>
-                                    <p className="text-muted-foreground mb-4">
-                                        You have been signed in successfully.
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Redirecting to dashboard...
+                                        {isLoginLoading ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                Logging in...
+                                            </>
+                                        ) : (
+                                            'Log In'
+                                        )}
+                                    </Button>
+
+                                    <div className="relative py-2">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <span className="w-full border-t border-black/10" />
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-white px-2 text-[#1A3D1A]/40 font-bold tracking-wider">OR</span>
+                                        </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+
+                                    <div className="space-y-3">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full h-12 rounded-full border-2 border-black/5 bg-white text-[#1A3D1A] font-bold hover:bg-[#F5F1E8] hover:border-black/10 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <svg className="h-5 w-5" viewBox="0 0 24 24">
+                                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                            </svg>
+                                            Continue with Google
+                                        </Button>
+                                    </div>
+
+                                    <p className="text-center mt-6 text-sm font-bold text-[#1A3D1A]/60">
+                                        New to MarkMorph?{' '}
+                                        <Link href="/signup" className="text-[#5B1E5E] underline hover:text-[#1A3D1A]">
+                                            Create an account
+                                        </Link>
+                                    </p>
+                                </form>
+                            </Form>
                         </motion.div>
-                    )}
-                </AnimatePresence>
+                    </AnimatePresence>
+                </div>
+            </div>
+
+            {/* Right Side - Visuals (Neo-Brutalist Collage) */}
+            <div className="hidden lg:flex flex-1 bg-[#1A3D1A] relative overflow-hidden items-center justify-center">
+                <NextImage
+                    src="/signup-hero.png"
+                    alt="Login to MarkMorph"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                <div className="absolute inset-0 bg-[#1A3D1A]/10 mix-blend-multiply" />
             </div>
         </div>
     );

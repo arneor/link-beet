@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useState } from 'react';
-import { useLogout } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SidebarProps {
     businessId: string;
@@ -21,7 +21,7 @@ interface SidebarProps {
 export function Sidebar({ businessId }: SidebarProps) {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
-    const logout = useLogout();
+    const { logout } = useAuth();
 
     const links = [
         {
@@ -45,7 +45,7 @@ export function Sidebar({ businessId }: SidebarProps) {
     const renderNavContent = () => (
         <div className="flex flex-col h-full py-6">
             <div className="px-6 mb-8">
-                <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-display font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                     MarkMorph
                 </h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">

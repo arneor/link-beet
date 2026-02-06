@@ -14,7 +14,6 @@ import { BusinessProfile, BusinessProfileSchema } from '../business/schemas/busi
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { AnalyticsLog, AnalyticsLogSchema } from '../analytics/schemas/analytics-log.schema';
 import { ComplianceLog, ComplianceLogSchema } from '../compliance/schemas/compliance-log.schema';
-import { WifiUser, WifiUserSchema } from '../splash/schemas/wifi-user.schema'; // Needed for analytics
 
 @Module({
     imports: [
@@ -25,7 +24,6 @@ import { WifiUser, WifiUserSchema } from '../splash/schemas/wifi-user.schema'; /
             { name: User.name, schema: UserSchema },
             { name: AnalyticsLog.name, schema: AnalyticsLogSchema },
             { name: ComplianceLog.name, schema: ComplianceLogSchema },
-            { name: WifiUser.name, schema: WifiUserSchema }, // Added Schema
         ]),
         PassportModule.register({ defaultStrategy: 'admin-jwt' }),
         JwtModule.registerAsync({

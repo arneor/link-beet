@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BusinessProfile, BusinessProfileDocument } from '../business/schemas/business-profile.schema';
-import { WifiUser, WifiUserDocument } from '../splash/schemas/wifi-user.schema';
 import { AnalyticsLog, AnalyticsLogDocument } from '../analytics/schemas/analytics-log.schema';
 import { AdminDashboardResponseDto, BusinessAnalyticsItemDto, KpisDto } from './dto/admin-analytics.dto';
 
@@ -20,7 +19,6 @@ export class AdminAnalyticsService {
 
     constructor(
         @InjectModel(BusinessProfile.name) private businessModel: Model<BusinessProfileDocument>,
-        @InjectModel(WifiUser.name) private wifiUserModel: Model<WifiUserDocument>,
         @InjectModel(AnalyticsLog.name) private analyticsModel: Model<AnalyticsLogDocument>,
     ) { }
 
@@ -108,12 +106,10 @@ export class AdminAnalyticsService {
      */
     private async getGlobalKpis(): Promise<KpisDto> {
         const [
-            totalUsers,
             totalBusinesses,
             activeBusinesses,
             analyticsStats
         ] = await Promise.all([
-            this.wifiUserModel.countDocuments(),
             this.businessModel.countDocuments(),
             this.businessModel.countDocuments({ status: 'active' }),
             this.analyticsModel.aggregate([
@@ -140,7 +136,7 @@ export class AdminAnalyticsService {
         const userGrowth = "+12%";
 
         return {
-            totalUsers,
+            totalUsers: 0, // Deprecated WifiUser model
             userGrowth,
             totalBusinesses,
             activeBusinesses,
@@ -155,84 +151,8 @@ export class AdminAnalyticsService {
      * B. Business-Specific Intelligence (Leaderboard)
      */
     private async getBusinessDrilldown(): Promise<BusinessAnalyticsItemDto[]> {
-        // We need to aggregate per business
-        // This pipeline joins Business -> WifiUser (connections) -> Analytics (views/clicks)
-
-        const businesses = await this.businessModel.aggregate([
-            {
-                $lookup: {
-                    from: 'wifi_users',
-                    localField: '_id',
-                    foreignField: 'businessId',
-                    as: 'connections'
-                }
-            },
-            {
-                $lookup: {
-                    from: 'analytics_logs',
-                    localField: '_id',
-                    foreignField: 'businessId',
-                    as: 'interactions'
-                }
-            },
-            {
-                $project: {
-                    name: '$businessName',
-                    location: { $ifNull: ['$location', 'Unknown'] },
-                    totalConnections: { $size: '$connections' },
-                    wifiUsers: '$connections', // Keep for loyalty calc
-
-                    views: {
-                        $size: {
-                            $filter: {
-                                input: '$interactions',
-                                as: 'i',
-                                cond: { $eq: ['$$i.interactionType', 'view'] }
-                            }
-                        }
-                    },
-                    clicks: {
-                        $size: {
-                            $filter: {
-                                input: '$interactions',
-                                as: 'i',
-                                cond: { $eq: ['$$i.interactionType', 'click'] }
-                            }
-                        }
-                    }
-                }
-            },
-            { $sort: { totalConnections: -1 } },
-            { $limit: 20 } // Top 20 for performance
-        ]);
-
-        return businesses.map(b => {
-            // Loyalty Rate: % of users with > 1 visit
-            const repeatUsers = b.wifiUsers.filter((u: any) => u.visitCount > 1).length;
-            const totalUsers = b.wifiUsers.length;
-            const loyaltyRate = totalUsers > 0
-                ? Math.round((repeatUsers / totalUsers) * 100) + '%'
-                : '0%';
-
-            // Active Sessions (Approx based on recent connections - e.g. last 30 mins)
-            // Ideally strictly filtered in DB, but map logic is fine for "God View" snapshot
-            const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
-            const activeSessions = b.wifiUsers.filter((u: any) => new Date(u.updatedAt) > thirtyMinsAgo).length;
-
-            return {
-                id: b._id.toString(),
-                name: b.name,
-                location: b.location,
-                totalConnections: b.totalConnections,
-                activeSessions,
-                loyaltyRate,
-                stats: {
-                    views: b.views,
-                    clicks: b.clicks,
-                    reviewsTriggered: Math.round(b.clicks * 0.3) // Estimate
-                }
-            };
-        });
+        // Functionality disabled due to schema migration
+        return [];
     }
 
     /**

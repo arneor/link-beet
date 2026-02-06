@@ -7,16 +7,27 @@ import { APP_GUARD } from '@nestjs/core';
 // Common Module
 import { CommonModule } from './common/common.module';
 
+// Infrastructure Modules (NEW)
+import { PrismaModule } from './common/prisma/prisma.module';
+import { SupabaseModule } from './common/supabase/supabase.module';
+import { RedisModule } from './common/redis/redis.module';
+import { ImageModule } from './common/image/image.module';
+
 // Feature Modules
 import { AuthModule } from './modules/auth/auth.module';
 import { BusinessModule } from './modules/business/business.module';
-import { AdsModule } from './modules/ads/ads.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { ComplianceModule } from './modules/compliance/compliance.module';
+// import { AdsModule } from './modules/ads/ads.module';
+// import { AnalyticsModule } from './modules/analytics/analytics.module';
+// import { AdminModule } from './modules/admin/admin.module';
+// import { ComplianceModule } from './modules/compliance/compliance.module';
 import { HealthModule } from './modules/health/health.module';
-import { SplashModule } from './modules/splash/splash.module';
+
 import { MediaModule } from './modules/media/media.module';
+
+// New Feature Modules (V2)
+import { ProfileModule } from './modules/profiles/profile.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { WifiPortalModule } from './modules/wifi-portal/wifi-portal.module';
 
 @Module({
     imports: [
@@ -26,7 +37,19 @@ import { MediaModule } from './modules/media/media.module';
             envFilePath: ['.env', '.env.local', '.env.development'],
         }),
 
-        // MongoDB Connection
+        // PostgreSQL via Prisma (Primary Database - Supabase)
+        PrismaModule,
+
+        // Supabase Client (Auth, Realtime)
+        SupabaseModule,
+
+        // Upstash Redis (Caching, OTP, Rate Limiting)
+        RedisModule,
+
+        // Image Processing (Sharp)
+        ImageModule,
+
+        // MongoDB Connection - DISABLED TEMPORARILY
         MongooseModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
@@ -52,16 +75,20 @@ import { MediaModule } from './modules/media/media.module';
         // Common Module (Global - Email Service, etc.)
         CommonModule,
 
-        // Feature Modules
+        // Feature Modules (Legacy)
         AuthModule,
         BusinessModule,
-        AdsModule,
-        AnalyticsModule,
-        AdminModule,
-        ComplianceModule,
+        // AdsModule,
+        // AnalyticsModule, // Disabled dependency on Mongoose
+        // AdminModule,
+        // ComplianceModule,
         HealthModule,
-        SplashModule,
         MediaModule,
+
+        // Feature Modules (V2 - New Platform Features)
+        ProfileModule,
+        CatalogModule,
+        WifiPortalModule,
     ],
     providers: [
         // Global Throttler Guard
@@ -72,3 +99,5 @@ import { MediaModule } from './modules/media/media.module';
     ],
 })
 export class AppModule { }
+
+

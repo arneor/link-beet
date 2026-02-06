@@ -1,0 +1,363 @@
+// MarkMorph Platform - Prisma Schema
+// PostgreSQL database via Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USER & AUTH ============
+
+model User {
+  id              String       @id @default(uuid())
+  email           String       @unique
+  passwordHash    String?
+
+  // OAuth
+  googleId        String?      @unique
+
+  // Profile basics
+  username        String       @unique
+  displayName     String?
+  profilePicture  String?
+
+  // Category
+  category        UserCategory?
+  creatorType     String?      // "Content Creator", "Artist", etc.
+
+  // Status
+  emailVerified   Boolean      @default(false)
+  isActive        Boolean      @default(true)
+  onboardingStep  Int          @default(0)
+
+  // Timestamps
+  lastLoginAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  profile         Profile?
+  business        Business?
+  usernameHistory UsernameHistory[]
+  complianceLogs  ComplianceLog[]
+
+  @@index([email])
+  @@index([username])
+  @@index([googleId])
+}
+
+enum UserCategory {
+  CREATOR
+  BUSINESS
+}
+
+model UsernameHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  oldUsername String   @unique
+  changedAt   DateTime @default(now())
+  expiresAt   DateTime // 6 months after change for redirects
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([oldUsername])
+}
+
+// ============ PROFILE (THE TREE) ============
+
+model Profile {
+  id              String       @id @default(uuid())
+  userId          String       @unique
+
+  // Display
+  bio             String?
+  location        String?
+
+  // Appearance
+  theme           ProfileTheme @default(DARK)
+  backgroundColor String?
+  backgroundImage String?
+  accentColor     String?      @default("#D4F935") // Lime from design system
+  buttonStyle     ButtonStyle  @default(ROUNDED)
+
+  // Settings
+  isPublished     Boolean      @default(false)
+  showLocation    Boolean      @default(true)
+
+  // Analytics
+  totalViews      Int          @default(0)
+  totalClicks     Int          @default(0)
+
+  // Timestamps
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socialLinks       SocialLink[]
+  customLinks       CustomLink[]
+  catalogCategories CatalogCategory[]
+
+  @@index([userId])
+}
+
+enum ProfileTheme {
+  LIGHT
+  DARK
+  CUSTOM
+}
+
+enum ButtonStyle {
+  ROUNDED
+  SQUARE
+  PILL
+}
+
+// ============ LINKS ============
+
+model SocialLink {
+  id          String         @id @default(uuid())
+  profileId   String
+
+  platform    SocialPlatform
+  url         String
+  username    String?
+  isVisible   Boolean        @default(true)
+  order       Int            @default(0)
+
+  // Analytics
+  clicks      Int            @default(0)
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  profile     Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+enum SocialPlatform {
+  INSTAGRAM
+  FACEBOOK
+  TWITTER
+  YOUTUBE
+  LINKEDIN
+  TIKTOK
+  WHATSAPP
+  CUSTOM
+}
+
+model CustomLink {
+  id          String   @id @default(uuid())
+  profileId   String
+
+  title       String
+  url         String
+  icon        String?  // Lucide icon name
+  color       String?
+  isVisible   Boolean  @default(true)
+  order       Int      @default(0)
+
+  // Analytics
+  clicks      Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+// ============ CATALOG ============
+
+model CatalogCategory {
+  id          String   @id @default(uuid())
+  profileId   String
+
+  name        String   // "Coffee", "Food", "Desserts"
+  slug        String
+  icon        String?
+  order       Int      @default(0)
+  isVisible   Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  items       CatalogItem[]
+
+  @@unique([profileId, slug])
+  @@index([profileId])
+}
+
+model CatalogItem {
+  id              String   @id @default(uuid())
+  categoryId      String
+
+  name            String
+  description     String?
+
+  // Pricing
+  price           Decimal? @db.Decimal(10, 2)
+  currency        String   @default("INR")
+  discountPrice   Decimal? @db.Decimal(10, 2)
+
+  // Media (up to 4 images)
+  images          String[] // Array of S3 URLs
+
+  // Attributes
+  isAvailable     Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  isVeg           Boolean?
+  spicyLevel      Int?     // 0-3
+  tags            String[]
+
+  order           Int      @default(0)
+  isVisible       Boolean  @default(true)
+
+  // Analytics
+  views           Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category        CatalogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+}
+
+// ============ BUSINESS (FOR WIFI PORTAL) ============
+
+model Business {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+
+  businessName    String
+  businessType    BusinessType
+  location        String?
+  address         String?
+  phone           String?
+
+  // Status
+  status          BusinessStatus @default(PENDING_APPROVAL)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+
+  // Timestamps
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wifiPortal      WifiPortal?
+  complianceLogs  ComplianceLog[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum BusinessType {
+  RESTAURANT_CAFE
+  RETAIL_STORE
+  SALON_SPA
+  GYM_FITNESS
+  HOTEL_HOSTEL
+  OTHER
+}
+
+enum BusinessStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+// ============ WIFI PORTAL ============
+
+model WifiPortal {
+  id                  String           @id @default(uuid())
+  businessId          String           @unique
+
+  // Splash page customization
+  splashTitle         String?
+  splashDescription   String?
+  splashBackgroundUrl String?
+  splashLogoUrl       String?
+
+  // WiFi config
+  wifiSsid            String?
+
+  // Post-connect behavior
+  redirectType        WifiRedirectType @default(PROFILE)
+  customRedirectUrl   String?
+  showProfileButton   Boolean          @default(true)
+
+  // Branding (using design system colors)
+  primaryColor        String           @default("#D4F935") // Lime
+  ctaButtonText       String           @default("View Our Offers")
+
+  // Settings
+  isEnabled           Boolean          @default(true)
+  requireEmail        Boolean          @default(false)
+
+  // Analytics
+  totalConnections    Int              @default(0)
+  uniqueVisitors      Int              @default(0)
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  business            Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+enum WifiRedirectType {
+  PROFILE    // Redirect to tree page
+  CUSTOM     // Redirect to custom URL
+  INTERNET   // Just allow internet access
+}
+
+model ReservedUsername {
+  id       String @id @default(uuid())
+  username String @unique
+  reason   String // "system_route", "brand_protection", "offensive"
+}
+
+// ============ COMPLIANCE (PM-WANI) ============
+
+model ComplianceLog {
+  id              String   @id @default(uuid())
+
+  // Data
+  macAddress      String
+  assignedIP      String?
+  phone           String?
+  
+  // Relations
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  
+  businessId      String?
+  business        Business? @relation(fields: [businessId], references: [id])
+
+  // Timestamps
+  loginTime       DateTime @default(now())
+  logoutTime      DateTime?
+  sessionDuration Int? // in minutes
+  
+  deviceType      String?
+  userAgent       String?
+  
+  createdAt       DateTime @default(now()) // For TTL (handled by DB policy usually, or cron)
+
+  @@index([macAddress])
+  @@index([phone])
+  @@index([businessId])
+}

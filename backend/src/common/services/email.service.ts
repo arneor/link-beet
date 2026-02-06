@@ -32,15 +32,16 @@ export class EmailService {
         this.logger.log(`📧 Initializing email service for environment: ${nodeEnv}`);
 
         // In PRODUCTION: Use Resend (works on cloud platforms like Render)
-        if (isProduction) {
-            const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
+        // Check for Resend API Key (Works in PROD and DEV)
+        const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
 
-            if (resendApiKey) {
-                this.resend = new Resend(resendApiKey);
-                this.useResend = true;
-                this.logger.log('📧 [PRODUCTION] Email service configured with Resend API');
-                return;
-            } else {
+        if (resendApiKey) {
+            this.resend = new Resend(resendApiKey);
+            this.useResend = true;
+            this.logger.log(`📧 Email service configured with Resend API (${nodeEnv})`);
+            return;
+        } else {
+            if (isProduction) {
                 this.logger.warn('⚠️ [PRODUCTION] RESEND_API_KEY not found! Emails will fail.');
             }
         }
