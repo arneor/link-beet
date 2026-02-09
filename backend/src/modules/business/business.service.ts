@@ -81,6 +81,14 @@ export class BusinessService {
      * Create a new business profile (status: pending_approval by default)
      */
     async create(ownerId: string, dto: CreateBusinessDto): Promise<BusinessProfileDocument> {
+        // Check for username uniqueness if provided
+        if (dto.username) {
+            const existing = await this.businessModel.findOne({ username: dto.username });
+            if (existing) {
+                throw new ForbiddenException('Username is already taken');
+            }
+        }
+
         const business = new this.businessModel({
             ...dto,
             ownerId: new Types.ObjectId(ownerId),
@@ -115,6 +123,19 @@ export class BusinessService {
      */
     async findByOwnerId(ownerId: string): Promise<BusinessProfileDocument | null> {
         return this.businessModel.findOne({ ownerId: new Types.ObjectId(ownerId) });
+    }
+
+    /**
+     * Get business by username (public)
+     */
+    async findByUsername(username: string): Promise<BusinessProfileDocument> {
+        const business = await this.businessModel.findOne({ username });
+
+        if (!business) {
+            throw new NotFoundException('Business not found');
+        }
+
+        return business;
     }
 
     /**

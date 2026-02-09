@@ -426,6 +426,7 @@ export const businessApi = {
   // Register new business
   async register(data: {
     businessName: string;
+    username?: string;
     location?: string;
     category?: string;
     contactEmail?: string;
@@ -435,6 +436,11 @@ export const businessApi = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  // Get public profile by username
+  async getPublicProfile(username: string): Promise<Business> {
+    return apiRequest(`/business/u/${username}`);
   },
 
   // Upload media

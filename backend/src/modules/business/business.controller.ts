@@ -60,7 +60,33 @@ export class BusinessController {
             ctaButtonText: business.ctaButtonText,
             ctaButtonUrl: business.ctaButtonUrl,
             showWelcomeBanner: business.showWelcomeBanner,
+            username: business.username,
             message: 'Business registered successfully. Pending admin approval.',
+        };
+    }
+
+    @Get('u/:username')
+    @SkipThrottle()
+    @ApiOperation({ summary: 'Get public business profile by username' })
+    @ApiParam({ name: 'username', description: 'Unique username of the business' })
+    @ApiResponse({ status: 200, description: 'Business profile data' })
+    @ApiResponse({ status: 404, description: 'Business not found' })
+    async getPublicProfileByUsername(@Param('username') username: string) {
+        const business = await this.businessService.findByUsername(username);
+
+        // Return only public data for the profile page
+        return {
+            id: business._id,
+            businessName: business.businessName,
+            username: business.username,
+            location: business.location,
+            category: business.category,
+            logoUrl: business.logoUrl,
+            primaryColor: business.primaryColor,
+            description: business.description,
+            // Add other necessary fields for Tree Profile
+            ads: business.ads.filter(ad => ad.status === 'active'),
+            createdAt: business.createdAt,
         };
     }
 

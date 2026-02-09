@@ -55,6 +55,11 @@ export class CreateBusinessDto {
     @IsNotEmpty()
     businessName: string;
 
+    @ApiProperty({ description: 'Public username for custom link', example: 'joescafe' })
+    @IsString()
+    @IsOptional()
+    username?: string;
+
     @ApiProperty({ description: 'Business location/address', example: '123 Main St, Mumbai' })
     @IsString()
     @IsOptional()
@@ -156,6 +161,9 @@ export class BusinessResponseDto {
 
     @ApiProperty({ description: 'Business name' })
     businessName: string;
+
+    @ApiProperty({ description: 'Public username' })
+    username?: string;
 
     @ApiProperty({ description: 'Owner user ID' })
     ownerId: string;

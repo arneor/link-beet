@@ -47,6 +47,10 @@ import Link from 'next/link';
 // Validation schema for business details
 const signupSchema = z.object({
     businessName: z.string().min(2, 'Business name must be at least 2 characters'),
+    username: z.string()
+        .min(3, 'Username must be at least 3 characters')
+        .max(20, 'Username must be at most 20 characters')
+        .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
     location: z.string().min(2, 'Location is required'),
     email: z.string().email('Please enter a valid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -82,6 +86,7 @@ export default function SignupPage() {
         resolver: zodResolver(signupSchema),
         defaultValues: {
             businessName: '',
+            username: '',
             location: '',
             email: '',
             password: '',
@@ -165,6 +170,7 @@ export default function SignupPage() {
             // Now register the business
             const business = await businessApi.register({
                 businessName: businessData.businessName,
+                username: businessData.username,
                 location: businessData.location,
                 contactEmail: businessData.email,
             });
@@ -295,12 +301,35 @@ export default function SignupPage() {
                                                     )}
                                                 />
 
+                                                {/* Username */}
+                                                <FormField
+                                                    control={signupForm.control}
+                                                    name="username"
+                                                    render={({ field }) => (
+                                                        <FormItem className="col-span-2 md:col-span-1">
+                                                            <FormLabel>Username</FormLabel>
+                                                            <FormControl>
+                                                                <div className="relative">
+                                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">@</span>
+                                                                    <Input
+                                                                        placeholder="markmorph"
+                                                                        className="pl-7 h-11"
+                                                                        {...field}
+                                                                        onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                                                    />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
                                                 {/* Location */}
                                                 <FormField
                                                     control={signupForm.control}
                                                     name="location"
                                                     render={({ field }) => (
-                                                        <FormItem className="col-span-2">
+                                                        <FormItem className="col-span-2 md:col-span-1">
                                                             <FormLabel>Location / City</FormLabel>
                                                             <FormControl>
                                                                 <div className="relative">

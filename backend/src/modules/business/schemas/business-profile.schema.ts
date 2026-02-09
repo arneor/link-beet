@@ -91,6 +91,10 @@ export class BusinessProfile {
     @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     ownerId: Types.ObjectId;
 
+    @ApiProperty({ description: 'Public username for custom link' })
+    @Prop({ unique: true, index: true, sparse: true })
+    username?: string;
+
     @ApiProperty({ description: 'Business location/address' })
     @Prop()
     location?: string;
