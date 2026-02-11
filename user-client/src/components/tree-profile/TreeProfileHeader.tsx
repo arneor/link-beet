@@ -17,6 +17,7 @@ import {
     X,
     Plus,
     Link as LinkIcon,
+    Clock,
 } from 'lucide-react';
 import { TreeProfileData, SocialLink } from '@/lib/dummyTreeProfileData';
 import { cn } from '@/lib/utils';
@@ -299,6 +300,56 @@ function TreeProfileHeaderComponent({ data, isEditMode, onUpdate }: TreeProfileH
                         />
                     ) : (
                         <span className="text-sm">{data.location}</span>
+                    )}
+                </div>
+
+                {/* Opening Hours */}
+                <div
+                    className="flex items-center justify-center gap-1.5 mb-6"
+                    style={{ color: 'var(--text-color)', opacity: 0.7 }}
+                >
+                    <Clock className="w-4 h-4 shrink-0" />
+                    {isEditMode ? (
+                        <div className="flex items-center gap-1">
+                            <input
+                                type="text"
+                                value={data.openingHours?.start || ''}
+                                onChange={(e) => onUpdate?.({
+                                    openingHours: {
+                                        start: e.target.value,
+                                        end: data.openingHours?.end || ''
+                                    }
+                                })}
+                                className="text-sm bg-transparent border-b outline-none w-20 text-center transition-colors"
+                                style={{
+                                    color: 'inherit',
+                                    borderColor: 'color-mix(in srgb, var(--text-color) 30%, transparent)'
+                                }}
+                                placeholder="Start Time"
+                            />
+                            <span>-</span>
+                            <input
+                                type="text"
+                                value={data.openingHours?.end || ''}
+                                onChange={(e) => onUpdate?.({
+                                    openingHours: {
+                                        start: data.openingHours?.start || '',
+                                        end: e.target.value
+                                    }
+                                })}
+                                className="text-sm bg-transparent border-b outline-none w-20 text-center transition-colors"
+                                style={{
+                                    color: 'inherit',
+                                    borderColor: 'color-mix(in srgb, var(--text-color) 30%, transparent)'
+                                }}
+                                placeholder="End Time"
+                            />
+                        </div>
+                    ) : (data.openingHours?.start && data.openingHours?.end) && (
+                        <div className="flex items-center gap-1.5 text-sm font-medium">
+                            <span className="text-green-500 font-bold uppercase text-[10px] tracking-wider border border-green-500/30 bg-green-500/10 px-1.5 py-0.5 rounded-full">Open</span>
+                            <span>{data.openingHours.start} - {data.openingHours.end}</span>
+                        </div>
                     )}
                 </div>
 

@@ -85,6 +85,10 @@ export interface TreeProfileData {
     isVerified: boolean;
     sectionTitle: string;
     linksTitle: string;
+    openingHours?: {
+        start: string;
+        end: string;
+    };
     theme: TreeProfileTheme;
     socialLinks: SocialLink[];
     customLinks: CustomLink[];
@@ -109,6 +113,10 @@ export const dummyTreeProfileData: TreeProfileData = {
     isVerified: true,
     sectionTitle: "✨ Our Menu",
     linksTitle: "🔗 Quick Links",
+    openingHours: {
+        start: "09:00 AM",
+        end: "10:00 PM"
+    },
     theme: {
         templateId: 'clean-minimal',
         primaryColor: "#000000",

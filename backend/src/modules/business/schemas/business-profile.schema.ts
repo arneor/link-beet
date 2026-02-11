@@ -78,10 +78,67 @@ export const AdSchema = SchemaFactory.createForClass(Ad);
 
 export type BusinessProfileDocument = BusinessProfile & Document;
 
+@Schema({ _id: false })
+export class TreeProfileTheme {
+    @Prop() primaryColor: string;
+    @Prop() secondaryColor: string;
+    @Prop() backgroundColor: string;
+    @Prop() backgroundType: string;
+    @Prop() backgroundValue: string;
+    @Prop() textColor: string;
+    @Prop() fontFamily: string;
+    @Prop() buttonStyle: string;
+    @Prop() cardStyle: string;
+}
+
+@Schema({ _id: false })
+export class CustomLink {
+    @Prop() id: string;
+    @Prop() title: string;
+    @Prop() url: string;
+    @Prop() description: string;
+    @Prop() icon: string;
+    @Prop() style: string;
+    @Prop() isActive: boolean;
+}
+
+@Schema({ _id: false })
+export class SocialLink {
+    @Prop() id: string;
+    @Prop() platform: string;
+    @Prop() url: string;
+    @Prop() label: string;
+}
+
 @Schema({ timestamps: true, collection: 'business_profiles' })
 export class BusinessProfile {
     @ApiProperty({ description: 'Unique identifier' })
     _id: Types.ObjectId;
+
+    // ... Tree Profile Specific Fields ...
+    @ApiProperty({ description: 'Tree Profile Theme Settings' })
+    @Prop({ type: TreeProfileTheme })
+    theme?: TreeProfileTheme;
+
+    @ApiProperty({ description: 'Custom Links for Tree Profile' })
+    @Prop({ type: [CustomLink], default: [] })
+    customLinks?: CustomLink[];
+
+    @ApiProperty({ description: 'Social Media Links' })
+    @Prop({ type: [SocialLink], default: [] })
+    socialLinks?: SocialLink[];
+
+    @ApiProperty({ description: 'Section Title for Menu/Catalog' })
+    @Prop()
+    sectionTitle?: string;
+
+    @ApiProperty({ description: 'Title for Quick Links Section' })
+    @Prop()
+    linksTitle?: string;
+
+    @ApiProperty({ description: 'Business Tagline' })
+    @Prop()
+    tagline?: string;
 
     @ApiProperty({ description: 'Business name' })
     @Prop({ required: true })

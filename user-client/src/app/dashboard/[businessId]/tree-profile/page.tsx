@@ -35,17 +35,10 @@ export async function generateMetadata({ params }: { params: Promise<{ businessI
     };
 }
 
-// Simulated Server-Side Data Fetching with caching
+// Server-Side Data Fetching
 async function getProfileData() {
-    // Simulate network delay to demonstrate Suspense
-    // In production: const res = await fetch(`.../api/business/${businessId}`, { next: { revalidate: 3600 } });
-
-    // Return dummy data for now, but treating it as async
-    return new Promise<typeof dummyTreeProfileData>((resolve) => {
-        // resolve immediately in production for speed, but simulating async nature here ensures we use Suspense correctly
-        // setTimeout(resolve, 0, dummyTreeProfileData);
-        resolve(dummyTreeProfileData);
-    });
+    // Return dummy data directly for UI development
+    return dummyTreeProfileData;
 }
 
 export default async function TreeProfilePage({ params }: { params: Promise<{ businessId: string }> }) {

@@ -22,19 +22,100 @@ export function TreeProfileEditControls() {
     const params = useParams();
     const businessId = params.businessId as string;
 
-    const handleSave = () => {
-        // Here you would typically trigger the API call
-        // const currentData = useTreeProfileStore.getState().profileData;
-        // await saveToApi(currentData);
+    const handleSave = async () => {
+        try {
+            // Map Banners to Ads
+            const bannerAds = (profileData.banners || []).map(b => ({
+                id: b.id.length === 24 ? b.id : undefined, // Keep ID if valid MongoID, else new
+                title: b.title || 'Untitled',
+                mediaUrl: b.imageUrl,
+                mediaType: 'image' as const,
+                placement: 'BANNER',
+                ctaUrl: b.linkUrl,
+                status: b.isActive ? 'active' : 'paused',
+                duration: 5,
+                views: 0,
+                clicks: 0
+            }));
 
-        console.log('Saving data:', profileData);
-        setHasChanges(false);
-        setIsEditMode(false);
+            // Map Gallery to Ads
+            const galleryAds = (profileData.gallery || []).map(g => ({
+                id: g.id.length === 24 ? g.id : undefined,
+                title: g.caption || 'Gallery Image',
+                mediaUrl: g.imageUrl,
+                mediaType: 'image' as const,
+                placement: 'GALLERY',
+                description: g.caption,
+                status: 'active',
+                duration: 5,
+                views: 0,
+                clicks: 0
+            }));
 
-        toast({
-            title: '✨ Changes Saved!',
-            description: 'Your Tree Profile has been updated successfully.',
-        });
+            // Prepare Business Update Payload
+            const updatePayload = {
+                businessName: profileData.businessName,
+                location: profileData.location,
+                description: profileData.description,
+                primaryColor: profileData.theme.primaryColor,
+                tagline: profileData.tagline,
+                sectionTitle: profileData.sectionTitle,
+                linksTitle: profileData.linksTitle,
+
+                // Theme Settings
+                theme: {
+                    primaryColor: profileData.theme.primaryColor,
+                    secondaryColor: profileData.theme.secondaryColor,
+                    backgroundColor: profileData.theme.backgroundColor,
+                    backgroundType: profileData.theme.backgroundType,
+                    backgroundValue: profileData.theme.backgroundValue,
+                    textColor: profileData.theme.textColor,
+                    fontFamily: profileData.theme.fontFamily,
+                    buttonStyle: profileData.theme.buttonStyle,
+                    cardStyle: profileData.theme.cardStyle,
+                },
+
+                // Links
+                customLinks: profileData.customLinks.map(link => ({
+                    id: link.id,
+                    title: link.title,
+                    url: link.url,
+                    description: link.description,
+                    icon: link.icon,
+                    style: link.style,
+                    isActive: link.isActive
+                })),
+
+                socialLinks: profileData.socialLinks.map(link => ({
+                    id: link.id,
+                    platform: link.platform,
+                    url: link.url,
+                    label: link.label
+                })),
+
+                // Combine ads
+                ads: [...bannerAds, ...galleryAds]
+            };
+
+            // MOCK API CALL - UI UPDATE ONLY
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('Mock saving profile data:', updatePayload);
+
+            setHasChanges(false);
+            setIsEditMode(false);
+
+            toast({
+                title: '✨ Changes Saved (Mock)',
+                description: 'Profile updated locally for preview.',
+            });
+        } catch (error) {
+            console.error('Failed to save profile:', error);
+            toast({
+                title: 'Save Failed',
+                description: 'Could not update profile. Please try again.',
+                variant: 'destructive'
+            });
+        }
     };
 
     const handleDiscard = () => {

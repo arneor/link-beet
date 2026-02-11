@@ -43,6 +43,38 @@ export interface Business {
   rejectionReason?: string;
   suspensionReason?: string;
   ads: Ad[];
+
+  // Tree Profile Specific Fields
+  theme?: {
+    primaryColor: string;
+    secondaryColor?: string;
+    backgroundColor: string;
+    backgroundType: string;
+    backgroundValue: string;
+    textColor: string;
+    fontFamily: string;
+    buttonStyle: string;
+    cardStyle: string;
+  };
+  customLinks?: Array<{
+    id: string;
+    title: string;
+    url: string;
+    description?: string;
+    icon?: string;
+    style: string;
+    isActive: boolean;
+  }>;
+  socialLinks?: Array<{
+    id: string;
+    platform: string;
+    url: string;
+    label?: string;
+  }>;
+  sectionTitle?: string;
+  linksTitle?: string;
+  tagline?: string;
+
   createdAt?: string;
   updatedAt?: string;
 }
