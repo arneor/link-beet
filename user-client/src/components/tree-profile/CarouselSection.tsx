@@ -1,20 +1,27 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring, PanInfo } from 'framer-motion';
-import { Plus, Trash2, Edit2, ImageIcon, Sparkles } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, Reorder, useDragControls, DragControls } from 'framer-motion';
+import {
+    Upload,
+    Trash2,
+    Star,
+    GripVertical,
+    Image as ImageIcon,
+    Pencil,
+    Check
+} from 'lucide-react';
 import { ProfileBanner, TreeProfileTheme } from '@/lib/dummyTreeProfileData';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SplashCarousel } from "@/components/SplashCarousel";
 
 interface CarouselSectionProps {
     banners: ProfileBanner[];
@@ -24,380 +31,319 @@ interface CarouselSectionProps {
 }
 
 export function CarouselSection({ banners = [], isEditMode, onUpdate, theme }: CarouselSectionProps) {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [editingBanner, setEditingBanner] = useState<ProfileBanner | null>(null);
-    const [direction, setDirection] = useState(0);
-    const scrollTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-    // Modal State
-    const [title, setTitle] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
-    const [linkUrl, setLinkUrl] = useState('');
-
-    // Parallax effect with spring physics for smooth motion
-    const dragX = useMotionValue(0);
-    const parallaxX = useSpring(dragX, { stiffness: 150, damping: 30, mass: 0.5 });
-
-    const activeBanners = isEditMode ? banners : banners.filter(b => b.isActive);
-
-    // Auto-advance carousel
-    useEffect(() => {
-        if (activeBanners.length <= 1 || isEditMode) return;
-
-        const startTimer = () => {
-            scrollTimerRef.current = setInterval(() => {
-                setDirection(1);
-                setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
-            }, 6000); // 6 seconds per slide
-        };
-
-        startTimer();
-
-        return () => {
-            if (scrollTimerRef.current) {
-                clearInterval(scrollTimerRef.current);
-            }
-        };
-    }, [activeBanners.length, isEditMode]);
-
-    // Restart timer after manual navigation
-    const restartTimer = () => {
-        if (scrollTimerRef.current) {
-            clearInterval(scrollTimerRef.current);
-        }
-        if (!isEditMode && activeBanners.length > 1) {
-            scrollTimerRef.current = setInterval(() => {
-                setDirection(1);
-                setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
-            }, 6000);
-        }
+    const handleAddBanner = () => {
+        fileInputRef.current?.click();
     };
 
-    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        const swipeThreshold = 50;
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
 
-        // Reset parallax after drag
-        dragX.set(0);
-
-        if (info.offset.x > swipeThreshold) {
-            // Swiped right - go to previous
-            setDirection(-1);
-            setCurrentIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
-            restartTimer();
-        } else if (info.offset.x < -swipeThreshold) {
-            // Swiped left - go to next
-            setDirection(1);
-            setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
-            restartTimer();
+        const files = Array.from(e.target.files);
+        if (files.length + banners.length > 3) {
+            alert("Maximum 3 featured banners allowed.");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
         }
+
+        const newBanners: ProfileBanner[] = files.map(file => ({
+            id: crypto.randomUUID(),
+            imageUrl: URL.createObjectURL(file), // In real app, upload to S3
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            isActive: true,
+            linkUrl: '#'
+        }));
+
+        onUpdate([...banners, ...newBanners]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const handleDelete = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        onUpdate(banners.filter(b => b.id !== id));
-        if (currentIndex >= activeBanners.length - 1) {
-            setCurrentIndex(Math.max(0, activeBanners.length - 2));
-        }
-    };
-
-    const openEditModal = (banner?: ProfileBanner, e?: React.MouseEvent) => {
+    const handleDelete = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
-        if (banner) {
-            setEditingBanner(banner);
-            setTitle(banner.title || '');
-            setImageUrl(banner.imageUrl);
-            setLinkUrl(banner.linkUrl || '');
-        } else {
-            setEditingBanner(null);
-            setTitle('');
-            setImageUrl('');
-            setLinkUrl('');
-        }
-        setIsModalOpen(true);
+        onUpdate(banners.filter(b => b.id !== id));
     };
 
-    const handleSave = () => {
-        if (!imageUrl) return;
-
-        if (editingBanner) {
-            onUpdate(banners.map(b =>
-                b.id === editingBanner.id
-                    ? { ...b, title, imageUrl, linkUrl }
-                    : b
-            ));
-        } else {
-            const newBanner: ProfileBanner = {
-                id: crypto.randomUUID(),
-                imageUrl,
-                title,
-                linkUrl,
-                isActive: true
-            };
-            onUpdate([...banners, newBanner]);
-        }
-        setIsModalOpen(false);
+    const handleReorder = (newBanners: ProfileBanner[]) => {
+        onUpdate(newBanners);
     };
+
+    const handleEditBanner = (banner: ProfileBanner, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setEditingBanner({ ...banner });
+    };
+
+    const handleSaveEdit = () => {
+        if (!editingBanner) return;
+        onUpdate(banners.map(b => b.id === editingBanner.id ? editingBanner : b));
+        setEditingBanner(null);
+    };
+
+    // Filter active banners for display mode
+    const activeBanners = banners.filter(b => b.isActive);
 
     if (!isEditMode && activeBanners.length === 0) return null;
 
-    const slideVariants = {
-        enter: (direction: number) => ({
-            x: direction > 0 ? 1000 : -1000,
-            opacity: 0,
-        }),
-        center: {
-            x: 0,
-            opacity: 1,
-        },
-        exit: (direction: number) => ({
-            x: direction < 0 ? 1000 : -1000,
-            opacity: 0,
-        })
-    };
-
     return (
-        <div className="relative w-full mb-8">
-            {/* Section Header */}
-            <motion.div
-                className="flex items-center justify-between mb-4 px-1"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" style={{ color: theme.primaryColor }} />
-                    <h3
-                        className="text-sm font-black uppercase tracking-widest text-white"
-                        style={{
-                            color: theme.primaryColor
-                        }}
-                    >
-                        Featured
-                    </h3>
-                </div>
-                {isEditMode && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs gap-1 bg-white/5 border-white/10 text-white hover:bg-white/10 backdrop-blur-xl"
-                        onClick={(e) => openEditModal(undefined, e)}
-                    >
-                        <Plus className="w-3 h-3" /> Add
-                    </Button>
-                )}
-            </motion.div>
+        <div className="mb-8">
+            {/* Hidden Input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+            />
 
-            {activeBanners.length === 0 ? (
-                <motion.div
-                    onClick={(e) => openEditModal(undefined, e)}
-                    className="aspect-video w-full rounded-3xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-white/40 cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all duration-300 gap-3 backdrop-blur-sm"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                >
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-linear-to-r from-purple-500/20 to-pink-500/20 blur-2xl" />
-                        <ImageIcon className="w-10 h-10 relative z-10" />
+            {(banners.length > 0 || isEditMode) && (
+                <div>
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-3 px-1">
+                        <Star className="w-4 h-4 text-[#FFD93D]" />
+                        <span
+                            className="text-xs font-bold uppercase tracking-wide"
+                            style={{ color: theme.textColor, opacity: 0.8 }}
+                        >
+                            Featured Offers ({banners.length}/3)
+                        </span>
                     </div>
-                    <span className="text-sm font-medium">Add featured content</span>
-                </motion.div>
-            ) : (
-                <div className="relative touch-pan-y">
-                    {/* Ambient Glow */}
-                    <div
-                        className="absolute -inset-6 opacity-20 blur-3xl transition-opacity duration-1000"
-                        style={{
-                            background: `radial-gradient(circle, ${theme.primaryColor}, transparent 70%)`
-                        }}
-                    />
 
-                    {/* Main Carousel with Parallax */}
-                    <div className="relative aspect-video w-full overflow-hidden rounded-3xl bg-black">
-                        {/* Subtle Border Glow */}
-                        <div
-                            className="absolute inset-0 rounded-3xl opacity-30 pointer-events-none z-20"
-                            style={{
-                                boxShadow: `inset 0 0 0 1px ${theme.primaryColor}60`
-                            }}
-                        />
+                    {isEditMode ? (
+                        <div className="space-y-2">
+                            <p className="text-xs px-1" style={{ color: theme.textColor, opacity: 0.5 }}>
+                                Drag the handle <GripVertical className="inline w-3 h-3" /> to reorder.
+                            </p>
 
-                        {/* Slides with Parallax Background */}
-                        <AnimatePresence initial={false} custom={direction}>
-                            <motion.div
-                                key={activeBanners[currentIndex].id}
-                                custom={direction}
-                                variants={slideVariants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                                transition={{
-                                    x: { type: "spring", stiffness: 300, damping: 30 },
-                                    opacity: { duration: 0.3 }
-                                }}
-                                drag={!isEditMode && activeBanners.length > 1 ? "x" : false}
-                                dragConstraints={{ left: 0, right: 0 }}
-                                dragElastic={0.2}
-                                onDrag={(e, info) => {
-                                    // Update parallax in real-time during drag
-                                    dragX.set(info.offset.x * 0.3);
-                                }}
-                                onDragEnd={handleDragEnd}
-                                className="absolute inset-0 cursor-grab active:cursor-grabbing"
-                            >
-                                {/* Parallax Background Layer - Moves slower */}
-                                <motion.div
-                                    className="absolute inset-0 scale-110"
-                                    style={{
-                                        x: parallaxX,
-                                    }}
-                                >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={activeBanners[currentIndex].imageUrl}
-                                        alt={activeBanners[currentIndex].title || 'Banner'}
-                                        className="w-full h-full object-cover"
-                                        draggable={false}
-                                    />
-                                </motion.div>
-
-                                {/* Gradient Overlays */}
-                                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/20 pointer-events-none z-10" />
-                                <div
-                                    className="absolute inset-0 opacity-20 pointer-events-none z-10"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${theme.primaryColor}30, transparent 60%)`
-                                    }}
-                                />
-
-                                {/* Content Layer - Static (no parallax) */}
-                                <div className="absolute inset-0 z-10 pointer-events-none">
-                                    {activeBanners[currentIndex].title && (
-                                        <div className="absolute bottom-0 left-0 right-0 p-6">
-                                            <motion.div
-                                                initial={{ y: 20, opacity: 0 }}
-                                                animate={{ y: 0, opacity: 1 }}
-                                                transition={{ delay: 0.2, duration: 0.5 }}
-                                                className="backdrop-blur-2xl bg-black/40 rounded-2xl p-4 border border-white/20"
-                                            >
-                                                <h4 className="text-white font-black text-xl md:text-2xl drop-shadow-2xl leading-tight">
-                                                    {activeBanners[currentIndex].title}
-                                                </h4>
-                                                <div
-                                                    className="h-1 w-16 rounded-full mt-2"
-                                                    style={{ background: theme.primaryColor }}
-                                                />
-                                            </motion.div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Edit Controls */}
-                                {isEditMode && (
-                                    <div className="absolute top-3 right-3 flex gap-2 z-20 pointer-events-auto">
-                                        <Button
-                                            size="icon"
-                                            variant="secondary"
-                                            className="h-8 w-8 rounded-full bg-black/30 hover:bg-black/50 text-white border border-white/20 backdrop-blur-xl"
-                                            onClick={(e) => openEditModal(activeBanners[currentIndex], e)}
-                                        >
-                                            <Edit2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                        <Button
-                                            size="icon"
-                                            variant="destructive"
-                                            className="h-8 w-8 rounded-full backdrop-blur-xl border border-white/20"
-                                            onClick={(e) => handleDelete(activeBanners[currentIndex].id, e)}
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
-
-                        {/* Progress Indicators */}
-                        {activeBanners.length > 1 && (
-                            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20 pointer-events-none">
-                                {activeBanners.map((_, idx) => (
+                            <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-1 touch-auto scrollbar-hide">
+                                {/* Add Banner Button */}
+                                {banners.length < 3 && (
                                     <motion.div
-                                        key={idx}
-                                        className={cn(
-                                            "h-1 rounded-full backdrop-blur-xl transition-all duration-500",
-                                            idx === currentIndex ? "w-8" : "w-1"
-                                        )}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={handleAddBanner}
+                                        className="w-72 shrink-0 aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all"
                                         style={{
-                                            background: idx === currentIndex
-                                                ? theme.primaryColor
-                                                : 'rgba(255, 255, 255, 0.3)'
+                                            borderColor: `${theme.textColor}40`,
+                                            backgroundColor: `${theme.textColor}08`
                                         }}
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Swipe Hint */}
-                        {!isEditMode && activeBanners.length > 1 && currentIndex === 0 && (
-                            <motion.div
-                                className="absolute top-1/2 right-4 -translate-y-1/2 text-white/60 text-xs pointer-events-none z-20"
-                                initial={{ opacity: 1, x: 0 }}
-                                animate={{ opacity: 0, x: -10 }}
-                                transition={{ delay: 2, duration: 1 }}
-                            >
-                                <span className="flex items-center gap-1 backdrop-blur-xl bg-black/40 px-3 py-1.5 rounded-full border border-white/20">
-                                    <motion.span
-                                        animate={{ x: [-3, 3, -3] }}
-                                        transition={{ repeat: 3, duration: 1.5 }}
                                     >
-                                        ←
-                                    </motion.span>
-                                    Swipe
-                                </span>
-                            </motion.div>
-                        )}
-                    </div>
+                                        <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${theme.textColor}15` }}>
+                                            <Upload className="w-5 h-5" style={{ color: theme.textColor, opacity: 0.6 }} />
+                                        </div>
+                                        <span className="text-xs font-medium text-center px-2" style={{ color: theme.textColor, opacity: 0.6 }}>
+                                            Add Offer Banner
+                                        </span>
+                                    </motion.div>
+                                )}
+
+                                <Reorder.Group
+                                    axis="x"
+                                    values={banners}
+                                    onReorder={handleReorder}
+                                    className="flex gap-3"
+                                >
+                                    {banners.map((banner) => (
+                                        <SortableItem key={banner.id} banner={banner}>
+                                            <BannerCard
+                                                banner={banner}
+                                                isEditMode={isEditMode}
+                                                onDelete={(e) => handleDelete(banner.id, e)}
+                                                onEdit={(e) => handleEditBanner(banner, e)}
+                                            />
+                                        </SortableItem>
+                                    ))}
+                                </Reorder.Group>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                            <SplashCarousel
+                                campaigns={activeBanners.map(b => ({
+                                    id: b.id,
+                                    title: b.title || '',
+                                    mediaUrl: b.imageUrl,
+                                    mediaType: 'image',
+                                    status: 'active',
+                                    duration: 5,
+                                    views: 0,
+                                    clicks: 0,
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                } as any))}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Edit Modal */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-md">
+            {/* Edit Banner Dialog */}
+            <Dialog open={!!editingBanner} onOpenChange={(open) => !open && setEditingBanner(null)}>
+                <DialogContent className="sm:max-w-md bg-[#1a1a2e] border-white/20 text-white">
                     <DialogHeader>
-                        <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add New Banner'}</DialogTitle>
+                        <DialogTitle>Edit Featured Banner</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Image URL</Label>
-                            <Input
-                                placeholder="https://..."
-                                value={imageUrl}
-                                onChange={(e) => setImageUrl(e.target.value)}
-                            />
+                    {editingBanner && (
+                        <div className="space-y-4">
+                            {/* Preview */}
+                            <div className="aspect-video rounded-lg overflow-hidden bg-black/30 relative border border-white/10">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={editingBanner.imageUrl}
+                                    alt={editingBanner.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+
+                            <div className="space-y-3">
+                                <div>
+                                    <Label className="text-white/80">Title</Label>
+                                    <Input
+                                        value={editingBanner.title || ''}
+                                        onChange={(e) =>
+                                            setEditingBanner({ ...editingBanner, title: e.target.value })
+                                        }
+                                        className="bg-white/10 border-white/20 text-white mt-1.5"
+                                        placeholder="Enter banner title..."
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-white/80">Link URL (Optional)</Label>
+                                    <Input
+                                        value={editingBanner.linkUrl || ''}
+                                        onChange={(e) =>
+                                            setEditingBanner({ ...editingBanner, linkUrl: e.target.value })
+                                        }
+                                        className="bg-white/10 border-white/20 text-white mt-1.5"
+                                        placeholder="https://..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setEditingBanner(null)}
+                                    className="text-white/70 hover:text-white hover:bg-white/10"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleSaveEdit}
+                                    className="bg-[#9EE53B] text-[#222] hover:bg-[#9EE53B]/90"
+                                >
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Save
+                                </Button>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Title (Optional)</Label>
-                            <Input
-                                placeholder="Special Offer..."
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Link URL (Optional)</Label>
-                            <Input
-                                placeholder="https://..."
-                                value={linkUrl}
-                                onChange={(e) => setLinkUrl(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSave}>Save</Button>
-                    </DialogFooter>
+                    )}
                 </DialogContent>
             </Dialog>
         </div>
+    );
+}
+
+// Wrapper to handle drag controls
+interface SortableItemProps {
+    banner: ProfileBanner;
+    children: React.ReactElement<{ dragControls?: DragControls }>;
+}
+
+function SortableItem({ banner, children }: SortableItemProps) {
+    const dragControls = useDragControls();
+
+    return (
+        <Reorder.Item
+            value={banner}
+            dragListener={false}
+            dragControls={dragControls}
+            className="relative"
+        >
+            {/* Clone the child to inject dragControls */}
+            {React.cloneElement(children, { dragControls } as { dragControls: DragControls })}
+        </Reorder.Item>
+    );
+}
+
+// Individual Banner Card Component
+interface BannerCardProps {
+    banner: ProfileBanner;
+    isEditMode: boolean;
+    onDelete?: (e: React.MouseEvent) => void;
+    onEdit?: (e: React.MouseEvent) => void;
+    dragControls?: DragControls;
+}
+
+function BannerCard({
+    banner,
+    isEditMode,
+    onDelete,
+    onEdit,
+    dragControls,
+}: BannerCardProps) {
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: isEditMode ? 1.02 : 1.03 }}
+            className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl group w-72 shrink-0 aspect-video"
+        >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+                src={banner.imageUrl}
+                alt={banner.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+
+            {/* Content */}
+            <div className="absolute inset-x-0 bottom-0 p-3">
+                <div className="text-white font-bold text-sm leading-snug mb-1 line-clamp-1">
+                    {banner.title}
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFD93D]/30 text-[#FFD93D] flex items-center gap-1 w-fit">
+                    <Star className="w-3 h-3 fill-current" />
+                    Featured
+                </span>
+            </div>
+
+            {/* Edit Mode Controls */}
+            {isEditMode && (
+                <>
+                    {/* Drag handle */}
+                    {dragControls && (
+                        <div
+                            onPointerDown={(e) => dragControls.start(e)}
+                            className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-grab active:cursor-grabbing touch-none z-10 hover:bg-black/60 transition-colors"
+                        >
+                            <GripVertical className="w-4 h-4 text-white" />
+                        </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="absolute top-2 right-2 flex gap-1 z-10">
+                        <button
+                            onClick={onEdit}
+                            className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+                        >
+                            <Pencil className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                            onClick={onDelete}
+                            className="w-8 h-8 rounded-full bg-red-500/40 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/60 transition-colors"
+                        >
+                            <Trash2 className="w-4 h-4 text-white" />
+                        </button>
+                    </div>
+
+                    {/* Edit mode indicator */}
+                    <div className="absolute inset-0 border-2 border-[#9EE53B]/50 rounded-2xl pointer-events-none" />
+                </>
+            )}
+        </motion.div>
     );
 }
