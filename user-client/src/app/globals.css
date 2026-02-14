@@ -386,3 +386,29 @@ img {
   animation: fade-in 0.5s ease-out forwards;
   animation-fill-mode: both;
 }
+
+/* Performance: Reduce animations on mobile for smoother scrolling */
+@media (max-width: 768px) {
+
+  /* Faster fade-in on mobile to reduce scroll jank */
+  .animate-fade-in {
+    animation-duration: 0.2s;
+  }
+
+  /* Disable gradient spin animation on mobile */
+  .animate-gradient-spin {
+    animation: none;
+  }
+
+  /* CSS containment for profile sections - isolates paint/layout */
+  .content-auto {
+    contain: layout style paint;
+  }
+}
+
+/* Performance: CSS containment for profile section containers */
+.contain-section {
+  contain: layout style paint;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}

@@ -382,7 +382,7 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
                                 }
                             }}
                             className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer backdrop-blur-sm border hover:scale-110 hover:-translate-y-0.5 active:scale-95 duration-200",
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer border hover:scale-110 hover:-translate-y-0.5 active:scale-95 duration-200",
                                 isLightTheme
                                     ? "bg-black/5 border-black/10 text-black/70 hover:bg-black/10 hover:text-black" // Light Theme
                                     : "bg-white/10 border-white/20 text-white/80 hover:bg-white/20 hover:text-white" // Dark Theme

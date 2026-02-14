@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import {
     Plus,
@@ -122,10 +121,8 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
             />
 
             {/* Section Header */}
-            <motion.div
-                className="flex items-center justify-between mb-4 px-1"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
+            <div
+                className="flex items-center justify-between mb-4 px-1 animate-fade-in"
             >
                 <div className="flex items-center gap-2">
                     <Grid3x3 className="w-4 h-4" style={{ color: theme.primaryColor }} />
@@ -143,7 +140,7 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                     <Button
                         size="sm"
                         onClick={handleAddImage}
-                        className="h-7 text-xs gap-1 backdrop-blur-xl rounded-full"
+                        className="h-7 text-xs gap-1 rounded-full"
                         style={{
                             backgroundColor: theme.primaryColor,
                             color: ['#FFFFFF', '#F5F5F5'].includes(theme.backgroundColor) ? '#FFFFFF' : '#000000'
@@ -152,7 +149,7 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                         <Plus className="w-3 h-3" /> Add Post
                     </Button>
                 )}
-            </motion.div>
+            </div>
 
             {isEditMode ? (
                 /* EDIT MODE: Simple Grid with Controls (User Requested) */
@@ -188,38 +185,25 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                 /* VIEW MODE: Masonry Grid Layout (Restored) */
                 <>
                     {images.length === 0 ? (
-                        <motion.div
-                            className="aspect-video w-full rounded-3xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-white/40 gap-3 backdrop-blur-sm"
+                        <div
+                            className="aspect-video w-full rounded-3xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-white/40 gap-3"
                         >
                             <div className="relative">
-                                <div className="absolute inset-0 bg-linear-to-r from-blue-500/20 to-cyan-500/20 blur-2xl" />
                                 <ImageIcon className="w-10 h-10 relative z-10" />
                             </div>
                             <span className="text-sm font-medium">No images yet</span>
-                        </motion.div>
+                        </div>
                     ) : (
                         <div className="grid grid-cols-3 auto-rows-[140px] gap-3">
                             {images.map((image, idx) => {
                                 const gridClass = getItemClass(idx);
                                 return (
-                                    <motion.div
+                                    <div
                                         key={image.id}
-                                        className={`relative overflow-hidden rounded-3xl group cursor-pointer ${gridClass}`}
-                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        transition={{
-                                            delay: idx * 0.05,
-                                            type: "spring",
-                                            stiffness: 100,
-                                            damping: 15
-                                        }}
-                                        whileHover={{
-                                            scale: 1.03,
-                                            zIndex: 10,
-                                            transition: { duration: 0.2 }
-                                        }}
+                                        className={`relative overflow-hidden rounded-3xl group cursor-pointer animate-fade-in hover:scale-[1.03] hover:z-10 transition-transform duration-200 ${gridClass}`}
+                                        style={{ animationDelay: `${idx * 50}ms` }}
                                     >
-                                        <div className="relative w-full h-full bg-linear-to-br from-gray-900/50 to-black/50 backdrop-blur-sm overflow-hidden rounded-3xl">
+                                        <div className="relative w-full h-full bg-linear-to-br from-gray-900/50 to-black/50 overflow-hidden rounded-3xl">
                                             {/* Performance: Next.js Image with AVIF/WebP auto-conversion + lazy loading */}
                                             <Image
                                                 src={image.imageUrl}
@@ -227,14 +211,14 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                                                 fill
                                                 sizes="(max-width: 768px) 50vw, 33vw"
                                                 loading="lazy"
-                                                className="object-cover transition-all duration-500 ease-out group-hover:scale-110 group-hover:brightness-90"
+                                                className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                                             />
 
                                             {/* Subtle Border Glow */}
                                             <div
                                                 className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                                 style={{
-                                                    boxShadow: `inset 0 0 0 2px ${theme.primaryColor}40, 0 0 20px ${theme.primaryColor}20`
+                                                    boxShadow: `inset 0 0 0 2px ${theme.primaryColor}40`
                                                 }}
                                             />
 
@@ -242,7 +226,7 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
 
                                             {image.caption && (
                                                 <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-                                                    <div className="backdrop-blur-xl bg-black/60 rounded-2xl px-3 py-2 border border-white/20">
+                                                    <div className="bg-black/70 rounded-2xl px-3 py-2 border border-white/20">
                                                         <p className="text-xs text-white font-semibold truncate">
                                                             {image.caption}
                                                         </p>
@@ -250,7 +234,7 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                                                 </div>
                                             )}
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 );
                             })}
                         </div>
@@ -331,12 +315,8 @@ function GalleryCard({
     onEdit,
 }: GalleryCardProps) {
     return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl group aspect-4/5 w-full"
+        <div
+            className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 shadow-xl group aspect-4/5 w-full animate-fade-in hover:scale-[1.02] transition-transform duration-200"
         >
             {/* Performance: Next.js Image for edit mode thumbnails */}
             <Image
@@ -364,13 +344,13 @@ function GalleryCard({
                     <div className="absolute top-2 right-2 flex gap-1 z-10">
                         <button
                             onClick={onEdit}
-                            className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+                            className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
                         >
                             <Pencil className="w-4 h-4 text-white" />
                         </button>
                         <button
                             onClick={onDelete}
-                            className="w-8 h-8 rounded-full bg-red-500/40 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/60 transition-colors"
+                            className="w-8 h-8 rounded-full bg-red-500/50 flex items-center justify-center hover:bg-red-500/70 transition-colors"
                         >
                             <Trash2 className="w-4 h-4 text-white" />
                         </button>
@@ -380,6 +360,6 @@ function GalleryCard({
                     <div className="absolute inset-0 border-2 border-white/20 rounded-2xl pointer-events-none" />
                 </>
             )}
-        </motion.div>
+        </div>
     );
 }

@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Plus, Trash2, Edit2, Star, User } from 'lucide-react';
 import { ProfileReview, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { cn } from '@/lib/utils';
@@ -116,14 +115,11 @@ export function ReviewsSection({ reviews = [], isEditMode, onUpdate, theme }: Re
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {reviews.map((review) => (
-                        <motion.div
-                            layout
-                            initial={{ opacity: 0, y: 10 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
+                    {reviews.map((review, idx) => (
+                        <div
                             key={review.id}
-                            className="relative p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-colors group"
+                            className="relative p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors group animate-fade-in"
+                            style={{ animationDelay: `${idx * 80}ms` }}
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-3">
@@ -172,7 +168,7 @@ export function ReviewsSection({ reviews = [], isEditMode, onUpdate, theme }: Re
                             <p className="mt-3 text-sm leading-relaxed opacity-80" style={{ color: theme.textColor }}>
                                 &quot;{review.comment}&quot;
                             </p>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             )}

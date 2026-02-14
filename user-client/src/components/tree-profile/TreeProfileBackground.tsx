@@ -91,19 +91,19 @@ function TreeProfileBackgroundComponent({ theme }: TreeProfileBackgroundProps) {
                 }}
             />
 
-            {/* Optimized Floating Orbs - Only for non-image backgrounds */}
+            {/* Floating Orbs - Hidden on mobile for performance (blur-3xl + animation is expensive) */}
             {theme.backgroundType !== 'image' && (
-                <>
+                <div className="hidden md:block">
                     <div
-                        className="absolute top-20 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20 bg-blend-screen animate-float-slow"
+                        className="absolute top-20 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20 bg-blend-screen animate-float-slow will-change-transform"
                         style={{ background: theme.primaryColor }}
                     />
 
                     <div
-                        className="absolute bottom-40 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 bg-blend-screen animate-float-delayed"
+                        className="absolute bottom-40 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20 bg-blend-screen animate-float-delayed will-change-transform"
                         style={{ background: '#A855F7' }}
                     />
-                </>
+                </div>
             )}
 
             {/* Critical CSS for animations */}

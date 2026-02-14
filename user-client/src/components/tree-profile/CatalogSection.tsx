@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Star, Sparkles, Flame, Leaf, Edit2, Plus, Trash2 } from 'lucide-react';
 import { CatalogCategory, CatalogItem, TreeProfileTheme } from '@/lib/treeProfileTypes';
@@ -41,7 +40,7 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
 
     // Base styles based on theme.cardStyle
     const cardBaseStyles = {
-        glass: isLightTheme ? 'bg-black/5 backdrop-blur-md border-black/10' : 'bg-white/5 backdrop-blur-md border-white/10',
+        glass: isLightTheme ? 'bg-black/5 border-black/10' : 'bg-white/5 border-white/10',
         flat: isLightTheme ? 'bg-black/5 border-transparent' : 'bg-white/10 border-transparent',
         outline: isLightTheme ? 'bg-transparent border-black/20' : 'bg-transparent border-white/20',
         minimal: 'bg-transparent border-transparent',
@@ -49,25 +48,15 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{
-                delay: index * 0.06,
-                type: 'spring',
-                stiffness: 150,
-                damping: 20,
-            }}
-            viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
+        <div
             className={cn(
-                'group relative rounded-2xl overflow-hidden transition-all duration-300',
+                'group relative rounded-2xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 animate-fade-in border',
                 cardBaseStyles[theme.cardStyle || 'glass'],
                 isLightTheme ? 'hover:border-black/20 hover:bg-black/10' : 'hover:border-white/20 hover:bg-white/10',
                 !item.isAvailable && 'opacity-50',
             )}
             style={{
-                boxShadow: `0 4px 24px color-mix(in srgb, var(--primary) 3%, transparent)`,
+                animationDelay: `${index * 60}ms`,
             }}
         >
             {/* Image */}
@@ -96,7 +85,7 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
                             <span
                                 key={tag}
                                 className={cn(
-                                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border backdrop-blur-sm',
+                                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border',
                                     tagColors[tag] || 'bg-white/20 text-white border-white/30',
                                 )}
                             >
@@ -139,22 +128,22 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
 
             {/* Edit mode overlay */}
             {isEditMode && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
-                        className="px-3 py-1.5 rounded-lg bg-white/20 text-white text-xs font-medium hover:bg-white/30 transition-colors flex items-center gap-1 backdrop-blur-md"
+                        className="px-3 py-1.5 rounded-lg bg-white/20 text-white text-xs font-medium hover:bg-white/30 transition-colors flex items-center gap-1"
                     >
                         <Edit2 className="w-3 h-3" /> Edit
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-                        className="px-3 py-1.5 rounded-lg bg-red-500/30 text-red-300 text-xs font-medium hover:bg-red-500/40 transition-colors backdrop-blur-md"
+                        className="px-3 py-1.5 rounded-lg bg-red-500/30 text-red-300 text-xs font-medium hover:bg-red-500/40 transition-colors"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
             )}
-        </motion.div>
+        </div>
     );
 };
 
@@ -306,23 +295,18 @@ function CatalogSectionComponent({
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="mt-8"
+        <div
+            className="mt-8 animate-fade-in"
         >
 
 
             {/* Category Pills */}
             <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
                 {categories.map((category) => (
-                    <motion.div
+                    <div
                         role="button"
                         tabIndex={0}
                         key={category.id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveCategory(category.id)}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
@@ -331,10 +315,10 @@ function CatalogSectionComponent({
                             }
                         }}
                         className={cn(
-                            'cursor-pointer shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border relative group select-none',
+                            'cursor-pointer shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border relative group select-none active:scale-95 hover:scale-105',
                             activeCategory === category.id
                                 ? 'text-white border-transparent'
-                                : 'bg-transparent border-white/20 hover:bg-white/10',
+                                : 'bg-transparent hover:bg-white/10',
                         )}
                         style={{
                             background: activeCategory === category.id
@@ -351,79 +335,67 @@ function CatalogSectionComponent({
                             <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={(e) => handleEditCategoryClick(category, e)}
-                                    className="w-5 h-5 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white/40 transition-colors"
+                                    className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center hover:bg-white/50 transition-colors"
                                 >
                                     <Edit2 className="w-2.5 h-2.5 text-white" />
                                 </button>
                             </div>
                         )}
-                    </motion.div>
+                    </div>
                 ))}
                 {isEditMode && (
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                    <button
                         onClick={handleAddCategory}
-                        className="shrink-0 px-3 py-2 rounded-full text-sm font-medium bg-white/5 border border-dashed border-white/20 text-white/50 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+                        className="shrink-0 px-3 py-2 rounded-full text-sm font-medium bg-white/5 border border-dashed text-white/50 hover:bg-white/10 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
                         style={{ color: 'var(--text-color)', borderColor: 'color-mix(in srgb, var(--text-color) 20%, transparent)' }}
                     >
                         + New Category
-                    </motion.button>
+                    </button>
                 )}
             </div>
 
             {/* Items Grid */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={activeCategory}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="grid grid-cols-2 gap-3 content-auto"
-                >
-                    {filteredItems.map((item, index) => (
-                        <CatalogItemCard
-                            key={item.id}
-                            item={item}
-                            index={index}
-                            theme={theme}
-                            isEditMode={isEditMode}
-                            onEdit={() => openForEdit(item)}
-                            onDelete={() => handleDeleteItem(item)}
-                        />
-                    ))}
-                    {isEditMode && (
-                        <motion.button
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            onClick={openForAdd}
-                            className={cn(
-                                "aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-colors group",
-                                isLightTheme
-                                    ? "border-black/10 hover:border-black/20 hover:bg-black/5"
-                                    : "border-white/10 hover:border-white/20 hover:bg-white/5"
-                            )}
-                            style={{ color: 'var(--text-color)' }}
-                        >
-                            <div className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                                isLightTheme ? "bg-black/5 group-hover:bg-black/10" : "bg-white/10 group-hover:bg-white/20"
-                            )}>
-                                <Plus className="w-5 h-5 opacity-70" />
-                            </div>
-                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Add Item</span>
-                        </motion.button>
-                    )}
-                </motion.div>
-            </AnimatePresence>
+            <div
+                key={activeCategory}
+                className="grid grid-cols-2 gap-3 content-auto animate-fade-in"
+            >
+                {filteredItems.map((item, index) => (
+                    <CatalogItemCard
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        theme={theme}
+                        isEditMode={isEditMode}
+                        onEdit={() => openForEdit(item)}
+                        onDelete={() => handleDeleteItem(item)}
+                    />
+                ))}
+                {isEditMode && (
+                    <button
+                        onClick={openForAdd}
+                        className={cn(
+                            "aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-colors group animate-fade-in",
+                            isLightTheme
+                                ? "border-black/10 hover:border-black/20 hover:bg-black/5"
+                                : "border-white/10 hover:border-white/20 hover:bg-white/5"
+                        )}
+                        style={{ color: 'var(--text-color)' }}
+                    >
+                        <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                            isLightTheme ? "bg-black/5 group-hover:bg-black/10" : "bg-white/10 group-hover:bg-white/20"
+                        )}>
+                            <Plus className="w-5 h-5 opacity-70" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-60">Add Item</span>
+                    </button>
+                )}
+            </div>
 
             {/* Empty state */}
             {filteredItems.length === 0 && !isEditMode && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="p-8 rounded-2xl border-2 border-dashed border-white/20 text-center"
+                <div
+                    className="p-8 rounded-2xl border-2 border-dashed text-center animate-fade-in"
                     style={{ borderColor: 'color-mix(in srgb, var(--text-color) 20%, transparent)' }}
                 >
                     <p className="text-white/50 mb-3" style={{ color: 'var(--text-color)', opacity: 0.5 }}>No items in {categories.find(c => c.id === activeCategory)?.name}</p>
@@ -436,7 +408,7 @@ function CatalogSectionComponent({
                             Add Item
                         </button>
                     )}
-                </motion.div>
+                </div>
             )}
 
             {/* Modal */}
@@ -466,7 +438,7 @@ function CatalogSectionComponent({
                 initialData={editingCategory}
                 key={editingCategory ? editingCategory.id : 'new-cat'}
             />
-        </motion.div>
+        </div>
     );
 }
 

@@ -20,7 +20,7 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
 
     // Base styles based on theme.cardStyle
     const cardBaseStyles = {
-        glass: isLightTheme ? 'bg-black/5 backdrop-blur-md border-black/10' : 'bg-white/10 backdrop-blur-md border-white/20',
+        glass: isLightTheme ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/20',
         flat: isLightTheme ? 'bg-black/5 border-transparent' : 'bg-white/10 border-transparent',
         outline: isLightTheme ? 'bg-transparent border-black/20' : 'bg-transparent border-white/20',
         minimal: 'bg-transparent border-transparent hover:bg-white/5',
@@ -129,7 +129,7 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
             {/* Edit mode overlay prompt */}
             {isEditMode && (
                 <div className={cn(
-                    "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20 backdrop-blur-[1px]",
+                    "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-black/20",
                     buttonShapeStyles[theme.buttonStyle || 'rounded']
                 )}>
                     <span className="bg-white text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">

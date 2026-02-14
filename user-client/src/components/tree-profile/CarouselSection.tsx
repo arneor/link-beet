@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { motion, Reorder, useDragControls, DragControls } from 'framer-motion';
+import { Reorder, useDragControls, DragControls } from 'framer-motion';
 import Image from 'next/image';
 import {
     Upload,
@@ -134,11 +134,9 @@ export function CarouselSection({ businessId, banners = [], isEditMode, onUpdate
                             <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-1 touch-auto scrollbar-hide">
                                 {/* Add Banner Button */}
                                 {banners.length < 3 && (
-                                    <motion.div
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                    <div
                                         onClick={handleAddBanner}
-                                        className="w-72 shrink-0 aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all"
+                                        className="w-72 shrink-0 aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
                                         style={{
                                             borderColor: `${theme.textColor}40`,
                                             backgroundColor: `${theme.textColor}08`
@@ -150,7 +148,7 @@ export function CarouselSection({ businessId, banners = [], isEditMode, onUpdate
                                         <span className="text-xs font-medium text-center px-2" style={{ color: theme.textColor, opacity: 0.6 }}>
                                             Add Offer Banner
                                         </span>
-                                    </motion.div>
+                                    </div>
                                 )}
 
                                 <Reorder.Group
@@ -300,12 +298,8 @@ function BannerCard({
     dragControls,
 }: BannerCardProps) {
     return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: isEditMode ? 1.02 : 1.03 }}
-            className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl group w-72 shrink-0 aspect-video"
+        <div
+            className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 shadow-xl group w-72 shrink-0 aspect-video transition-transform duration-200 hover:scale-[1.02] animate-fade-in"
         >
             {/* Performance: Next.js Image for banner cards */}
             <Image
@@ -338,7 +332,7 @@ function BannerCard({
                     {dragControls && (
                         <div
                             onPointerDown={(e) => dragControls.start(e)}
-                            className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center cursor-grab active:cursor-grabbing touch-none z-10 hover:bg-black/60 transition-colors"
+                            className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none z-10 hover:bg-black/60 transition-colors"
                         >
                             <GripVertical className="w-4 h-4 text-white" />
                         </div>
@@ -348,13 +342,13 @@ function BannerCard({
                     <div className="absolute top-2 right-2 flex gap-1 z-10">
                         <button
                             onClick={onEdit}
-                            className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+                            className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/60 transition-colors"
                         >
                             <Pencil className="w-4 h-4 text-white" />
                         </button>
                         <button
                             onClick={onDelete}
-                            className="w-8 h-8 rounded-full bg-red-500/40 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/60 transition-colors"
+                            className="w-8 h-8 rounded-full bg-red-500/50 flex items-center justify-center hover:bg-red-500/60 transition-colors"
                         >
                             <Trash2 className="w-4 h-4 text-white" />
                         </button>
@@ -364,6 +358,6 @@ function BannerCard({
                     <div className="absolute inset-0 border-2 border-[#9EE53B]/50 rounded-2xl pointer-events-none" />
                 </>
             )}
-        </motion.div>
+        </div>
     );
 }
