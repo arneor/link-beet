@@ -1,4 +1,4 @@
-# MARK MORPH - Robots.txt
+# LINKBEET - Robots.txt
 # Wi-Fi Advertising Platform | Captive Portal Marketing
 
 User-agent: *

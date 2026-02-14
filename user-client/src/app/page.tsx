@@ -151,7 +151,7 @@ export default function LandingPage() {
               {/* Subheadline */}
               <p className="text-xl text-white/90 leading-relaxed max-w-lg">
                 Capture emails, display targeted ads, and grow your business
-                while providing seamless connectivity. Start growing your customer database today with MarkMorph.
+                while providing seamless connectivity. Start growing your customer database today with LinkBeet.
               </p>
 
               {/* Feature Pills */}
@@ -187,7 +187,7 @@ export default function LandingPage() {
                   size="lg"
                   variant="outline"
                   className="h-14 px-8 text-lg font-bold rounded-full bg-white/10 text-white border-2 border-white/30 hover:bg-white/20 backdrop-blur-sm transition-all duration-300"
-                  onClick={() => window.open('https://docs.markmorph.in/', '_blank')}
+                  onClick={() => window.open('https://docs.linkbeet.in/', '_blank')}
                 >
                   Learn More
                 </Button>
@@ -214,7 +214,7 @@ export default function LandingPage() {
                 <CardContent className="px-8 pb-8">
                   <div className="space-y-6">
                     <p className="text-gray-500 text-center">
-                      Join thousands of businesses using MarkMorph to grow their customer base.
+                      Join thousands of businesses using LinkBeet to grow their customer base.
                     </p>
 
                     <Button
@@ -457,7 +457,7 @@ export default function LandingPage() {
               Ready to transform your WiFi?
             </h2>
             <p className="text-xl text-white/90 mb-10">
-              Start using MarkMorph today to grow your
+              Start using LinkBeet today to grow your
               customer base.
             </p>
 
@@ -500,7 +500,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center text-center space-y-8">
             {/* Logo - Text Wordmark */}
             <h2 className="text-4xl md:text-5xl font-display font-extrabold tracking-tight text-white">
-              Mark<span className="text-[#9EE53B]">Morph</span><span className="text-[#9EE53B]">.</span>
+              Link<span className="text-[#9EE53B]">Beet</span><span className="text-[#9EE53B]">.</span>
             </h2>
 
             {/* Social Icons */}
@@ -528,7 +528,7 @@ export default function LandingPage() {
 
             {/* Copyright */}
             <p className="text-gray-500 text-sm">
-              © 2026 MarkMorph. All rights reserved.
+              © 2026 LinkBeet. All rights reserved.
             </p>
           </div>
         </div>

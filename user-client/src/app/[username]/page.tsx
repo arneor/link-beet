@@ -42,8 +42,8 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
         if (!business) return { title: 'Profile Not Found' };
 
         return {
-            title: `${business.businessName} | Mark Morph`,
-            description: business.tagline || business.description || `Visit ${business.businessName} on Mark Morph`,
+            title: `${business.businessName} | LinkBeet`,
+            description: business.tagline || business.description || `Visit ${business.businessName} on LinkBeet`,
             openGraph: {
                 title: business.businessName,
                 description: business.tagline || business.description || '',
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
             },
         };
     } catch {
-        return { title: 'Profile | Mark Morph' };
+        return { title: 'Profile | LinkBeet' };
     }
 }
 

@@ -305,7 +305,7 @@ export default function SignupPage() {
                                                             <div className="relative">
                                                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">@</span>
                                                                 <Input
-                                                                    placeholder="markmorph"
+                                                                    placeholder="linkbeet"
                                                                     className="pl-7 h-11"
                                                                     {...field}
                                                                     onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}

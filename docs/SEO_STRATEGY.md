@@ -1,4 +1,4 @@
-# MARK MORPH SEO Strategy & Content Guide
+# LinkBeet SEO Strategy & Content Guide
 
 ## 1. META TAGS JSON STRUCTURE (4 Main Pages)
 
@@ -6,9 +6,9 @@
 {
   "pages": {
     "homepage": {
-      "title": "Turn Free Wi-Fi Into Sales | MARK MORPH",
+      "title": "Turn Free Wi-Fi Into Sales | LinkBeet",
       "description": "Transform your guest Wi-Fi into a powerful marketing engine. Capture leads, display targeted ads, and boost Google reviews. Zero hardware cost. Setup in 5 minutes.",
-      "keywords": "Wi-Fi Advertising Platform, Captive Portal Marketing, Free Wi-Fi for Businesses, Digital Hotspot Ads, Customer Analytics for Restaurants, Monetize Guest Wi-Fi, Google Review Automation, Small Business Marketing Tools, MARK MORPH Wi-Fi",
+      "keywords": "Wi-Fi Advertising Platform, Captive Portal Marketing, Free Wi-Fi for Businesses, Digital Hotspot Ads, Customer Analytics for Restaurants, Monetize Guest Wi-Fi, Google Review Automation, Small Business Marketing Tools, LinkBeet Wi-Fi",
       "canonicalUrl": "https://www.markmorph.in/",
       "ogType": "website",
       "ogImage": "https://www.markmorph.in/ms-icon-310x310.png",
@@ -16,14 +16,14 @@
       "robots": "index, follow, max-image-preview:large"
     },
     "dashboard": {
-      "title": "Business Insights & Ad Manager | MARK MORPH",
+      "title": "Business Insights & Ad Manager | LinkBeet",
       "description": "Access real-time customer analytics, manage Wi-Fi ad campaigns, and track Google review performance. Your complete business dashboard.",
       "keywords": "Business Dashboard, Customer Analytics, Ad Campaign Manager, Wi-Fi Marketing Analytics, Real-time Insights",
       "canonicalUrl": "https://www.markmorph.in/dashboard",
       "robots": "index, follow"
     },
     "businessProfile": {
-      "title": "Customize Your Brand | MARK MORPH",
+      "title": "Customize Your Brand | LinkBeet",
       "description": "Set up your business profile, upload branded banners, and create an engaging splash page for your guests. Make every Wi-Fi connection count.",
       "keywords": "Business Profile Setup, Brand Customization, Splash Page Design, Wi-Fi Branding, Guest Experience",
       "canonicalUrl": "https://www.markmorph.in/profile",
@@ -46,7 +46,7 @@
 
 ### Turn Your Free Guest Wi-Fi Into a Powerful Sales Engine
 
-Every day, hundreds of customers walk into your business and connect to your free Wi-Fi. But what if that simple connection could become your most powerful marketing tool? Welcome to **MARK MORPH** – India's leading Wi-Fi advertising platform that transforms every guest login into a growth opportunity.
+Every day, hundreds of customers walk into your business and connect to your free Wi-Fi. But what if that simple connection could become your most powerful marketing tool? Welcome to **LinkBeet** – India's leading Wi-Fi advertising platform that transforms every guest login into a growth opportunity.
 
 #### The 3-Step Growth Flow
 
@@ -59,17 +59,17 @@ Before connecting, guests see your targeted ads, promotional banners, and specia
 **Step 3: Grow**  
 Every interaction is tracked. Every email is captured. Every review request is automated. You'll have access to powerful customer analytics that help you understand peak hours, repeat visitors, and campaign performance.
 
-#### Why Businesses Choose MARK MORPH
+#### Why Businesses Choose LinkBeet
 
 **Data-Driven Growth**: Stop guessing and start knowing. Our real-time analytics dashboard reveals exactly how your customers interact with your brand. Track footfall, measure ad impressions, and optimize your campaigns based on actual data.
 
 **Instant Google Reviews**: Struggling to get reviews? Our automated review request system prompts satisfied customers to share their experience the moment they connect. Watch your online reputation soar without lifting a finger.
 
-**Zero Hardware Cost**: Unlike traditional Wi-Fi marketing solutions, MARK MORPH requires no new hardware. Your existing router works perfectly. Just sign up, customize your portal, and go live in under 5 minutes.
+**Zero Hardware Cost**: Unlike traditional Wi-Fi marketing solutions, LinkBeet requires no new hardware. Your existing router works perfectly. Just sign up, customize your portal, and go live in under 5 minutes.
 
-Whether you're a cozy café in Bangalore, a bustling restaurant in Mumbai, or a modern coworking space in Hyderabad, MARK MORPH gives you the tools to turn passive Wi-Fi users into loyal, engaged customers.
+Whether you're a cozy café in Bangalore, a bustling restaurant in Mumbai, or a modern coworking space in Hyderabad, LinkBeet gives you the tools to turn passive Wi-Fi users into loyal, engaged customers.
 
-**Ready to transform your guest Wi-Fi into a marketing powerhouse?** Join thousands of Indian businesses already growing with MARK MORPH.
+**Ready to transform your guest Wi-Fi into a marketing powerhouse?** Join thousands of Indian businesses already growing with LinkBeet.
 
 ---
 
@@ -131,10 +131,10 @@ Whether you're a cozy café in Bangalore, a bustling restaurant in Mumbai, or a 
 
 | Image Type | Alt-Text Template |
 |------------|-------------------|
-| Business Logo | "[Business Name] logo on MARK MORPH captive portal" |
+| Business Logo | "[Business Name] logo on LinkBeet captive portal" |
 | Banner Ad | "[Offer Title] promotional banner displayed on guest Wi-Fi splash page" |
 | Gallery Image | "[Business Name] interior photo showcasing [descriptor]" |
-| Dashboard Screenshot | "MARK MORPH analytics dashboard showing real-time Wi-Fi engagement metrics" |
+| Dashboard Screenshot | "LinkBeet analytics dashboard showing real-time Wi-Fi engagement metrics" |
 
 ---
 
@@ -183,4 +183,4 @@ import { SEO, SEO_CONFIG } from "@/components/SEO";
 
 **Document Version**: 1.0  
 **Last Updated**: 2026-02-01  
-**Author**: MARK MORPH SEO Strategy
+**Author**: LinkBeet SEO Strategy

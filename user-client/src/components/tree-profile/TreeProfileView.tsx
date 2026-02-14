@@ -53,7 +53,7 @@ const Footer = memo(function Footer() {
                     className="font-semibold"
                     style={{ color: 'color-mix(in srgb, var(--primary) 70%, transparent)' }}
                 >
-                    MarkMorph
+                    LinkBeet
                 </span>
             </span>
         </div>

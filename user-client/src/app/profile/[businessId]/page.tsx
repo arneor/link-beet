@@ -45,11 +45,11 @@ export async function generateMetadata(
     }
 
     return {
-        title: `${business.businessName} | Mark Morph`,
-        description: business.description || `Check out ${business.businessName} on Mark Morph.`,
+        title: `${business.businessName} | LinkBeet`,
+        description: business.description || `Check out ${business.businessName} on LinkBeet.`,
         openGraph: {
             title: business.businessName,
-            description: business.description || `Check out ${business.businessName} on Mark Morph.`,
+            description: business.description || `Check out ${business.businessName} on LinkBeet.`,
             images: business.logoUrl ? [{ url: business.logoUrl }] : [],
         },
     };

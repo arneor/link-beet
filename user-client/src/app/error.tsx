@@ -65,7 +65,7 @@ export default function Error({
                 <p className="mt-8 text-sm text-muted-foreground">
                     Need help?{' '}
                     <Link
-                        href="mailto:support@markmorph.com"
+                        href="mailto:support@linkbeet.in"
                         className="text-primary hover:underline"
                     >
                         Contact Support

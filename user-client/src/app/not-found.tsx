@@ -3,7 +3,7 @@ import { Home } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Page Not Found | Mark Morph',
+    title: 'Page Not Found | LinkBeet',
     description: 'The page you are looking for could not be found.',
 };
 
@@ -39,7 +39,7 @@ export default function NotFound() {
                 <p className="mt-8 text-sm text-muted-foreground">
                     Need help?{' '}
                     <Link
-                        href="mailto:support@markmorph.com"
+                        href="mailto:support@linkbeet.in"
                         className="text-primary hover:underline"
                     >
                         Contact Support

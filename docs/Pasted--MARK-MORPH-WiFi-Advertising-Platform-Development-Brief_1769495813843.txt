@@ -1,7 +1,7 @@
-# MARK MORPH - WiFi Advertising Platform Development Brief
+# LinkBeet - WiFi Advertising Platform Development Brief
 
 ## Project Overview
-MARK MORPH is a captive portal WiFi advertising platform that monetizes free WiFi access by displaying targeted advertisements to users while simultaneously helping businesses collect valuable customer data, drive Google reviews, and build their marketing database.
+LinkBeet is a captive portal WiFi advertising platform that monetizes free WiFi access by displaying targeted advertisements to users while simultaneously helping businesses collect valuable customer data, drive Google reviews, and build their marketing database.
 
 ## Core Concept
 Transform free WiFi from a basic amenity into a powerful marketing and revenue generation tool by creating an intelligent advertising ecosystem that benefits three key stakeholders: end users (getting free WiFi), business owners (getting customer data and reviews), and the platform (generating ad revenue).
@@ -725,7 +725,7 @@ After UI approval, backend will implement:
 
 ## Conclusion
 
-MARK MORPH transforms free WiFi from a cost center into a revenue and marketing powerhouse. By starting with UI-first development using dummy data, we ensure the user experience is perfected before significant backend investment. The platform creates a win-win-win scenario: users get free WiFi, businesses get customer insights and reviews, and advertisers get targeted reach.
+LinkBeet transforms free WiFi from a cost center into a revenue and marketing powerhouse. By starting with UI-first development using dummy data, we ensure the user experience is perfected before significant backend investment. The platform creates a win-win-win scenario: users get free WiFi, businesses get customer insights and reviews, and advertisers get targeted reach.
 
 This comprehensive approach addresses all stakeholder needs, edge cases, and scalability considerations while maintaining simplicity at the core. The phased development approach reduces risk and allows for iterative refinement based on real user feedback.
 

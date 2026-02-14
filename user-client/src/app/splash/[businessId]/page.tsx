@@ -32,7 +32,7 @@ export async function generateMetadata(
 
     if (!data) {
         return {
-            title: 'Business Not Found | Mark Morph',
+            title: 'Business Not Found | LinkBeet',
             description: 'The requested business could not be found.',
         };
     }
@@ -41,7 +41,7 @@ export async function generateMetadata(
     const location = data.business.location || '';
 
     return {
-        title: `Connect to ${businessName} WiFi | Mark Morph`,
+        title: `Connect to ${businessName} WiFi | LinkBeet`,
         description: `Get free WiFi access at ${businessName}${location ? ` in ${location}` : ''}. View exclusive offers and discover local deals.`,
         openGraph: {
             title: `${businessName} - Free WiFi`,
@@ -49,7 +49,7 @@ export async function generateMetadata(
             images: data.business.logoUrl ? [{ url: data.business.logoUrl }] : [],
             type: 'website',
             locale: 'en_IN',
-            siteName: 'Mark Morph',
+            siteName: 'LinkBeet',
         },
         twitter: {
             card: 'summary_large_image',

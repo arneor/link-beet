@@ -239,7 +239,7 @@ export default function LoginPage() {
                                     Welcome back
                                 </CardTitle>
                                 <CardDescription>
-                                    Sign in to your MarkMorph dashboard
+                                    Sign in to your LinkBeet dashboard
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>

@@ -1,5 +1,5 @@
 /**
- * Mark Morph API Client for Next.js
+ * LinkBeet API Client for Next.js
  * Server-side and client-side API configuration for NestJS backend integration
  */
 

@@ -71,7 +71,7 @@ export function Sidebar({ businessId }: SidebarProps) {
         <div className="flex flex-col h-full py-6">
             <div className="px-6 mb-8">
                 <h1 className="text-2xl font-display font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    MarkMorph
+                    LinkBeet
                 </h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mt-1">
                     Business Portal
@@ -204,7 +204,7 @@ export function Sidebar({ businessId }: SidebarProps) {
                             {renderNavContent()}
                         </SheetContent>
                     </Sheet>
-                    <span className="font-display font-bold text-lg text-gray-900">MarkMorph</span>
+                    <span className="font-display font-bold text-lg text-gray-900">LinkBeet</span>
                 </div>
             </div>
 

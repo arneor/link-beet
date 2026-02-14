@@ -180,7 +180,7 @@ export function ProfileContent({ business }: ProfileContentProps) {
                         <div className="text-center">
                             <span className="text-[11px] text-white/40 font-medium">
                                 Powered by{" "}
-                                <span className="text-[#9EE53B]/70">MarkMorph</span>
+                                <span className="text-[#9EE53B]/70">LinkBeet</span>
                             </span>
                         </div>
 
