@@ -5,16 +5,23 @@ import Providers from '@/components/providers/Providers';
 import './globals.css';
 
 // Configure fonts to match the existing design system
+// Performance: Optimized font loading with fallback metrics to minimize CLS
 const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-display', // Matches standard variable name used in globals.css
+  variable: '--font-display',
   display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true, // Reduces CLS by matching fallback font metrics
 });
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-body', // Matches standard variable name used in globals.css
+  variable: '--font-body',
   display: 'swap',
+  preload: true,
+  fallback: ['system-ui', '-apple-system', 'sans-serif'],
+  adjustFontFallback: true,
 });
 
 export const viewport: Viewport = {
@@ -104,6 +111,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
+      <head>
+        {/* Performance: DNS prefetch + preconnect for API server (saves 200-500ms on mobile) */}
+        <link rel="dns-prefetch" href="https://mark-morph.onrender.com" />
+        <link rel="preconnect" href="https://mark-morph.onrender.com" crossOrigin="anonymous" />
+      </head>
       <body className="font-sans antialiased">
         <Providers>
           {children}

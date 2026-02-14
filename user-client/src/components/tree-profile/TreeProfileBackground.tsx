@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import Image from 'next/image';
 import { TreeProfileTheme } from '@/lib/treeProfileTypes';
 
 interface TreeProfileBackgroundProps {
@@ -14,7 +15,7 @@ interface TreeProfileBackgroundProps {
  * - Solid colors
  * - Gradients (static)
  * - Animated gradients
- * - Background images
+ * - Background images (Optimized with Next.js Image)
  * 
  * Following Next.js best practices with proper memoization
  */
@@ -33,14 +34,9 @@ function TreeProfileBackgroundComponent({ theme }: TreeProfileBackgroundProps) {
                 // Both use gradient strings, never URL
                 return { backgroundImage: theme.backgroundValue };
 
+            // Image type handled separately via Next.js Image component for performance
             case 'image':
-                // Only use URL for actual image type
-                return {
-                    backgroundImage: `url(${theme.backgroundValue})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat'
-                };
+                return { backgroundColor: theme.backgroundColor || '#000' };
 
             default:
                 return { backgroundColor: theme.backgroundColor };
@@ -55,6 +51,21 @@ function TreeProfileBackgroundComponent({ theme }: TreeProfileBackgroundProps) {
                 className="absolute inset-0 transition-all duration-700 ease-in-out will-change-[background]"
                 style={getBackgroundStyle()}
             />
+
+            {/* Background Image Optimization: Render Next.js Image for LCP/performance */}
+            {theme.backgroundType === 'image' && theme.backgroundValue && (
+                <div className="absolute inset-0 z-0">
+                    <Image
+                        src={theme.backgroundValue}
+                        alt="Profile Background"
+                        fill
+                        priority
+                        className="object-cover transition-opacity duration-700"
+                        sizes="100vw"
+                        quality={75}
+                    />
+                </div>
+            )}
 
             {/* Animated Gradient Overlay - Only for animated gradients */}
             {theme.backgroundType === 'animated' && (

@@ -3,7 +3,6 @@
 import { useState, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 import {
     TreeProfileData,
     CustomLink,
@@ -13,14 +12,33 @@ import {
     CatalogCategory
 } from '@/lib/treeProfileTypes';
 
-// Critical components loaded immediately
+// Performance: Critical above-fold components loaded eagerly
 import { TreeProfileHeader } from '@/components/tree-profile/TreeProfileHeader';
 import { LinksSection } from '@/components/tree-profile/LinksSection';
-import { CarouselSection } from '@/components/tree-profile/CarouselSection';
-import { GallerySection } from '@/components/tree-profile/GallerySection';
-import { CatalogSection } from '@/components/tree-profile/CatalogSection';
+import { TreeProfileBackground } from '@/components/tree-profile/TreeProfileBackground';
 
-const TreeProfileBackground = dynamic(() => import('@/components/tree-profile/TreeProfileBackground').then(mod => mod.TreeProfileBackground));
+// Performance: Below-fold components loaded via dynamic import (code splitting)
+import { CatalogSkeleton } from '@/components/tree-profile/SectionSkeletons';
+
+const CarouselSection = dynamic(
+    () => import('@/components/tree-profile/CarouselSection').then(mod => ({ default: mod.CarouselSection })),
+    { loading: () => <div className="mb-8 w-full aspect-video rounded-2xl bg-white/5 animate-pulse" /> }
+);
+
+const GallerySection = dynamic(
+    () => import('@/components/tree-profile/GallerySection').then(mod => ({ default: mod.GallerySection })),
+    { loading: () => <div className="mb-8 grid grid-cols-3 gap-3">{[1, 2, 3].map(i => <div key={i} className="aspect-square rounded-3xl bg-white/5 animate-pulse" />)}</div> }
+);
+
+const CatalogSection = dynamic(
+    () => import('@/components/tree-profile/CatalogSection').then(mod => ({ default: mod.CatalogSection })),
+    { loading: () => <CatalogSkeleton /> }
+);
+
+const ReviewsSection = dynamic(
+    () => import('@/components/tree-profile/ReviewsSection').then(mod => ({ default: mod.ReviewsSection })),
+    { loading: () => <div className="mb-8 space-y-4">{[1, 2].map(i => <div key={i} className="h-24 rounded-xl bg-white/5 animate-pulse" />)}</div> }
+);
 
 // Footer Component
 const Footer = memo(function Footer() {
@@ -103,7 +121,7 @@ export function TreeProfileView({
 
     return (
         <div
-            className="min-h-screen relative overflow-hidden bg-black text-rendering-optimize-legibility"
+            className="min-h-screen relative overflow-hidden bg-black text-rendering-optimize-legibility touch-optimized"
             style={cssVariables}
         >
             {/* Optimized Background */}
@@ -143,11 +161,10 @@ export function TreeProfileView({
                                         data.linksTitle ?? "Quick Links"
                                     )}
                                     {activeTab === 'links' && (
-                                        <motion.div
-                                            layoutId="activeTabIndicator"
-                                            className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                                        /* Performance: CSS-only tab indicator instead of framer-motion layoutId */
+                                        <div
+                                            className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-all duration-300"
                                             style={{ background: 'var(--primary)' }}
-                                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                         />
                                     )}
                                 </button>
@@ -171,66 +188,104 @@ export function TreeProfileView({
                                         data.sectionTitle
                                     )}
                                     {activeTab === 'menu' && (
-                                        <motion.div
-                                            layoutId="activeTabIndicator"
-                                            className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                                        /* Performance: CSS-only tab indicator instead of framer-motion layoutId */
+                                        <div
+                                            className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-all duration-300"
                                             style={{ background: 'var(--primary)' }}
-                                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                         />
                                     )}
                                 </button>
                             </div>
 
-                            {/* Content Area - Keep Mounted Strategy for Instant Switching */}
+                            {/* Performance: Conditional rendering for public view, keep-mounted for edit mode */}
                             <div className="relative min-h-[400px]">
-                                {/* Links Section */}
-                                <div className={cn(
-                                    "transition-opacity duration-300",
-                                    activeTab === 'links' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
-                                )}>
-                                    <LinksSection
-                                        links={data.customLinks}
-                                        theme={data.theme}
-                                        isEditMode={isEditMode}
-                                        onUpdate={onUpdateLinks || (() => { })}
-                                    />
-
-                                    {/* New Sections Below Links */}
-                                    <div className="mt-8 space-y-8">
-                                        <CarouselSection
-                                            businessId={businessId}
-                                            banners={data.banners || []}
-                                            theme={data.theme}
-                                            isEditMode={isEditMode}
-                                            onUpdate={onUpdateBanners || (() => { })}
-                                        />
-
-                                        <GallerySection
-                                            businessId={businessId}
-                                            images={data.gallery || []}
-                                            theme={data.theme}
-                                            isEditMode={isEditMode}
-                                            onUpdate={onUpdateGallery || (() => { })}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Menu/Catalog Section */}
-                                <div className={cn(
-                                    "transition-opacity duration-300",
-                                    activeTab === 'menu' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
-                                )}>
-                                    <CatalogSection
-                                        title={data.sectionTitle}
-                                        categories={data.categories}
-                                        items={data.catalogItems}
-                                        theme={data.theme}
-                                        isEditMode={isEditMode}
-                                        onUpdateItems={onUpdateCatalogItems}
-                                        onUpdateCategories={onUpdateCategories}
-                                        businessId={businessId}
-                                    />
-                                </div>
+                                {isEditMode ? (
+                                    /* Edit Mode: Keep both tabs mounted for instant switching */
+                                    <>
+                                        <div className={cn(
+                                            "transition-opacity duration-300",
+                                            activeTab === 'links' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
+                                        )}>
+                                            <LinksSection
+                                                links={data.customLinks}
+                                                theme={data.theme}
+                                                isEditMode={isEditMode}
+                                                onUpdate={onUpdateLinks || (() => { })}
+                                            />
+                                            <div className="mt-8 space-y-8">
+                                                <CarouselSection
+                                                    businessId={businessId}
+                                                    banners={data.banners || []}
+                                                    theme={data.theme}
+                                                    isEditMode={isEditMode}
+                                                    onUpdate={onUpdateBanners || (() => { })}
+                                                />
+                                                <GallerySection
+                                                    businessId={businessId}
+                                                    images={data.gallery || []}
+                                                    theme={data.theme}
+                                                    isEditMode={isEditMode}
+                                                    onUpdate={onUpdateGallery || (() => { })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={cn(
+                                            "transition-opacity duration-300",
+                                            activeTab === 'menu' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
+                                        )}>
+                                            <CatalogSection
+                                                title={data.sectionTitle}
+                                                categories={data.categories}
+                                                items={data.catalogItems}
+                                                theme={data.theme}
+                                                isEditMode={isEditMode}
+                                                onUpdateItems={onUpdateCatalogItems}
+                                                onUpdateCategories={onUpdateCategories}
+                                                businessId={businessId}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    /* Public View: Only render active tab (reduces DOM nodes ~50%) */
+                                    <>
+                                        {activeTab === 'links' && (
+                                            <div>
+                                                <LinksSection
+                                                    links={data.customLinks}
+                                                    theme={data.theme}
+                                                    isEditMode={false}
+                                                    onUpdate={() => { }}
+                                                />
+                                                <div className="mt-8 space-y-8">
+                                                    <CarouselSection
+                                                        businessId={businessId}
+                                                        banners={data.banners || []}
+                                                        theme={data.theme}
+                                                        isEditMode={false}
+                                                        onUpdate={() => { }}
+                                                    />
+                                                    <GallerySection
+                                                        businessId={businessId}
+                                                        images={data.gallery || []}
+                                                        theme={data.theme}
+                                                        isEditMode={false}
+                                                        onUpdate={() => { }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {activeTab === 'menu' && (
+                                            <CatalogSection
+                                                title={data.sectionTitle}
+                                                categories={data.categories}
+                                                items={data.catalogItems}
+                                                theme={data.theme}
+                                                isEditMode={false}
+                                                businessId={businessId}
+                                            />
+                                        )}
+                                    </>
+                                )}
                             </div>
 
                             {/* Footer */}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, memo } from 'react';
-import { motion } from 'framer-motion';
 import { ExternalLink, Plus } from 'lucide-react';
 import { CustomLink, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { cn, isColorExclusivelyDark } from '@/lib/utils';
@@ -55,28 +54,14 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
     } : {};
 
     return (
-        <motion.a
+        <a
             href={isEditMode ? undefined : (link.url.match(/^https?:\/\//) ? link.url : `https://${link.url}`)}
             target={isEditMode ? undefined : "_blank"}
             rel={isEditMode ? undefined : "noopener noreferrer"}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{
-                delay: index * 0.08,
-                type: 'spring',
-                stiffness: 200,
-                damping: 20,
-            }}
-            whileHover={{
-                scale: 1.02,
-                y: -2,
-                transition: { duration: 0.2 },
-            }}
-            whileTap={{ scale: 0.98 }}
             className={cn(
-                'group relative block w-full p-4 border transition-all duration-300',
+                'group relative block w-full p-4 border transition-all duration-300 animate-fade-in',
                 buttonShapeStyles[theme.buttonStyle || 'rounded'],
-                'shadow-lg hover:shadow-xl',
+                'shadow-lg hover:shadow-xl hover:scale-[1.02] hover:-translate-y-0.5 active:scale-98',
                 link.style !== 'gradient' && link.style !== 'featured' && (styleClasses[link.style] || styleClasses.default),
                 link.style === 'featured' && styleClasses.featured,
                 isEditMode && 'cursor-pointer hover:border-dashed hover:border-white/60',
@@ -85,6 +70,9 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
                 ...gradientStyle,
                 ...featuredStyle,
                 boxShadow: `0 4px 20px color-mix(in srgb, var(--primary) 10%, transparent)`,
+                animationDelay: `${index * 0.1}s`,
+                opacity: 0, // Starts invisible for animation
+                animationFillMode: 'forwards'
             }}
             onClick={(e) => {
                 if (isEditMode) {
@@ -118,13 +106,11 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
                 </div>
 
                 {/* Arrow icon */}
-                <motion.div
-                    className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center", isLightTheme ? "bg-black/10" : "bg-white/10")}
-                    whileHover={{ scale: 1.1, rotate: -45 }}
-                    transition={{ duration: 0.2 }}
+                <div
+                    className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-45", isLightTheme ? "bg-black/10" : "bg-white/10")}
                 >
                     <ExternalLink className={cn("w-4 h-4 transition-colors", isLightTheme ? "text-black/70 group-hover:text-black" : "text-white/70 group-hover:text-white")} />
-                </motion.div>
+                </div>
             </div>
 
             {/* Featured badge */}
@@ -151,7 +137,7 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
                     </span>
                 </div>
             )}
-        </motion.a>
+        </a>
     );
 };
 
@@ -230,11 +216,9 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="space-y-3"
+        <div
+            className="space-y-3 animate-fade-in"
+            style={{ animationDelay: '0.3s', opacity: 0, animationFillMode: 'forwards' }}
         >
 
 
@@ -251,12 +235,10 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
                     />
                 ))}
                 {isEditMode && activeLinks.length > 0 && (
-                    <motion.button
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                    <button
                         onClick={openForAdd}
                         className={cn(
-                            "w-full py-3 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 transition-all group",
+                            "w-full py-3 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 transition-all group animate-fade-in",
                             isLightTheme
                                 ? "border-black/10 hover:border-black/20 hover:bg-black/5 text-black/60"
                                 : "border-white/10 hover:border-white/20 hover:bg-white/5 text-white/60"
@@ -270,16 +252,14 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
                             <Plus className="w-4 h-4" />
                         </div>
                         <span className="text-sm font-medium opacity-80">Add New Link</span>
-                    </motion.button>
+                    </button>
                 )}
             </div>
 
             {/* Empty state for edit mode */}
             {isEditMode && activeLinks.length === 0 && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="p-8 rounded-2xl border-2 border-dashed border-white/20 text-center"
+                <div
+                    className="p-8 rounded-2xl border-2 border-dashed border-white/20 text-center animate-fade-in"
                     style={{ borderColor: 'color-mix(in srgb, var(--text-color) 20%, transparent)' }}
                 >
                     <p className="text-white/50 mb-3" style={{ color: 'var(--text-color)', opacity: 0.5 }}>No links added yet</p>
@@ -290,7 +270,7 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
                     >
                         Add Your First Link
                     </button>
-                </motion.div>
+                </div>
             )}
 
             {/* Modal */}
@@ -303,7 +283,7 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
                 key={editingLink ? editingLink.id : 'new'}
                 theme={theme}
             />
-        </motion.div>
+        </div>
     );
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, Reorder, useDragControls, DragControls } from 'framer-motion';
+import Image from 'next/image';
 import {
     Upload,
     Trash2,
@@ -201,11 +202,13 @@ export function CarouselSection({ businessId, banners = [], isEditMode, onUpdate
                         <div className="space-y-4">
                             {/* Preview */}
                             <div className="aspect-video rounded-lg overflow-hidden bg-black/30 relative border border-white/10">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                {/* Performance: Next.js Image for edit modal preview */}
+                                <Image
                                     src={editingBanner.imageUrl}
-                                    alt={editingBanner.title}
-                                    className="w-full h-full object-cover"
+                                    alt={editingBanner.title || 'Banner preview'}
+                                    fill
+                                    sizes="400px"
+                                    className="object-cover"
                                 />
                             </div>
 
@@ -304,11 +307,14 @@ function BannerCard({
             whileHover={{ scale: isEditMode ? 1.02 : 1.03 }}
             className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl group w-72 shrink-0 aspect-video"
         >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* Performance: Next.js Image for banner cards */}
+            <Image
                 src={banner.imageUrl}
-                alt={banner.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                alt={banner.title || 'Banner'}
+                fill
+                sizes="288px"
+                loading="lazy"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
 
             {/* Gradient overlay */}

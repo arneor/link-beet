@@ -58,6 +58,7 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
                 stiffness: 150,
                 damping: 20,
             }}
+            viewport={{ once: true, margin: "-50px" }}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
             className={cn(
                 'group relative rounded-2xl overflow-hidden transition-all duration-300',
@@ -379,7 +380,7 @@ function CatalogSectionComponent({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
-                    className="grid grid-cols-2 gap-3"
+                    className="grid grid-cols-2 gap-3 content-auto"
                 >
                     {filteredItems.map((item, index) => (
                         <CatalogItemCard

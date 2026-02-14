@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+/* Performance: Fonts loaded via next/font/google in layout.tsx (swap + preload) */
+/* Removed render-blocking @import url() for Google Fonts - was causing double-loading */
 
 @import "tailwindcss";
 
@@ -114,10 +115,7 @@
   background-color: hsl(var(--muted-foreground) / 0.4);
 }
 
-/* Glassmorphism utilities */
-.glass-panel {
-  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl dark:bg-black/40 dark:border-white/10;
-}
+
 
 /* Linktree-inspired Gradients */
 .gradient-hero {
@@ -240,7 +238,14 @@
 
 /* Feature card hover effect */
 .feature-card {
-  @apply relative overflow-hidden rounded-3xl p-8 transition-all duration-500;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  /* rounded-3xl */
+  padding: 2rem;
+  /* p-8 */
+  transition: all 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* transition-all duration-500 */
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -294,4 +299,90 @@
   75% {
     border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
   }
+}
+
+/* ========= MOBILE PERFORMANCE OPTIMIZATIONS ========= */
+
+/* Performance: content-visibility for off-screen sections */
+/* Skips rendering of below-fold content until it's near the viewport */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Performance: Optimized text rendering for readability */
+.text-rendering-optimize-legibility {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Performance: GPU compositing hints for animated elements */
+.gpu-accelerated {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Performance: Reduce animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Performance: Optimize touch interactions on mobile */
+.touch-optimized {
+  touch-action: manipulation;
+  /* Removes 300ms tap delay */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Performance: Optimize image rendering */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  content-visibility: auto;
+}
+
+/* Performance: GPU-accelerated gradient animation for profile borders */
+@keyframes gradient-spin {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-spin {
+  background-size: 300% 300%;
+  animation: gradient-spin 4s linear infinite;
+  will-change: background-position;
+}
+
+/* Performance: Simple fade-in animation replaces JS-driven opacity */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fade-in 0.5s ease-out forwards;
+  animation-fill-mode: both;
 }

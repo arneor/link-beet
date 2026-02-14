@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Ad } from "@/lib/api";
 
@@ -114,19 +115,22 @@ export function SplashCarousel({ campaigns }: SplashCarouselProps) {
             }}
             className="absolute inset-0"
           >
-            {/* Image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={carouselItems[currentIndex].mediaUrl}
-              alt={carouselItems[currentIndex].title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                e.currentTarget.parentElement?.classList.add(
-                  "gradient-purple-pink"
-                );
-              }}
-            />
+            {/* Performance: Next.js Image for auto AVIF/WebP + responsive sizing */}
+            <div className="relative w-full h-full">
+              <Image
+                src={carouselItems[currentIndex].mediaUrl}
+                alt={carouselItems[currentIndex].title}
+                fill
+                sizes="(max-width: 768px) 100vw, 448px"
+                className="object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                  e.currentTarget.parentElement?.classList.add(
+                    "gradient-purple-pink"
+                  );
+                }}
+              />
+            </div>
 
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />

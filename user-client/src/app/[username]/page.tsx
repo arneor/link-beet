@@ -1,7 +1,22 @@
+import { Suspense, cache } from 'react';
 import { TreeProfileView } from '@/components/tree-profile/TreeProfileView';
+import { TreeProfileSkeleton } from '@/components/tree-profile/TreeProfileSkeleton';
 import { fetchBusinessByUsername } from '@/lib/api';
 import type { TreeProfileData, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+
+/**
+ * Performance: React cache() deduplicates this fetch across
+ * generateMetadata() and the page component (single API call per render)
+ */
+const getBusinessByUsername = cache((username: string) =>
+    fetchBusinessByUsername(username)
+);
+
+interface PublicProfilePageProps {
+    params: Promise<{ username: string }>;
+}
 
 // Default theme for profiles without theme data
 const defaultTheme: TreeProfileTheme = {
@@ -15,8 +30,40 @@ const defaultTheme: TreeProfileTheme = {
     cardStyle: 'solid',
 };
 
-interface PublicProfilePageProps {
-    params: Promise<{ username: string }>;
+/**
+ * Performance: Dynamic metadata for SEO + social sharing
+ * Generates unique title, description, and OG images per business profile
+ */
+export async function generateMetadata({ params }: PublicProfilePageProps): Promise<Metadata> {
+    const { username } = await params;
+
+    try {
+        const business = await getBusinessByUsername(username);
+        if (!business) return { title: 'Profile Not Found' };
+
+        return {
+            title: `${business.businessName} | Mark Morph`,
+            description: business.tagline || business.description || `Visit ${business.businessName} on Mark Morph`,
+            openGraph: {
+                title: business.businessName,
+                description: business.tagline || business.description || '',
+                images: business.profileImage || business.logoUrl
+                    ? [{ url: business.profileImage || business.logoUrl || '' }]
+                    : undefined,
+                type: 'profile',
+            },
+            twitter: {
+                card: 'summary',
+                title: business.businessName,
+                description: business.tagline || '',
+                images: business.profileImage || business.logoUrl
+                    ? [business.profileImage || business.logoUrl || '']
+                    : undefined,
+            },
+        };
+    } catch {
+        return { title: 'Profile | Mark Morph' };
+    }
 }
 
 export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
@@ -24,7 +71,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
     let business;
     try {
-        business = await fetchBusinessByUsername(username);
+        business = await getBusinessByUsername(username);
     } catch {
         notFound();
     }
@@ -82,10 +129,13 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     };
 
     return (
-        <TreeProfileView
-            businessId={business.id}
-            data={profileData}
-            isEditMode={false}
-        />
+        /* Performance: Suspense boundary enables streaming SSR - skeleton shown instantly */
+        <Suspense fallback={<TreeProfileSkeleton />}>
+            <TreeProfileView
+                businessId={business.id}
+                data={profileData}
+                isEditMode={false}
+            />
+        </Suspense>
     );
 }

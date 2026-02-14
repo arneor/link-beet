@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, memo } from 'react';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import {
     MapPin,
@@ -135,11 +134,7 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="relative w-full mb-8"
-        >
+        <div className="relative w-full mb-8 animate-fade-in">
             {/* Banner Image */}
             <div className="relative w-full h-56 md:h-72 rounded-b-[2.5rem] overflow-hidden shadow-2xl -mt-20 sm:-mt-24 mx-auto max-w-4xl group">
                 {data.bannerImage ? (
@@ -204,19 +199,10 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
             <div className="relative px-6 -mt-16 text-center z-10">
                 {/* Avatar with Animated Ring */}
                 <div className="relative w-36 h-36 mx-auto mb-6 group">
-                    <motion.div
-                        className="absolute inset-[-4px] rounded-full"
+                    <div
+                        className="absolute inset-[-4px] rounded-full animate-gradient-spin"
                         style={{
                             backgroundImage: `linear-gradient(135deg, var(--primary), #A855F7, var(--primary))`,
-                            backgroundSize: '300% 300%',
-                        }}
-                        animate={{
-                            backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                        }}
-                        transition={{
-                            duration: 4,
-                            ease: 'linear',
-                            repeat: Infinity,
                         }}
                     />
                     <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-[#0f1016] shadow-2xl bg-black">
@@ -380,11 +366,11 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
                 </div>
 
                 {/* Social Links */}
-                <motion.div
+                <div
                     className="flex justify-center gap-3 flex-wrap"
                 >
                     {data.socialLinks.map((social) => (
-                        <motion.a
+                        <a
                             key={social.id}
                             href={isEditMode ? undefined : (social.url.match(/^https?:\/\//) ? social.url : `https://${social.url}`)}
                             target={isEditMode ? undefined : "_blank"}
@@ -395,10 +381,8 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
                                     openSocialModal(social);
                                 }
                             }}
-                            whileHover={{ scale: 1.15, y: -2 }}
-                            whileTap={{ scale: 0.95 }}
                             className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer backdrop-blur-sm border",
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer backdrop-blur-sm border hover:scale-110 hover:-translate-y-0.5 active:scale-95 duration-200",
                                 isLightTheme
                                     ? "bg-black/5 border-black/10 text-black/70 hover:bg-black/10 hover:text-black" // Light Theme
                                     : "bg-white/10 border-white/20 text-white/80 hover:bg-white/20 hover:text-white" // Dark Theme
@@ -413,16 +397,14 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
                                     <div className="w-1.5 h-1.5 bg-black rounded-full" />
                                 </div>
                             )}
-                        </motion.a>
+                        </a>
                     ))}
 
                     {/* Add Button */}
                     {isEditMode && (
-                        <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                        <button
                             className={cn(
-                                "w-10 h-10 rounded-full border border-dashed flex items-center justify-center transition-all",
+                                "w-10 h-10 rounded-full border border-dashed flex items-center justify-center transition-all hover:scale-110 active:scale-90 duration-200",
                                 isLightTheme
                                     ? "bg-black/5 border-black/20 text-black/50 hover:text-black hover:bg-black/10"
                                     : "bg-white/5 border-white/30 text-white/50 hover:text-white hover:bg-white/10"
@@ -430,9 +412,9 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
                             onClick={() => openSocialModal()}
                         >
                             <Plus className="w-5 h-5" />
-                        </motion.button>
+                        </button>
                     )}
-                </motion.div>
+                </div>
             </div>
 
             {/* Social Link Modal */}
@@ -446,7 +428,7 @@ function TreeProfileHeaderComponent({ businessId, data, isEditMode, onUpdate }: 
                 initialData={editingLink}
                 key={editingLink ? editingLink.id : 'new'}
             />
-        </motion.div>
+        </div>
     );
 }
 

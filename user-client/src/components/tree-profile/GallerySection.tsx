@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
     Plus,
     Trash2,
@@ -219,11 +220,14 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                                         }}
                                     >
                                         <div className="relative w-full h-full bg-linear-to-br from-gray-900/50 to-black/50 backdrop-blur-sm overflow-hidden rounded-3xl">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
+                                            {/* Performance: Next.js Image with AVIF/WebP auto-conversion + lazy loading */}
+                                            <Image
                                                 src={image.imageUrl}
                                                 alt={image.caption || 'Gallery Image'}
-                                                className="w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-110 group-hover:brightness-90"
+                                                fill
+                                                sizes="(max-width: 768px) 50vw, 33vw"
+                                                loading="lazy"
+                                                className="object-cover transition-all duration-500 ease-out group-hover:scale-110 group-hover:brightness-90"
                                             />
 
                                             {/* Subtle Border Glow */}
@@ -264,11 +268,12 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                         <div className="space-y-4">
                             {/* Preview */}
                             <div className="aspect-4/5 rounded-lg overflow-hidden bg-black/30 relative border border-white/10 w-1/2 mx-auto">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <Image
                                     src={editingImage.imageUrl}
-                                    alt={editingImage.caption}
-                                    className="w-full h-full object-cover"
+                                    alt={editingImage.caption || 'Edit preview'}
+                                    fill
+                                    sizes="200px"
+                                    className="object-cover"
                                 />
                             </div>
 
@@ -333,11 +338,13 @@ function GalleryCard({
             whileHover={{ scale: 1.02 }}
             className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl group aspect-4/5 w-full"
         >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* Performance: Next.js Image for edit mode thumbnails */}
+            <Image
                 src={image.imageUrl}
-                alt={image.caption}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                alt={image.caption || 'Gallery thumbnail'}
+                fill
+                sizes="200px"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
 
             {/* Gradient overlay */}
