@@ -713,7 +713,7 @@ export function SplashContent({ businessId: id, initialData }: SplashContentProp
                                     </div>
                                     {galleryCampaigns.length > 0 ? (
                                         <div className="grid grid-cols-2 gap-3">
-                                            {galleryCampaigns.slice(0, 4).map((c: SplashData['ads'][number], index: number) => {
+                                            {galleryCampaigns.slice(0, 4).map((c: SplashData['ads'][number]) => {
                                                 const isLiked = likedAds.has(c.id);
                                                 const likes = (c.likesCount || 0) + (isLiked ? 1 : 0);
 

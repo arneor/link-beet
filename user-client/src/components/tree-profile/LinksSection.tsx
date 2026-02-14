@@ -14,7 +14,7 @@ interface LinkBlockProps {
     onEdit?: () => void;
 }
 
-const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBlockProps) => {
+const LinkBlockComponent = ({ link, theme, isEditMode, onEdit }: LinkBlockProps) => {
     // Check if theme is likely light mode
     const isLightTheme = isColorExclusivelyDark(theme.textColor);
 

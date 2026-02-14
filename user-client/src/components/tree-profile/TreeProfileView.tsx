@@ -35,10 +35,7 @@ const CatalogSection = dynamic(
     { loading: () => <CatalogSkeleton /> }
 );
 
-const ReviewsSection = dynamic(
-    () => import('@/components/tree-profile/ReviewsSection').then(mod => ({ default: mod.ReviewsSection })),
-    { loading: () => <div className="mb-8 space-y-4">{[1, 2].map(i => <div key={i} className="h-24 rounded-xl bg-white/5 animate-pulse" />)}</div> }
-);
+
 
 // Footer Component
 const Footer = memo(function Footer() {

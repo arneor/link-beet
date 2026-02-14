@@ -276,6 +276,19 @@
     0 0 30px rgba(158, 229, 59, 0.2);
 }
 
+/* Story section — flowing narrative prose */
+.story-section p {
+  font-size: 1.125rem;
+  line-height: 1.85;
+}
+
+/* Story cards — use-case hover effect */
+.story-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3),
+    0 0 24px rgba(158, 229, 59, 0.15);
+}
+
 /* Blob shapes */
 .blob {
   border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
