@@ -50,7 +50,7 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
     return (
         <div
             className={cn(
-                'group relative rounded-2xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 animate-fade-in border',
+                'group relative rounded-2xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 border',
                 cardBaseStyles[theme.cardStyle || 'glass'],
                 isLightTheme ? 'hover:border-black/20 hover:bg-black/10' : 'hover:border-white/20 hover:bg-white/10',
                 !item.isAvailable && 'opacity-50',
@@ -296,7 +296,7 @@ function CatalogSectionComponent({
 
     return (
         <div
-            className="mt-8 animate-fade-in"
+            className="mt-8"
         >
 
 
@@ -357,7 +357,7 @@ function CatalogSectionComponent({
             {/* Items Grid */}
             <div
                 key={activeCategory}
-                className="grid grid-cols-2 gap-3 content-auto animate-fade-in"
+                className="grid grid-cols-2 gap-3 content-auto"
             >
                 {filteredItems.map((item, index) => (
                     <CatalogItemCard
@@ -374,7 +374,7 @@ function CatalogSectionComponent({
                     <button
                         onClick={openForAdd}
                         className={cn(
-                            "aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-colors group animate-fade-in",
+                            "aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-3 transition-colors group",
                             isLightTheme
                                 ? "border-black/10 hover:border-black/20 hover:bg-black/5"
                                 : "border-white/10 hover:border-white/20 hover:bg-white/5"

@@ -292,7 +292,7 @@ function BannerCard({
 }: BannerCardProps) {
     return (
         <div
-            className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 shadow-md group w-72 shrink-0 aspect-video animate-fade-in"
+            className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 shadow-md group w-72 shrink-0 aspect-video"
         >
             {/* Performance: Next.js Image for banner cards */}
             <Image

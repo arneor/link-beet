@@ -122,7 +122,7 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
 
             {/* Section Header */}
             <div
-                className="flex items-center justify-between mb-4 px-1 animate-fade-in"
+                className="flex items-center justify-between mb-4 px-1"
             >
                 <div className="flex items-center gap-2">
                     <Grid3x3 className="w-4 h-4" style={{ color: theme.primaryColor }} />
@@ -200,7 +200,7 @@ export function GallerySection({ businessId, images = [], isEditMode, onUpdate, 
                                 return (
                                     <div
                                         key={image.id}
-                                        className={`relative overflow-hidden rounded-3xl group cursor-pointer animate-fade-in transition-opacity duration-200 ${gridClass}`}
+                                        className={`relative overflow-hidden rounded-3xl group cursor-pointer transition-opacity duration-200 ${gridClass}`}
                                         style={{ animationDelay: `${idx * 50}ms` }}
                                     >
                                         <div className="relative w-full h-full bg-linear-to-br from-gray-900/50 to-black/50 overflow-hidden rounded-3xl">
@@ -316,7 +316,7 @@ function GalleryCard({
 }: GalleryCardProps) {
     return (
         <div
-            className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 shadow-md group aspect-4/5 w-full animate-fade-in transition-opacity duration-200"
+            className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 shadow-md group aspect-4/5 w-full transition-opacity duration-200"
         >
             {/* Performance: Next.js Image for edit mode thumbnails */}
             <Image

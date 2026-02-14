@@ -59,7 +59,7 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
             target={isEditMode ? undefined : "_blank"}
             rel={isEditMode ? undefined : "noopener noreferrer"}
             className={cn(
-                'group relative block w-full p-4 border transition-all duration-300 animate-fade-in',
+                'group relative block w-full p-4 border transition-all duration-300',
                 buttonShapeStyles[theme.buttonStyle || 'rounded'],
                 'shadow-sm active:scale-98',
                 link.style !== 'gradient' && link.style !== 'featured' && (styleClasses[link.style] || styleClasses.default),
@@ -69,9 +69,8 @@ const LinkBlockComponent = ({ link, index, theme, isEditMode, onEdit }: LinkBloc
             style={{
                 ...gradientStyle,
                 ...featuredStyle,
-                animationDelay: `${index * 0.05}s`,
-                opacity: 0,
-                animationFillMode: 'forwards'
+                ...gradientStyle,
+                ...featuredStyle,
             }}
             onClick={(e) => {
                 if (isEditMode) {
@@ -207,8 +206,8 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
 
     return (
         <div
-            className="space-y-3 animate-fade-in"
-            style={{ animationDelay: '0.3s', opacity: 0, animationFillMode: 'forwards' }}
+            className="space-y-3"
+            style={{}}
         >
 
 
