@@ -27,6 +27,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                         <Image
                             src="https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=500&q=60"
@@ -34,6 +35,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                     </div>
                 </div>
@@ -59,6 +61,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                         <Image
                             src="https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=500&q=60"
@@ -66,6 +69,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                     </div>
                 </div>
@@ -91,6 +95,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                         <Image
                             src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=500&q=60"
@@ -98,6 +103,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                     </div>
                 </div>
@@ -123,6 +129,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                         <Image
                             src="https://images.unsplash.com/photo-1493723843671-1d655e66ac1c?auto=format&fit=crop&w=500&q=60"
@@ -130,6 +137,7 @@ export function HowItWorksSection() {
                             width={500}
                             height={500}
                             className={`rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full ${shadowClass}`}
+                            sizes="(max-width: 768px) 100vw, 50vw"
                         />
                     </div>
                 </div>

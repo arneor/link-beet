@@ -5,12 +5,16 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function HeroHeader() {
     const router = useRouter()
+    const isMobile = useIsMobile()
     const [particles, setParticles] = useState<Array<{ left: string; top: string; targetX: number }>>([])
 
     useEffect(() => {
+        if (isMobile) return;
+
         const timer = setTimeout(() => {
             setParticles(
                 Array.from({ length: 6 }).map(() => ({
@@ -21,7 +25,7 @@ export function HeroHeader() {
             )
         }, 0)
         return () => clearTimeout(timer)
-    }, [])
+    }, [isMobile])
 
     return (
         <header className="relative z-50 flex items-center justify-between p-6">
@@ -30,7 +34,7 @@ export function HeroHeader() {
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-                <Link href="/" className="relative w-10 h-10 group-hover:drop-shadow-lg transition-all duration-300" style={{ filter: "url(#logo-glow)" }}>
+                <Link href="/" className="relative w-10 h-10 group-hover:drop-shadow-[0_0_15px_rgba(6,182,212,0.8)] transition-all duration-300">
                     <Image
                         src="/logo.png"
                         alt="LinkBeet Logo"
@@ -89,7 +93,7 @@ export function HeroHeader() {
             </nav>
 
             {/* Login Button Group with Arrow */}
-            <div id="gooey-btn" className="relative flex items-center group" style={{ filter: "url(#gooey-filter)" }}>
+            <div id="gooey-btn" className="relative flex items-center group">
                 <button
                     onClick={() => router.push("/login")}
                     className="absolute right-0 px-2.5 py-2 rounded-full bg-white text-black font-normal text-xs transition-all duration-300 hover:bg-white/90 cursor-pointer h-8 flex items-center justify-center -translate-x-10 group-hover:-translate-x-19 z-0">

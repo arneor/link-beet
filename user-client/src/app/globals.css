@@ -461,6 +461,11 @@ img {
   .content-auto {
     contain: layout style paint;
   }
+
+  /* Disable expensive blur animations on mobile */
+  .animate-element, .animate-slide-right, .animate-testimonial {
+    filter: none !important;
+  }
 }
 
 /* Performance: CSS containment for profile section containers */

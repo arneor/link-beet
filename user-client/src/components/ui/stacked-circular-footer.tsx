@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Linkedin, Twitter, Github, Mail } from "lucide-react"
+import { Mail, Instagram, Facebook } from "lucide-react"
 import Image from "next/image"
 
 function StackedCircularFooter() {
@@ -27,21 +27,23 @@ function StackedCircularFooter() {
                         <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
                     </nav>
                     <div className="mb-8 flex space-x-4">
-                        <Button variant="outline" size="icon" className="rounded-full">
-                            <Twitter className="h-4 w-4" />
-                            <span className="sr-only">Twitter</span>
+                        <Button variant="outline" size="icon" className="rounded-full" asChild>
+                            <Link href="https://www.instagram.com/linkbe.et" target="_blank" rel="noopener noreferrer">
+                                <Instagram className="h-4 w-4" />
+                                <span className="sr-only">Instagram</span>
+                            </Link>
                         </Button>
-                        <Button variant="outline" size="icon" className="rounded-full">
-                            <Linkedin className="h-4 w-4" />
-                            <span className="sr-only">LinkedIn</span>
+                        <Button variant="outline" size="icon" className="rounded-full" asChild>
+                            <Link href="https://www.facebook.com/Linkbeet/" target="_blank" rel="noopener noreferrer">
+                                <Facebook className="h-4 w-4" />
+                                <span className="sr-only">Facebook</span>
+                            </Link>
                         </Button>
-                        <Button variant="outline" size="icon" className="rounded-full">
-                            <Github className="h-4 w-4" />
-                            <span className="sr-only">GitHub</span>
-                        </Button>
-                        <Button variant="outline" size="icon" className="rounded-full">
-                            <Mail className="h-4 w-4" />
-                            <span className="sr-only">Email</span>
+                        <Button variant="outline" size="icon" className="rounded-full" asChild>
+                            <Link href="mailto:linkbeet@gmail.com">
+                                <Mail className="h-4 w-4" />
+                                <span className="sr-only">Email</span>
+                            </Link>
                         </Button>
                     </div>
                     <div className="text-center">

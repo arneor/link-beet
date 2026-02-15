@@ -15,7 +15,7 @@ import { CTASection } from '@/components/ui/cta-section';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen h-full w-full">
+    <div className="min-h-screen h-full w-full overflow-x-hidden">
       <ShaderShowcase />
       <section id="features" className="scroll-mt-20">
         <FeaturesSection />

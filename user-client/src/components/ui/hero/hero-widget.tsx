@@ -5,11 +5,16 @@ import { PulsingBorder } from "@paper-design/shaders-react"
 import { motion } from "framer-motion"
 
 export function HeroWidget() {
-    const [isMounted, setIsMounted] = useState(false)
+    const [showShader, setShowShader] = useState(false)
 
     useEffect(() => {
-        const timer = setTimeout(() => setIsMounted(true), 0)
-        return () => clearTimeout(timer)
+        // Only load shader on non-mobile devices to save performance
+        const checkMobile = () => {
+            const isMobile = window.matchMedia("(max-width: 768px)").matches
+            setShowShader(!isMobile)
+        }
+
+        checkMobile()
     }, [])
 
     return (
@@ -26,7 +31,7 @@ export function HeroWidget() {
                     }}
                 />
 
-                {isMounted && (
+                {showShader && (
                     <div className="animate-in fade-in duration-700">
                         <PulsingBorder
                             colors={["#06b6d4", "#0891b2", "#f97316", "#00FF88", "#ffffff"]}

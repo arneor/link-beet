@@ -28,7 +28,7 @@ export const Timeline = ({ data, title = "Changelog", description = "Here's a ti
         offset: ["start 10%", "end 50%"],
     });
 
-    const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height]);
+    const heightTransform = useTransform(scrollYProgress, [0, 1], [0, 1]);
     const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
 
     return (
@@ -76,10 +76,11 @@ export const Timeline = ({ data, title = "Changelog", description = "Here's a ti
                 >
                     <motion.div
                         style={{
-                            height: heightTransform,
+                            scaleY: heightTransform,
                             opacity: opacityTransform,
+                            transformOrigin: "top",
                         }}
-                        className="absolute inset-x-0 top-0  w-[2px] bg-linear-to-t from-purple-500 via-blue-500 to-transparent from-0% via-10% rounded-full"
+                        className="absolute inset-x-0 top-0 h-full w-[2px] bg-linear-to-t from-purple-500 via-blue-500 to-transparent from-0% via-10% rounded-full will-change-transform"
                     />
                 </div>
             </div>

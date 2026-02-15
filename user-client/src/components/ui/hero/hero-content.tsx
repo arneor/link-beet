@@ -3,9 +3,11 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function HeroContent() {
     const router = useRouter()
+    const isMobile = useIsMobile()
 
     return (
         <main className="absolute bottom-8 left-8 z-50 max-w-2xl">
@@ -13,7 +15,8 @@ export function HeroContent() {
                 <motion.div
                     className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm mb-6 relative border border-white/10"
                     style={{
-                        filter: "url(#glass-effect)",
+                        backdropFilter: "blur(12px)",
+                        boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
                     }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -38,9 +41,9 @@ export function HeroContent() {
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
                             backgroundClip: "text",
-                            filter: "url(#text-glow)",
+                            textShadow: "0 0 20px rgba(6,182,212,0.5)",
                         }}
-                        animate={{
+                        animate={isMobile ? {} : {
                             backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                         }}
                         transition={{

@@ -24,8 +24,9 @@ function HandWrittenTitle({
     };
 
     return (
-        <div className="min-h-screen relative w-full max-w-4xl mx-auto py-24 flex flex-col items-center justify-center">
-            <div className="absolute inset-0">
+        <div className="min-h-[40vh] md:min-h-screen relative w-full max-w-4xl mx-auto py-20 md:py-24 flex flex-col items-center justify-center">
+            {/* Desktop SVG */}
+            <div className="absolute inset-0 hidden md:block">
                 <motion.svg
                     width="100%"
                     height="100%"
@@ -52,9 +53,41 @@ function HandWrittenTitle({
                     />
                 </motion.svg>
             </div>
-            <div className="relative text-center z-10 flex flex-col items-center justify-center">
+
+            {/* Mobile SVG - Optimized as a wide oval for text */}
+            <div className="absolute inset-0 block md:hidden pointer-events-none">
+                <motion.svg
+                    width="100%"
+                    height="100%"
+                    viewBox="0 0 400 220"
+                    preserveAspectRatio="none"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    className="w-full h-full"
+                >
+                    <title>{title}</title>
+                    <motion.path
+                        /* Wider and taller oval to encompass wrapped text */
+                        d="M 350 30
+                           C 390 50, 395 150, 350 180
+                           C 280 215, 120 215, 50 180
+                           C 5 150, 10 50, 50 30
+                           C 120 5, 280 5, 350 30"
+                        fill="none"
+                        strokeWidth="5"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        variants={draw}
+                        className="text-black opacity-90"
+                    />
+                </motion.svg>
+            </div>
+
+            <div className="relative text-center z-10 flex flex-col items-center justify-center px-4">
                 <motion.h1
-                    className="text-4xl md:text-6xl text-black tracking-tighter flex items-center gap-2"
+                    className="text-3xl md:text-6xl text-black tracking-tighter flex items-center gap-2 font-bold mb-2"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -64,7 +97,7 @@ function HandWrittenTitle({
                 </motion.h1>
                 {subtitle && (
                     <motion.p
-                        className="text-xl text-black/80"
+                        className="text-base md:text-xl text-black/80 max-w-[260px] md:max-w-xl mx-auto leading-relaxed"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}

@@ -4,15 +4,24 @@ import { MeshGradient } from "@paper-design/shaders-react"
 import { useState, useEffect } from "react"
 
 export function HeroBackground() {
-    const [isMounted, setIsMounted] = useState(false)
+    const [showShader, setShowShader] = useState(false)
 
     useEffect(() => {
-        const timer = setTimeout(() => setIsMounted(true), 0)
-        return () => clearTimeout(timer)
+        // Only load shader on non-mobile devices to save performance
+        const checkMobile = () => {
+            const isMobile = window.matchMedia("(max-width: 768px)").matches
+            setShowShader(!isMobile)
+        }
+
+        checkMobile()
+
+        // Optional: Listen for resize if you want dynamic switching (usually not needed for landing pages)
+        // window.addEventListener('resize', checkMobile)
+        // return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
     return (
-        <div className="absolute inset-0 w-full h-full bg-white">
+        <div className="absolute inset-0 w-full h-full bg-white will-change-transform">
             {/* 
                 Static CSS Gradient Fallback 
                 This renders immediately on the server/initial HTML, preventing the "black void"
@@ -35,7 +44,7 @@ export function HeroBackground() {
                 Only rendered after the client has mounted to avoid hydration mismatches.
                 The fallback above ensures the user sees something beautiful instantly.
             */}
-            {isMounted && (
+            {showShader && (
                 <div className="absolute inset-0 w-full h-full animate-in fade-in duration-1000">
                     <MeshGradient
                         className="absolute inset-0 w-full h-full pointer-events-none"
