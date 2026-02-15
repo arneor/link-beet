@@ -5,11 +5,11 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useIsMobile } from "@/hooks/use-mobile"
+
 
 export function HeroHeader() {
     const router = useRouter()
-    const isMobile = useIsMobile()
+
     const [particles, setParticles] = useState<Array<{ left: string; top: string; targetX: number }>>([])
 
     useEffect(() => {
@@ -34,7 +34,7 @@ export function HeroHeader() {
             >
                 <Link href="/" className="relative w-10 h-10 group-hover:drop-shadow-[0_0_15px_rgba(6,182,212,0.8)] transition-all duration-300">
                     <Image
-                        src="/logo.png"
+                        src="/black-logo.png"
                         alt="LinkBeet Logo"
                         fill
                         className="object-contain"

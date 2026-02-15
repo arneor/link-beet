@@ -28,7 +28,7 @@ export function CTASection() {
                         {/* Heading */}
                         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-display animate-element animate-delay-100">
                             <span className="block text-foreground">Ready to Transform</span>
-                            <span className="block mt-1 bg-linear-to-r from-cyan-500 via-blue-500 to-orange-500 bg-clip-text text-transparent">
+                            <span className="block mt-1 text-foreground">
                                 Your Digital Presence?
                             </span>
                         </h2>
@@ -43,11 +43,11 @@ export function CTASection() {
                             <Button
                                 asChild
                                 size="lg"
-                                className="rounded-full px-8 py-6 text-base font-semibold bg-linear-to-r from-cyan-500 to-orange-500 hover:from-cyan-400 hover:to-orange-400 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                                className="rounded-full px-8 py-6 text-base font-medium bg-transparent border-2 border-black border-dotted text-black hover:bg-black hover:text-white hover:border-transparent transition-all duration-300 shadow-sm hover:shadow-md"
                             >
                                 <Link href="/signup">
                                     Start Your Journey
-                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                    <ArrowRight className="ml-2 h-5 w-5 text-current" />
                                 </Link>
                             </Button>
                         </div>

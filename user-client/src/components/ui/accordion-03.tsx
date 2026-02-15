@@ -20,7 +20,7 @@ const items = [
     {
         id: "02",
         title: "Do I need technical skills?",
-        img: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80",
+        img: "/faq/secondimage.jpeg",
         content:
             "Not at all. Our drag-and-drop builder makes it easy to create beautiful portals in minutes. Add links, upload images, organize your catalog—all without writing a single line of code.",
     },

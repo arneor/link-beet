@@ -48,7 +48,7 @@ export const Timeline = ({ data, title = "Changelog", description = "Here's a ti
             <div ref={ref} className="relative max-w-7xl mx-auto pb-20">
                 {data.map((item, index) => (
                     <div
-                        key={index}
+                        key={`timeline-item-${index}`}
                         className="flex justify-start pt-10 md:pt-40 md:gap-10"
                     >
                         <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
@@ -64,7 +64,7 @@ export const Timeline = ({ data, title = "Changelog", description = "Here's a ti
                             <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500">
                                 {item.title}
                             </h3>
-                            {item.content}{" "}
+                            {item.content}
                         </div>
                     </div>
                 ))}

@@ -1,10 +1,7 @@
-"use client"
-import dynamic from 'next/dynamic'
 
-const ShaderShowcase = dynamic(() => import('@/components/ui/hero'), {
-  ssr: false,
-  loading: () => <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading Shader...</div>
-})
+
+import Hero from '@/components/ui/hero'
+
 
 import FeaturesSection from '@/components/ui/features-section';
 import { StackedCircularFooter } from '@/components/ui/stacked-circular-footer';
@@ -16,7 +13,7 @@ import { CTASection } from '@/components/ui/cta-section';
 export default function LandingPage() {
   return (
     <div className="min-h-screen h-full w-full overflow-x-hidden">
-      <ShaderShowcase />
+      <Hero />
       <section id="features" className="scroll-mt-20">
         <FeaturesSection />
       </section>

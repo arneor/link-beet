@@ -6,7 +6,7 @@ import { Wifi, Link, ShoppingBag, Image as ImageIcon } from "lucide-react";
 export function HowItWorksSection() {
     const shadowClass = "shadow-[0_0_24px_rgba(34,42,53,0.06),0_1px_1px_rgba(0,0,0,0.05),0_0_0_1px_rgba(34,42,53,0.04),0_0_4px_rgba(34,42,53,0.08),0_16px_68px_rgba(47,48,55,0.05),0_1px_0_rgba(255,255,255,0.1)_inset]";
 
-    const data = [
+    const data = React.useMemo(() => [
         {
             title: "Step 1",
             content: (
@@ -56,7 +56,7 @@ export function HowItWorksSection() {
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                         <Image
-                            src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=500&q=60"
+                            src="/how-it-work/setp-2-first.jpeg"
                             alt="Mobile interface with links"
                             width={500}
                             height={500}
@@ -143,7 +143,7 @@ export function HowItWorksSection() {
                 </div>
             ),
         },
-    ];
+    ], [shadowClass]);
 
     return (
         <div className="w-full bg-white">
