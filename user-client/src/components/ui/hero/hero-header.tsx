@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export function HeroHeader() {
     const router = useRouter()
@@ -29,10 +30,7 @@ export function HeroHeader() {
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-                <div
-                    className="relative w-10 h-10 group-hover:drop-shadow-lg transition-all duration-300"
-                    style={{ filter: "url(#logo-glow)" }}
-                >
+                <Link href="/" className="relative w-10 h-10 group-hover:drop-shadow-lg transition-all duration-300" style={{ filter: "url(#logo-glow)" }}>
                     <Image
                         src="/logo.png"
                         alt="LinkBeet Logo"
@@ -40,7 +38,7 @@ export function HeroHeader() {
                         className="object-contain"
                         priority
                     />
-                </div>
+                </Link>
 
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     {particles.map((p, i) => (
@@ -70,24 +68,24 @@ export function HeroHeader() {
 
             {/* Navigation */}
             <nav className="flex items-center space-x-2">
-                <a
-                    href="#"
+                <Link
+                    href="/#features"
                     className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
                 >
                     Features
-                </a>
-                <a
-                    href="#"
+                </Link>
+                <Link
+                    href="/#how-it-works"
                     className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
                 >
-                    Pricing
-                </a>
-                <a
-                    href="#"
+                    How it works
+                </Link>
+                <Link
+                    href="/#faq"
                     className="text-white/80 hover:text-white text-xs font-light px-3 py-2 rounded-full hover:bg-white/10 transition-all duration-200"
                 >
-                    Docs
-                </a>
+                    FAQ
+                </Link>
             </nav>
 
             {/* Login Button Group with Arrow */}

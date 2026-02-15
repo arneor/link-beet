@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 export function HeroContent() {
@@ -68,19 +69,20 @@ export function HeroContent() {
                 </motion.p>
 
                 <motion.div
-                    className="flex items-center gap-6 flex-wrap"
+                    className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 1.0 }}
                 >
-                    <motion.button
-                        onClick={() => router.push("/signup")}
-                        className="px-10 py-4 rounded-full bg-transparent border-2 border-white/30 text-white font-medium text-sm transition-all duration-300 hover:bg-white/10 hover:border-cyan-400/50 hover:text-cyan-100 cursor-pointer backdrop-blur-sm"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        View Features
-                    </motion.button>
+                    <Link href="/#features">
+                        <motion.button
+                            className="px-10 py-4 rounded-full bg-transparent border-2 border-white/30 text-white font-medium text-sm transition-all duration-300 hover:bg-white/10 hover:border-cyan-400/50 hover:text-cyan-100 cursor-pointer backdrop-blur-sm"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            View Features
+                        </motion.button>
+                    </Link>
                     <motion.button
                         onClick={() => router.push("/signup")}
                         className="px-10 py-4 rounded-full bg-linear-to-r from-cyan-500 to-orange-500 text-white font-semibold text-sm transition-all duration-300 hover:from-cyan-400 hover:to-orange-400 cursor-pointer shadow-lg hover:shadow-xl"

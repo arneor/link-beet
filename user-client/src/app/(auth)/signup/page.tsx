@@ -11,22 +11,16 @@ import { z } from 'zod';
 
 import {
     ArrowRight,
-    Store,
-    MapPin,
     Loader2,
     CheckCircle2,
-    ArrowLeft,
     RefreshCw,
+    Eye,
+    EyeOff,
+    MapPin,
+    AtSign,
+    Store
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import {
     Form,
     FormControl,
@@ -42,7 +36,7 @@ import {
 } from '@/components/ui/input-otp';
 import { authApi, businessApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
+import { SignInPage, GlassInputWrapper } from '@/components/ui/sign-in';
 
 // Validation schema for business details
 const signupSchema = z.object({
@@ -66,6 +60,7 @@ type OtpValues = z.infer<typeof otpSchema>;
 
 type Step = 'details' | 'otp' | 'success';
 
+
 export default function SignupPage() {
     const router = useRouter();
     const { toast } = useToast();
@@ -73,6 +68,7 @@ export default function SignupPage() {
     // Steps: details -> otp -> success
     const [step, setStep] = useState<Step>('details');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Business Data
     const [businessData, setBusinessData] = useState<SignupValues | null>(null);
@@ -121,15 +117,6 @@ export default function SignupPage() {
     const onSubmitDetails = async (data: SignupValues) => {
         setIsLoading(true);
         try {
-            // Check if email exists or start signup flow
-            // Since the API requires registering first to get OTP in some flows,
-            // we'll assume a "initiate signup" endpoint or use the register endpoint directly
-            // which might send OTP if configured.
-            // However, based on the previous context, we might need to register first.
-            // Let's assume `authApi.register` sends OTP.
-
-            // Only send email and password to the signup endpoint
-            // The business name and location are used later in the registration step
             const response = await authApi.signup({
                 email: data.email,
                 password: data.password,
@@ -164,10 +151,8 @@ export default function SignupPage() {
 
         setIsLoading(true);
         try {
-            // Verify OTP
             await authApi.verifyOtp(businessData.email, data.otp);
 
-            // Now register the business
             const business = await businessApi.register({
                 businessName: businessData.businessName,
                 username: businessData.username,
@@ -175,7 +160,6 @@ export default function SignupPage() {
                 contactEmail: businessData.email,
             });
 
-            // Get the business ID (handle both id and _id from backend)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const businessId = business.id || (business as any)._id;
 
@@ -189,7 +173,6 @@ export default function SignupPage() {
                 description: 'Your business profile is ready.',
             });
 
-            // Redirect to dashboard after delay
             setTimeout(() => {
                 router.push(`/dashboard/${businessId}`);
             }, 2000);
@@ -211,10 +194,6 @@ export default function SignupPage() {
 
         setIsLoading(true);
         try {
-            // Ideally trigger a resend endpoint
-            // For now, re-calling register might trigger resend or use a specific resend endpoint if available
-            // Assuming authApi.resendOtp exists or similar. checking authApi...
-            // If not, we can re-call register/login logic
             await authApi.signup(businessData); // Re-trigger registration email logic
 
             setCountdown(60);
@@ -249,308 +228,295 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
-            {/* Background decorations */}
-            <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl opacity-50" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl opacity-50" />
+        <SignInPage
+            title={
+                step === 'success' ? (
+                    <span className="text-green-500 flex items-center gap-3">
+                        Success <CheckCircle2 className="w-8 h-8" />
+                    </span>
+                ) : step === 'otp' ? (
+                    "Verify Email"
+                ) : (
+                    "Create Account"
+                )
+            }
+            description={
+                step === 'success' ? (
+                    "Your account has been created successfully."
+                ) : step === 'otp' ? (
+                    <span>Enter the code sent to <span className="font-medium text-primary">{businessData?.email}</span></span>
+                ) : (
+                    "Start your WiFi marketing journey today"
+                )
+            }
+            heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
 
-            <div className="w-full max-w-lg z-10">
-                {/* Step 1: Business Details */}
-                {step === 'details' && (
-                    <div className="animate-fade-in">
-                        <Card className="shadow-2xl shadow-primary/5 border-border/50 backdrop-blur-sm bg-card/80">
-                            <CardHeader className="space-y-1">
-                                <CardTitle className="text-2xl font-display flex items-center gap-2">
-                                    <Store className="w-6 h-6 text-primary" />
-                                    Create Business Account
-                                </CardTitle>
-                                <CardDescription>
-                                    Start your WiFi marketing journey today
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Form {...signupForm}>
-                                    <form
-                                        onSubmit={signupForm.handleSubmit(onSubmitDetails)}
-                                        className="space-y-4"
-                                    >
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {/* Business Name */}
-                                            <FormField
-                                                control={signupForm.control}
-                                                name="businessName"
-                                                render={({ field }) => (
-                                                    <FormItem className="col-span-2">
-                                                        <FormLabel>Business Name</FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder="e.g. The Coffee House"
-                                                                className="h-11"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+        >
+            {/* Step 1: Business Details */}
+            {step === 'details' && (
+                <Form {...signupForm}>
+                    <form onSubmit={signupForm.handleSubmit(onSubmitDetails)} className="space-y-4">
+                        <div className="flex flex-col gap-4">
+                            {/* Business Name */}
+                            <FormField
+                                control={signupForm.control}
+                                name="businessName"
+                                render={({ field }) => (
+                                    <FormItem className="animate-element animate-delay-100">
+                                        <FormLabel className="text-sm font-medium text-muted-foreground">Business Name</FormLabel>
+                                        <FormControl>
+                                            <GlassInputWrapper>
+                                                <div className="relative">
+                                                    <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="The Coffee House"
+                                                        className="w-full bg-transparent text-sm p-4 pl-10 rounded-2xl focus:outline-none"
+                                                        {...field}
+                                                    />
+                                                </div>
+                                            </GlassInputWrapper>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                                            {/* Username */}
-                                            <FormField
-                                                control={signupForm.control}
-                                                name="username"
-                                                render={({ field }) => (
-                                                    <FormItem className="col-span-2 md:col-span-1">
-                                                        <FormLabel>Username</FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">@</span>
-                                                                <Input
-                                                                    placeholder="linkbeet"
-                                                                    className="pl-7 h-11"
-                                                                    {...field}
-                                                                    onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                                                                />
-                                                            </div>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Username */}
+                                <FormField
+                                    control={signupForm.control}
+                                    name="username"
+                                    render={({ field }) => (
+                                        <FormItem className="animate-element animate-delay-200">
+                                            <FormLabel className="text-sm font-medium text-muted-foreground">Username</FormLabel>
+                                            <FormControl>
+                                                <GlassInputWrapper>
+                                                    <div className="relative">
+                                                        <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="linkbeet"
+                                                            className="w-full bg-transparent text-sm p-4 pl-10 rounded-2xl focus:outline-none"
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                                        />
+                                                    </div>
+                                                </GlassInputWrapper>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                                            {/* Location */}
-                                            <FormField
-                                                control={signupForm.control}
-                                                name="location"
-                                                render={({ field }) => (
-                                                    <FormItem className="col-span-2 md:col-span-1">
-                                                        <FormLabel>Location / City</FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative">
-                                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                                <Input
-                                                                    placeholder="New York, NY"
-                                                                    className="pl-9 h-11"
-                                                                    {...field}
-                                                                />
-                                                            </div>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                {/* Location */}
+                                <FormField
+                                    control={signupForm.control}
+                                    name="location"
+                                    render={({ field }) => (
+                                        <FormItem className="animate-element animate-delay-200">
+                                            <FormLabel className="text-sm font-medium text-muted-foreground">Location</FormLabel>
+                                            <FormControl>
+                                                <GlassInputWrapper>
+                                                    <div className="relative">
+                                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="City, State"
+                                                            className="w-full bg-transparent text-sm p-4 pl-10 rounded-2xl focus:outline-none"
+                                                            {...field}
+                                                        />
+                                                    </div>
+                                                </GlassInputWrapper>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                                            {/* Email & Password */}
-                                            <FormField
-                                                control={signupForm.control}
-                                                name="email"
-                                                render={({ field }) => (
-                                                    <FormItem className="col-span-2">
-                                                        <FormLabel>Email Address</FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                type="email"
-                                                                placeholder="owner@business.com"
-                                                                className="h-11"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={signupForm.control}
-                                                name="password"
-                                                render={({ field }) => (
-                                                    <FormItem className="col-span-2">
-                                                        <FormLabel>Password</FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                type="password"
-                                                                placeholder="••••••••"
-                                                                className="h-11"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-
-                                        <Button
-                                            type="submit"
-                                            className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all bg-[#9EE53B] text-[#0a0a1a] hover:bg-[#8CD032]"
-                                            disabled={isLoading}
-                                        >
-                                            {isLoading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Creating Account...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    Continue{' '}
-                                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                                </>
-                                            )}
-                                        </Button>
-
-                                        <div className="pt-2 text-center">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                className="h-auto px-0"
-                                                asChild
-                                            >
-                                                <Link href="/login">
-                                                    Already have an account? Sign in
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </Form>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Step 2: OTP */}
-                {step === 'otp' && (
-                    <div className="animate-fade-in">
-                        <Card className="shadow-2xl shadow-primary/5 border-border/50 backdrop-blur-sm bg-card/80">
-                            <CardHeader className="space-y-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 w-8 p-0 -ml-2"
-                                        onClick={handleBack}
-                                    >
-                                        <ArrowLeft className="w-4 h-4" />
-                                    </Button>
-                                    <CardTitle className="text-xl font-display">
-                                        Verify Email
-                                    </CardTitle>
-                                </div>
-                                <CardDescription>
-                                    Enter the 6-digit code sent to{' '}
-                                    <span className="font-medium text-foreground">
-                                        {businessData?.email}
-                                    </span>
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Form {...otpForm}>
-                                    <form
-                                        onSubmit={otpForm.handleSubmit(onSubmitOtp)}
-                                        className="space-y-6"
-                                    >
-                                        <FormField
-                                            control={otpForm.control}
-                                            name="otp"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col items-center">
-                                                    <FormControl>
-                                                        <InputOTP
-                                                            maxLength={6}
-                                                            value={field.value}
-                                                            onChange={field.onChange}
-                                                        >
-                                                            <InputOTPGroup>
-                                                                <InputOTPSlot index={0} />
-                                                                <InputOTPSlot index={1} />
-                                                                <InputOTPSlot index={2} />
-                                                                <InputOTPSlot index={3} />
-                                                                <InputOTPSlot index={4} />
-                                                                <InputOTPSlot index={5} />
-                                                            </InputOTPGroup>
-                                                        </InputOTP>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <div className="text-center text-sm text-muted-foreground">
-                                            {otpExpiresIn > 0 ? (
-                                                <p>
-                                                    Code expires in{' '}
-                                                    <span className="font-medium text-primary">
-                                                        {formatTime(otpExpiresIn)}
-                                                    </span>
-                                                </p>
-                                            ) : (
-                                                <p className="text-destructive">Code expired</p>
-                                            )}
-                                        </div>
-
-                                        <Button
-                                            type="submit"
-                                            className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all bg-[#9EE53B] text-[#0a0a1a] hover:bg-[#8CD032]"
-                                            disabled={isLoading || otpForm.watch('otp').length !== 6}
-                                        >
-                                            {isLoading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Verifying...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    Verify & Create Account{' '}
-                                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                                </>
-                                            )}
-                                        </Button>
-
-                                        <div className="text-center">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="gap-2"
-                                                onClick={handleResendOtp}
-                                                disabled={countdown > 0 || isLoading}
-                                            >
-                                                <RefreshCw
-                                                    className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''
-                                                        }`}
+                            {/* Email */}
+                            <FormField
+                                control={signupForm.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem className="animate-element animate-delay-300">
+                                        <FormLabel className="text-sm font-medium text-muted-foreground">Email Address</FormLabel>
+                                        <FormControl>
+                                            <GlassInputWrapper>
+                                                <input
+                                                    type="email"
+                                                    placeholder="owner@business.com"
+                                                    className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none"
+                                                    {...field}
                                                 />
-                                                {countdown > 0
-                                                    ? `Resend available in ${countdown}s`
-                                                    : 'Resend Verification Code'}
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </Form>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
+                                            </GlassInputWrapper>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                {/* Step 3: Success */}
-                {step === 'success' && (
-                    <div className="animate-fade-in">
-                        <Card className="shadow-2xl shadow-primary/5 border-border/50 backdrop-blur-sm bg-card/80">
-                            <CardContent className="pt-8 pb-8 flex flex-col items-center text-center">
-                                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                                    <CheckCircle2 className="w-8 h-8 text-green-600" />
-                                </div>
-                                <h2 className="text-2xl font-display font-semibold mb-2">
-                                    You&apos;re All Set!
-                                </h2>
-                                <p className="text-muted-foreground mb-4">
-                                    Your business account has been created successfully.
-                                </p>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Redirecting to your dashboard...
-                                </div>
-                            </CardContent>
-                        </Card>
+                            {/* Password */}
+                            <FormField
+                                control={signupForm.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem className="animate-element animate-delay-400">
+                                        <FormLabel className="text-sm font-medium text-muted-foreground">Password</FormLabel>
+                                        <FormControl>
+                                            <GlassInputWrapper>
+                                                <div className="relative">
+                                                    <input
+                                                        type={showPassword ? 'text' : 'password'}
+                                                        placeholder="••••••••"
+                                                        className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none"
+                                                        {...field}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className="absolute inset-y-0 right-3 flex items-center"
+                                                    >
+                                                        {showPassword ? (
+                                                            <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                                                        ) : (
+                                                            <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </GlassInputWrapper>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="animate-element animate-delay-500 w-full rounded-2xl bg-primary py-6 font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 text-base mt-2"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    Creating Account...
+                                </>
+                            ) : (
+                                <>
+                                    Continue <ArrowRight className="w-5 h-5 ml-2" />
+                                </>
+                            )}
+                        </Button>
+
+                        <p className="animate-element animate-delay-600 text-center text-sm text-muted-foreground mt-4">
+                            Already have an account?{' '}
+                            <a href="#" onClick={(e) => { e.preventDefault(); router.push('/login'); }} className="text-primary hover:underline transition-colors font-medium">
+                                Sign In
+                            </a>
+                        </p>
+                    </form>
+                </Form>
+            )}
+
+            {/* Step 2: OTP Verification */}
+            {step === 'otp' && (
+                <Form {...otpForm}>
+                    <form onSubmit={otpForm.handleSubmit(onSubmitOtp)} className="space-y-6">
+                        <FormField
+                            control={otpForm.control}
+                            name="otp"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col items-center animate-element animate-delay-300">
+                                    <FormControl>
+                                        <InputOTP
+                                            maxLength={6}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                        >
+                                            <InputOTPGroup>
+                                                <InputOTPSlot index={0} className="h-12 w-12 sm:h-14 sm:w-14 text-lg" />
+                                                <InputOTPSlot index={1} className="h-12 w-12 sm:h-14 sm:w-14 text-lg" />
+                                                <InputOTPSlot index={2} className="h-12 w-12 sm:h-14 sm:w-14 text-lg" />
+                                                <InputOTPSlot index={3} className="h-12 w-12 sm:h-14 sm:w-14 text-lg" />
+                                                <InputOTPSlot index={4} className="h-12 w-12 sm:h-14 sm:w-14 text-lg" />
+                                                <InputOTPSlot index={5} className="h-12 w-12 sm:h-14 sm:w-14 text-lg" />
+                                            </InputOTPGroup>
+                                        </InputOTP>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {otpExpiresIn > 0 ? (
+                            <p className="text-center text-sm text-muted-foreground animate-element animate-delay-400">
+                                Code expires in{' '}
+                                <span className="font-medium text-primary">
+                                    {formatTime(otpExpiresIn)}
+                                </span>
+                            </p>
+                        ) : (
+                            <p className="text-center text-sm text-destructive animate-element animate-delay-400">
+                                Code expired
+                            </p>
+                        )}
+
+                        <Button
+                            type="submit"
+                            className="animate-element animate-delay-500 w-full rounded-2xl bg-primary py-6 font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 text-base"
+                            disabled={isLoading || otpForm.watch('otp').length !== 6}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    Verifying...
+                                </>
+                            ) : (
+                                <>
+                                    Verify & Create Account <ArrowRight className="w-5 h-5 ml-2" />
+                                </>
+                            )}
+                        </Button>
+
+                        <div className="flex flex-col items-center gap-2 animate-element animate-delay-600">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="h-auto"
+                                onClick={handleResendOtp}
+                                disabled={countdown > 0 || isLoading}
+                            >
+                                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                                {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className="h-auto text-muted-foreground text-sm hover:text-primary"
+                                onClick={handleBack}
+                            >
+                                Use a different email
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            )}
+
+            {/* Step 3: Success */}
+            {step === 'success' && (
+                <div className="flex flex-col items-center justify-center space-y-4 animate-element animate-delay-300 py-10">
+                    <div className="animate-bounce">
+                        <CheckCircle2 className="w-20 h-20 text-green-500" />
                     </div>
-                )}
-            </div>
-        </div>
+                    <div className="text-center">
+                        <h2 className="text-2xl font-semibold mb-2">You&apos;re All Set!</h2>
+                        <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+                    </div>
+                </div>
+            )}
+        </SignInPage>
     );
 }
