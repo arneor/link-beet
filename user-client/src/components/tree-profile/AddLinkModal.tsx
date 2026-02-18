@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2, Link as LinkIcon, Type, Layout, Star, Sparkles, LucideIcon } from 'lucide-react';
 import { CustomLink, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { cn, isColorExclusivelyDark } from '@/lib/utils';
+import { validateGenericUrl } from '@/lib/validation';
 
 // Client-side mount detection without useEffect setState
 const emptySubscribe = () => () => { };
@@ -50,9 +51,21 @@ export function AddLinkModal({ isOpen, onClose, onSave, onDelete, initialData, t
     };
 
 
+    const [error, setError] = useState<string | null>(null);
+
+    // Reset error when inputs change
+    if (error && url) setError(null); // Simple reset or use useEffect
+
     const handleSave = () => {
         if (!title || !url) return;
-        onSave({ title, url, description, style, isActive: true });
+
+        const validation = validateGenericUrl(url);
+        if (!validation.isValid) {
+            setError(validation.error || 'Invalid URL format');
+            return;
+        }
+
+        onSave({ title, url: validation.formattedUrl, description, style, isActive: true });
         onClose();
     };
 

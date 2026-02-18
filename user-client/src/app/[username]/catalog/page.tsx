@@ -14,7 +14,7 @@ const getBusinessByUsername = cache((username: string) =>
     fetchBusinessByUsername(username)
 );
 
-interface PublicProfilePageProps {
+interface CatalogPageProps {
     params: Promise<{ username: string }>;
 }
 
@@ -34,18 +34,20 @@ const defaultTheme: TreeProfileTheme = {
  * Performance: Dynamic metadata for SEO + social sharing
  * Generates unique title, description, and OG images per business profile
  */
-export async function generateMetadata({ params }: PublicProfilePageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: CatalogPageProps): Promise<Metadata> {
     const { username } = await params;
 
     try {
         const business = await getBusinessByUsername(username);
         if (!business) return { title: 'Profile Not Found' };
 
+        const title = business.sectionTitle || 'Our Menu';
+
         return {
-            title: `${business.businessName} | LinkBeet`,
-            description: business.tagline || business.description || `Visit ${business.businessName} on LinkBeet`,
+            title: `${title} | ${business.businessName}`,
+            description: `Explore the ${title} at ${business.businessName}. ${business.tagline || ''}`,
             openGraph: {
-                title: business.businessName,
+                title: `${title} | ${business.businessName}`,
                 description: business.tagline || business.description || '',
                 images: business.profileImage || business.logoUrl
                     ? [{ url: business.profileImage || business.logoUrl || '' }]
@@ -54,7 +56,7 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
             },
             twitter: {
                 card: 'summary',
-                title: business.businessName,
+                title: `${title} | ${business.businessName}`,
                 description: business.tagline || '',
                 images: business.profileImage || business.logoUrl
                     ? [business.profileImage || business.logoUrl || '']
@@ -62,11 +64,11 @@ export async function generateMetadata({ params }: PublicProfilePageProps): Prom
             },
         };
     } catch {
-        return { title: 'Profile | LinkBeet' };
+        return { title: 'Catalog | LinkBeet' };
     }
 }
 
-export default async function PublicProfilePage({ params }: PublicProfilePageProps) {
+export default async function CatalogPage({ params }: CatalogPageProps) {
     const { username } = await params;
 
     let business;
@@ -135,7 +137,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
                 businessId={business.id}
                 username={username}
                 data={profileData}
-                activeTab="links"
+                activeTab="menu"
                 isEditMode={false}
             />
         </Suspense>

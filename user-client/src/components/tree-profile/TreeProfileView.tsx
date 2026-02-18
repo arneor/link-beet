@@ -2,6 +2,7 @@
 
 import { useState, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
     TreeProfileData,
@@ -74,12 +75,14 @@ interface TreeProfileViewProps {
     onUpdateSectionTitle?: (title: string) => void;
     onUpdateLinksTitle?: (title: string) => void;
 
+    username?: string;
     // Optional children for overlays (like Edit Controls or Theme Customizer)
     children?: React.ReactNode;
 }
 
 export function TreeProfileView({
     businessId,
+    username,
     data,
     isEditMode = false,
     activeTab: controlledActiveTab,
@@ -97,12 +100,24 @@ export function TreeProfileView({
     // Internal state for tab if not controlled
     const [internalActiveTab, setInternalActiveTab] = useState<'links' | 'menu'>('links');
     const activeTab = controlledActiveTab ?? internalActiveTab;
+    const router = useRouter();
 
     const handleTabChange = (tab: 'links' | 'menu') => {
-        if (onTabChange) {
-            onTabChange(tab);
-        } else {
-            setInternalActiveTab(tab);
+        if (isEditMode) {
+            if (onTabChange) {
+                onTabChange(tab);
+            } else {
+                setInternalActiveTab(tab);
+            }
+        } else if (username) {
+            // Public view navigation
+            // optimistically update local state for immediate feedback if needed, 
+            // but the page transition will handle the actual source of truth
+            if (tab === 'menu') {
+                router.replace(`/${username}/catalog`, { scroll: false });
+            } else {
+                router.replace(`/${username}`, { scroll: false });
+            }
         }
     };
 

@@ -29,7 +29,7 @@ export interface CatalogItem {
     categoryId: string;
     title: string;
     description?: string;
-    price: number;
+    price?: number;
     currency: string;
     imageUrl?: string;
     s3Key?: string;

@@ -371,6 +371,11 @@ export class BusinessService {
     }
 
     const treeProfile = await this.findOrCreateTreeProfile(businessId);
+
+    if (dto.socialLinks) {
+      this.validateSocialLinks(dto.socialLinks);
+    }
+
     Object.assign(treeProfile, dto);
     await treeProfile.save();
 
@@ -586,6 +591,44 @@ export class BusinessService {
     } catch (error) {
       this.logger.warn(`Could not fetch admin access logs: ${error.message}`);
       return [];
+    }
+  }
+
+  private validateSocialLinks(socialLinks: any[]) {
+    const REGEX_MAP = {
+      instagram: /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)\/?$/,
+      facebook: /^(?:https?:\/\/)?(?:www\.)?facebook\.com\/([a-zA-Z0-9.]+)\/?$/,
+      twitter: /^(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/?$/,
+      youtube: /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:channel\/|c\/|user\/|@)|youtu\.be\/)([a-zA-Z0-9_-]+)\/?$/,
+      linkedin: /^(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in|company)\/([a-zA-Z0-9_-]+)\/?$/,
+      tiktok: /^(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@?([a-zA-Z0-9_.]+)\/?$/,
+      whatsapp: /^(?:https?:\/\/)?(?:www\.)?(?:wa\.me\/|api\.whatsapp\.com\/send\?phone=)(\d+)/,
+      email: /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/,
+      phone: /^\+?([0-9\s-]{7,})$/,
+    };
+
+    for (const link of socialLinks) {
+      // Skip if platform is unknown or url is missing
+      if (!link.platform || !link.url) continue;
+
+      const regex = REGEX_MAP[link.platform as keyof typeof REGEX_MAP];
+      if (regex) {
+        if (link.platform === 'email') {
+          const clean = link.url.replace(/^mailto:/, '');
+          if (!regex.test(clean)) {
+            throw new ForbiddenException(`Invalid Email: ${link.url}`);
+          }
+        } else if (link.platform === 'phone') {
+          const clean = link.url.replace(/^tel:/, '');
+          if (!regex.test(clean)) {
+            throw new ForbiddenException(`Invalid Phone number: ${link.url}`);
+          }
+        } else {
+          if (!regex.test(link.url)) {
+            throw new ForbiddenException(`Invalid URL for ${link.platform}: ${link.url}`);
+          }
+        }
+      }
     }
   }
 }

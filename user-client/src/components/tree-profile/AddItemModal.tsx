@@ -57,7 +57,7 @@ export function AddItemModal({ isOpen, onClose, onSave, onDelete, initialData, c
 
     const [title, setTitle] = useState(initialData?.title || '');
     const [description, setDescription] = useState(initialData?.description || '');
-    const [price, setPrice] = useState(initialData?.price.toString() || '');
+    const [price, setPrice] = useState(initialData?.price != null ? initialData.price.toString() : '');
     const [image, setImage] = useState(initialData?.imageUrl || '');
     const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || []);
     const [isAvailable, setIsAvailable] = useState(initialData?.isAvailable !== false);
@@ -109,11 +109,11 @@ export function AddItemModal({ isOpen, onClose, onSave, onDelete, initialData, c
     };
 
     const handleSave = () => {
-        if (!title || !price) return;
+        if (!title) return;
         onSave({
             title,
             description,
-            price: parseFloat(price),
+            price: price ? parseFloat(price) : undefined,
             imageUrl: image,
             s3Key,
             tags: selectedTags as CatalogItem['tags'],
@@ -322,7 +322,7 @@ export function AddItemModal({ isOpen, onClose, onSave, onDelete, initialData, c
                         )}
                         <button
                             onClick={handleSave}
-                            disabled={!title || !price || isUploading}
+                            disabled={!title || isUploading}
                             className={cn(
                                 "flex-1 font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,255,255,0.15)]",
                                 isLightTheme

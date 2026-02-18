@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import { X, Trash2, Link as LinkIcon, Instagram, Facebook, Twitter, Youtube, Linkedin, Mail, Phone } from 'lucide-react';
 import { SocialLink, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { cn, isColorExclusivelyDark } from '@/lib/utils';
+import { validateSocialLink } from '@/lib/validation';
 
 // Client-side mount detection without useEffect setState
 const emptySubscribe = () => () => { };
@@ -55,7 +56,13 @@ export function SocialLinkModal({ isOpen, onClose, onSave, onDelete, initialData
     const [selectedPlatform, setSelectedPlatform] = useState<string>(initialData?.platform || 'instagram');
     const [url, setUrl] = useState(initialData?.url || '');
     const [label, setLabel] = useState(initialData?.label || '');
+    const [error, setError] = useState<string | null>(null);
     const mounted = useIsMounted();
+
+    useEffect(() => {
+        // Reset error when inputs change
+        setError(null);
+    }, [url, selectedPlatform]);
 
     const isLightTheme = isColorExclusivelyDark(theme.textColor);
 
@@ -73,11 +80,20 @@ export function SocialLinkModal({ isOpen, onClose, onSave, onDelete, initialData
         optionBtnActive: isLightTheme ? 'bg-black/10 text-black border-black/30' : 'bg-white/10 text-white border-white/30',
         label: isLightTheme ? 'text-black/40' : 'text-white/40',
         deleteBtn: 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20',
+        errorText: 'text-red-500 text-xs mt-1'
     };
 
     const handleSave = () => {
         if (!url) return;
-        onSave({ platform: selectedPlatform, url, label });
+
+        const validation = validateSocialLink(selectedPlatform, url);
+
+        if (!validation.isValid) {
+            setError(validation.error || 'Invalid URL');
+            return;
+        }
+
+        onSave({ platform: selectedPlatform, url: validation.formattedUrl, label });
         onClose();
     };
 
@@ -150,10 +166,11 @@ export function SocialLinkModal({ isOpen, onClose, onSave, onDelete, initialData
                                         styles.inputBg,
                                         styles.text,
                                         styles.placeholder,
-                                        isLightTheme ? "focus:ring-black/30" : "focus:ring-white/30"
+                                        error ? "border-red-500 focus:ring-red-500/30" : (isLightTheme ? "focus:ring-black/30" : "focus:ring-white/30")
                                     )}
                                 />
                             </div>
+                            {error && <p className={styles.errorText}>{error}</p>}
                         </div>
 
                         <div className="space-y-1.5">

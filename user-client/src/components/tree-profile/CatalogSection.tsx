@@ -47,6 +47,8 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
         solid: isLightTheme ? 'bg-white border-black/10' : 'bg-[#1a1a1a] border-white/10',
     };
 
+    const hasPrice = item.price != null && item.price > 0;
+
     return (
         <div
             className={cn(
@@ -112,18 +114,26 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
                     {item.title}
                 </h3>
                 {item.description && (
-                    <p className="text-xs line-clamp-2 mb-2 min-h-8" style={{ color: 'var(--text-color)', opacity: 0.6 }}>
+                    <p
+                        className={cn(
+                            "text-xs line-clamp-2",
+                            hasPrice ? "mb-2 min-h-8" : "mb-0"
+                        )}
+                        style={{ color: 'var(--text-color)', opacity: 0.6 }}
+                    >
                         {item.description}
                     </p>
                 )}
-                <div className="flex items-center justify-between">
-                    <span
-                        className="text-lg font-bold"
-                        style={{ color: 'var(--primary)' }}
-                    >
-                        {item.currency}{item.price}
-                    </span>
-                </div>
+                {hasPrice && (
+                    <div className="flex items-center justify-between">
+                        <span
+                            className="text-lg font-bold"
+                            style={{ color: 'var(--primary)' }}
+                        >
+                            {item.currency}{item.price}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Edit mode overlay */}
@@ -264,7 +274,7 @@ function CatalogSectionComponent({
                 id: `item-${Date.now()}`,
                 categoryId: activeCategory,
                 title: itemData.title || 'New Item',
-                price: itemData.price || 0,
+                price: itemData.price !== undefined ? itemData.price : undefined,
                 currency: itemData.currency || '₹',
                 isAvailable: true,
                 ...itemData

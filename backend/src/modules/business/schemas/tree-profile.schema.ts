@@ -68,7 +68,7 @@ export class CatalogItem {
   @Prop() categoryId: string;
   @Prop() title: string;
   @Prop() description: string;
-  @Prop() price: number;
+  @Prop({ required: false }) price: number;
   @Prop({ default: "INR" }) currency: string;
   @Prop() imageUrl: string;
   @Prop({ type: [String], default: [] }) tags: string[];
