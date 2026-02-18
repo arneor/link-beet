@@ -133,3 +133,19 @@ The environment guard (`environment.guard.ts`) does 3 things at every startup:
 | `npm run prod:local`| Start locally with PROD config        |
 | `npm run start:prod`| Production build (used by Render)     |
 | `npm run build`     | Build for production deployment       |
+
+
+# 1. Work on develop
+git checkout develop
+
+# 2. Make changes, test locally
+# 3. Commit and push to develop
+git add . && git commit -m "feat: description" && git push origin develop
+
+# 4. Test on dev environment (dev Vercel URL)
+
+# 5. When ready for production:
+git checkout main
+git merge develop --no-edit
+git push origin main
+git checkout develop
