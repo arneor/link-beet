@@ -1,0 +1,139 @@
+# =============================================================================
+# CI Pipeline — Runs on every PR and push to develop/main
+# =============================================================================
+# Purpose:
+#   - Lint, test, and build all services on every PR
+#   - Enforce quality gates before merging to develop or main
+#   - Matrix strategy ensures all 3 services are validated in parallel
+# =============================================================================
+
+name: CI — Lint, Test & Build
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # =========================================================================
+  # Backend — NestJS API
+  # =========================================================================
+  backend:
+    name: Backend — Lint, Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/linkbeet_test
+          JWT_SECRET: test-jwt-secret
+          JWT_EXPIRES_IN: 1d
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build output (dist/) not found!"
+            exit 1
+          fi
+          echo "✅ Build succeeded — dist/ directory created"
+
+  # =========================================================================
+  # User Client — Next.js (customer-facing)
+  # =========================================================================
+  user-client:
+    name: User Client — Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: user-client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: user-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api-dev.linkbeet.in/api
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: placeholder
+          NEXT_PUBLIC_SITE_URL: https://dev.linkbeet.in
+
+  # =========================================================================
+  # Admin Client — Next.js (admin dashboard)
+  # =========================================================================
+  admin-client:
+    name: Admin Client — Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin-client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: admin-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api-dev.linkbeet.in/api
+          NEXT_PUBLIC_APP_URL: https://admin-dev.linkbeet.in
+          NEXT_PUBLIC_CUSTOMER_APP_URL: https://dev.linkbeet.in

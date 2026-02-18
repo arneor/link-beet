@@ -3,10 +3,14 @@ import { ValidationPipe, Logger } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { validateEnvironment } from "./common/guards/environment.guard";
 import * as express from "express";
 import { join } from "path";
 
 async function bootstrap() {
+  // Validate environment before anything else
+  validateEnvironment();
+
   const logger = new Logger("Bootstrap");
   const app = await NestFactory.create(AppModule);
 
@@ -18,14 +22,14 @@ async function bootstrap() {
   const corsOrigins = origins
     ? origins.split(",").map((o) => o.trim())
     : [
-        "http://localhost:3001",
-        "http://localhost:3000",
-        "http://localhost:3002",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "https://www.linkbeet.in",
-        "https://admin.linkbeet.in",
-      ];
+      "http://localhost:3001",
+      "http://localhost:3000",
+      "http://localhost:3002",
+      "http://localhost:5173",
+      "http://127.0.0.1:3000",
+      "https://www.linkbeet.in",
+      "https://admin.linkbeet.in",
+    ];
 
   app.enableCors({
     origin: corsOrigins,
@@ -85,6 +89,11 @@ async function bootstrap() {
   logger.log(`🚀 LINKBEET Backend is running on: http://localhost:${port}`);
   logger.log(`📚 API Documentation: http://localhost:${port}/docs`);
   logger.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+
+  // Show which database we're connected to (hide credentials)
+  const dbUri = process.env.MONGODB_URI || '';
+  const dbName = dbUri.split('/').pop()?.split('?')[0] || 'unknown';
+  logger.log(`🗄️  Database: ${dbName}`);
 }
 
 bootstrap();

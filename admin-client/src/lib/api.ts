@@ -3,9 +3,10 @@
  * Separate from customer API for security isolation
  */
 
-// API Base URL
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
-    (process.env.NODE_ENV === 'development' ? "http://localhost:3001/api" : "https://link-beet.onrender.com/api");
+// API Base URL - sourced exclusively from environment variables.
+// NEVER hardcode production URLs in source code.
+// Set NEXT_PUBLIC_API_URL in .env.local (dev) or platform secrets (prod).
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 // API error class
 export class ApiError extends Error {

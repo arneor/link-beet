@@ -20,10 +20,17 @@ import { MediaModule } from "./modules/media/media.module";
 
 @Module({
   imports: [
-    // Configuration
+    // Configuration — loads the correct .env file based on NODE_ENV
+    // Priority: .env.{NODE_ENV} → .env.local → .env (first match wins per key)
+    // Running locally (NODE_ENV=development) → loads .env.development → DEV database
+    // Running on Render (NODE_ENV=production) → loads .env.production → PROD database
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [".env", ".env.local", ".env.development"],
+      envFilePath: [
+        `.env.${process.env.NODE_ENV || 'development'}`, // .env.development or .env.production
+        '.env.local',                                     // Local overrides (optional)
+        '.env',                                           // Fallback
+      ],
     }),
 
     // MongoDB Connection
@@ -73,4 +80,4 @@ import { MediaModule } from "./modules/media/media.module";
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

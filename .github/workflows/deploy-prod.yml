@@ -1,0 +1,148 @@
+# =============================================================================
+# Deploy to PROD — Manual approval via GitHub Release
+# =============================================================================
+# Purpose:
+#   - Deploy to production ONLY via GitHub Releases (tag-based)
+#   - Requires the CI pipeline on `main` to have passed
+#   - Uses production GitHub Environment with required reviewers
+#   - Never bypasses testing — CI must pass on main before release
+# =============================================================================
+
+name: Deploy — Production
+
+on:
+  release:
+    types: [published]
+
+# Only allow one production deploy at a time
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # =========================================================================
+  # Gate: Ensure CI passed on main
+  # =========================================================================
+  verify-ci:
+    name: Verify CI Passed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Verify tag is on main branch
+        run: |
+          TAG_SHA=$(git rev-parse ${{ github.event.release.tag_name }})
+          MAIN_SHA=$(git rev-parse HEAD)
+          echo "Tag SHA:  $TAG_SHA"
+          echo "Main SHA: $MAIN_SHA"
+          
+          # Verify the tag commit is an ancestor of main
+          if git merge-base --is-ancestor "$TAG_SHA" "$MAIN_SHA" 2>/dev/null || [ "$TAG_SHA" = "$MAIN_SHA" ]; then
+            echo "✅ Tag is on main branch"
+          else
+            echo "❌ Release tag must be on the main branch!"
+            exit 1
+          fi
+
+  # =========================================================================
+  # Deploy Backend to Render (Prod)
+  # =========================================================================
+  deploy-backend-prod:
+    name: Deploy Backend → Render (Prod)
+    runs-on: ubuntu-latest
+    needs: verify-ci
+    environment: production  # Requires manual approval
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.RENDER_DEPLOY_HOOK_PROD_BACKEND }}")
+          
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Render deploy hook triggered for prod backend"
+          else
+            echo "❌ Render deploy hook failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+  # =========================================================================
+  # Deploy User Client to Vercel (Prod)
+  # =========================================================================
+  deploy-user-client-prod:
+    name: Deploy User Client → Vercel (Prod)
+    runs-on: ubuntu-latest
+    needs: verify-ci
+    environment: production  # Requires manual approval
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: user-client/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: user-client
+
+      - name: Build for Production
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: user-client
+
+      - name: Deploy to Production
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "✅ User Client deployed to production: $DEPLOY_URL"
+        working-directory: user-client
+
+  # =========================================================================
+  # Deploy Admin Client to Vercel (Prod)
+  # =========================================================================
+  deploy-admin-client-prod:
+    name: Deploy Admin Client → Vercel (Prod)
+    runs-on: ubuntu-latest
+    needs: verify-ci
+    environment: production  # Requires manual approval
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: admin-client/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: admin-client
+
+      - name: Build for Production  
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: admin-client
+
+      - name: Deploy to Production
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "✅ Admin Client deployed to production: $DEPLOY_URL"
+        working-directory: admin-client

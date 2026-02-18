@@ -32,7 +32,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.linkbeet.in'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.linkbeet.in'),
   title: {
     default: 'LinkBeet - WiFi & Marketing Platform',
     template: '%s | LinkBeet',
@@ -113,8 +113,19 @@ export default function RootLayout({
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
       <head>
         {/* Performance: DNS prefetch + preconnect for API server (saves 200-500ms on mobile) */}
-        <link rel="dns-prefetch" href="https://link-beet.onrender.com" />
-        <link rel="preconnect" href="https://link-beet.onrender.com" crossOrigin="anonymous" />
+        {process.env.NEXT_PUBLIC_API_URL && (() => {
+          try {
+            const apiHost = new URL(process.env.NEXT_PUBLIC_API_URL).origin;
+            return (
+              <>
+                <link rel="dns-prefetch" href={apiHost} />
+                <link rel="preconnect" href={apiHost} crossOrigin="anonymous" />
+              </>
+            );
+          } catch {
+            return null;
+          }
+        })()}
       </head>
       <body className="font-sans antialiased">
         <Providers>

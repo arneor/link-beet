@@ -1,0 +1,107 @@
+# =============================================================================
+# Deploy to DEV — Automatic on push to develop branch
+# =============================================================================
+# Purpose:
+#   - Automatically deploy to dev environment when code is merged to develop
+#   - Uses dev-specific secrets and database
+#   - Deploys backend to Render (dev service) and frontends to Vercel (dev)
+# =============================================================================
+
+name: Deploy — Dev Environment
+
+on:
+  push:
+    branches: [develop]
+
+# Only allow one deploy at a time
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # =========================================================================
+  # Deploy Backend to Render (Dev)
+  # =========================================================================
+  deploy-backend-dev:
+    name: Deploy Backend → Render (Dev)
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.RENDER_DEPLOY_HOOK_DEV_BACKEND }}"
+          echo "✅ Render deploy hook triggered for dev backend"
+
+  # =========================================================================
+  # Deploy User Client to Vercel (Dev)
+  # =========================================================================
+  deploy-user-client-dev:
+    name: Deploy User Client → Vercel (Dev)
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: user-client/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: user-client
+
+      - name: Build for Preview
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: user-client
+
+      - name: Deploy to Dev
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "✅ User Client deployed to: $DEPLOY_URL"
+        working-directory: user-client
+
+  # =========================================================================
+  # Deploy Admin Client to Vercel (Dev)
+  # =========================================================================
+  deploy-admin-client-dev:
+    name: Deploy Admin Client → Vercel (Dev)
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: admin-client/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: admin-client
+
+      - name: Build for Preview
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: admin-client
+
+      - name: Deploy to Dev
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "✅ Admin Client deployed to: $DEPLOY_URL"
+        working-directory: admin-client
