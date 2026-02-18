@@ -103,16 +103,15 @@ export function TreeProfileView({
     const router = useRouter();
 
     const handleTabChange = (tab: 'links' | 'menu') => {
-        if (isEditMode) {
-            if (onTabChange) {
-                onTabChange(tab);
-            } else {
-                setInternalActiveTab(tab);
-            }
-        } else if (username) {
-            // Public view navigation
-            // optimistically update local state for immediate feedback if needed, 
-            // but the page transition will handle the actual source of truth
+        // Always update controlled/internal state for immediate tab switching
+        if (onTabChange) {
+            onTabChange(tab);
+        } else {
+            setInternalActiveTab(tab);
+        }
+
+        // Public view: also navigate to the appropriate route
+        if (!isEditMode && username) {
             if (tab === 'menu') {
                 router.replace(`/${username}/catalog`, { scroll: false });
             } else {
