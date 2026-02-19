@@ -2,7 +2,7 @@
 
 import { useState, useMemo, memo } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
     TreeProfileData,
@@ -101,6 +101,7 @@ export function TreeProfileView({
     const [internalActiveTab, setInternalActiveTab] = useState<'links' | 'menu'>('links');
     const activeTab = controlledActiveTab ?? internalActiveTab;
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleTabChange = (tab: 'links' | 'menu') => {
         // Always update controlled/internal state for immediate tab switching
@@ -110,15 +111,26 @@ export function TreeProfileView({
             setInternalActiveTab(tab);
         }
 
-        // Public view: also navigate to the appropriate route
+        // Public view: navigate to route
         if (!isEditMode && username) {
-            if (tab === 'menu') {
-                router.replace(`/${username}/catalog`, { scroll: false });
-            } else {
-                router.replace(`/${username}`, { scroll: false });
+            // In "Keep Alive" mode, the layout persists, but we still update URL for sharing
+            // We use router.replace to avoid history stack pollution if desired, or push.
+            // Given user wants "tabs", navigation behavior is standard.
+            const target = tab === 'menu' ? `/${username}/catalog` : `/${username}`;
+            if (pathname !== target) {
+                router.replace(target, { scroll: false });
             }
         }
     };
+
+    // Determine active tab: Controlled > EditMode Internal > Pathname derivation
+    const computedActiveTab = useMemo(() => {
+        if (activeTab) return activeTab;
+        if (!isEditMode && pathname) {
+            return pathname.endsWith('/catalog') ? 'menu' : 'links';
+        }
+        return internalActiveTab;
+    }, [activeTab, isEditMode, pathname, internalActiveTab]);
 
     // CSS Variables for HIGH PERFORMANCE (No JS re-renders for styles)
     const cssVariables = useMemo(() => ({
@@ -159,7 +171,7 @@ export function TreeProfileView({
                                 {/* Tab: Quick Links */}
                                 <button
                                     onClick={() => handleTabChange('links')}
-                                    className={`relative px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors duration-300 ${activeTab === 'links' ? 'text-(--text-color)' : 'text-(--text-color) opacity-50 hover:opacity-80'}`}
+                                    className={`relative px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors duration-300 ${computedActiveTab === 'links' ? 'text-(--text-color)' : 'text-(--text-color) opacity-50 hover:opacity-80'}`}
                                 >
                                     {isEditMode && onUpdateLinksTitle ? (
                                         <input
@@ -171,7 +183,7 @@ export function TreeProfileView({
                                     ) : (
                                         data.linksTitle ?? "Quick Links"
                                     )}
-                                    {activeTab === 'links' && (
+                                    {computedActiveTab === 'links' && (
                                         /* Performance: CSS-only tab indicator instead of framer-motion layoutId */
                                         <div
                                             className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-all duration-300"
@@ -186,7 +198,7 @@ export function TreeProfileView({
                                 {/* Tab: Our Menu */}
                                 <button
                                     onClick={() => handleTabChange('menu')}
-                                    className={`relative px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors duration-300 ${activeTab === 'menu' ? 'text-(--text-color)' : 'text-(--text-color) opacity-50 hover:opacity-80'}`}
+                                    className={`relative px-4 py-2 text-sm font-bold uppercase tracking-wider transition-colors duration-300 ${computedActiveTab === 'menu' ? 'text-(--text-color)' : 'text-(--text-color) opacity-50 hover:opacity-80'}`}
                                 >
                                     {isEditMode && onUpdateSectionTitle ? (
                                         <input
@@ -198,7 +210,7 @@ export function TreeProfileView({
                                     ) : (
                                         data.sectionTitle
                                     )}
-                                    {activeTab === 'menu' && (
+                                    {computedActiveTab === 'menu' && (
                                         /* Performance: CSS-only tab indicator instead of framer-motion layoutId */
                                         <div
                                             className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-all duration-300"
@@ -208,95 +220,54 @@ export function TreeProfileView({
                                 </button>
                             </div>
 
-                            {/* Performance: Conditional rendering for public view, keep-mounted for edit mode */}
+                            {/* Performance: "Keep Alive" Rendering Strategy
+                                Both tabs remain in the DOM. Visibility is toggled via CSS.
+                                This prevents unmount/remount flicker and preserves scroll position/state.
+                            */}
                             <div className="relative min-h-[400px]">
-                                {isEditMode ? (
-                                    /* Edit Mode: Keep both tabs mounted for instant switching */
-                                    <>
-                                        <div className={cn(
-                                            "transition-opacity duration-300",
-                                            activeTab === 'links' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
-                                        )}>
-                                            <LinksSection
-                                                links={data.customLinks}
-                                                theme={data.theme}
-                                                isEditMode={isEditMode}
-                                                onUpdate={onUpdateLinks || (() => { })}
-                                            />
-                                            <div className="mt-8 space-y-8">
-                                                <CarouselSection
-                                                    businessId={businessId}
-                                                    banners={data.banners || []}
-                                                    theme={data.theme}
-                                                    isEditMode={isEditMode}
-                                                    onUpdate={onUpdateBanners || (() => { })}
-                                                />
-                                                <GallerySection
-                                                    businessId={businessId}
-                                                    images={data.gallery || []}
-                                                    theme={data.theme}
-                                                    isEditMode={isEditMode}
-                                                    onUpdate={onUpdateGallery || (() => { })}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className={cn(
-                                            "transition-opacity duration-300",
-                                            activeTab === 'menu' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
-                                        )}>
-                                            <CatalogSection
-                                                title={data.sectionTitle}
-                                                categories={data.categories}
-                                                items={data.catalogItems}
-                                                theme={data.theme}
-                                                isEditMode={isEditMode}
-                                                onUpdateItems={onUpdateCatalogItems}
-                                                onUpdateCategories={onUpdateCategories}
-                                                businessId={businessId}
-                                            />
-                                        </div>
-                                    </>
-                                ) : (
-                                    /* Public View: Only render active tab (reduces DOM nodes ~50%) */
-                                    <>
-                                        {activeTab === 'links' && (
-                                            <div>
-                                                <LinksSection
-                                                    links={data.customLinks}
-                                                    theme={data.theme}
-                                                    isEditMode={false}
-                                                    onUpdate={() => { }}
-                                                />
-                                                <div className="mt-8 space-y-8">
-                                                    <CarouselSection
-                                                        businessId={businessId}
-                                                        banners={data.banners || []}
-                                                        theme={data.theme}
-                                                        isEditMode={false}
-                                                        onUpdate={() => { }}
-                                                    />
-                                                    <GallerySection
-                                                        businessId={businessId}
-                                                        images={data.gallery || []}
-                                                        theme={data.theme}
-                                                        isEditMode={false}
-                                                        onUpdate={() => { }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                        {activeTab === 'menu' && (
-                                            <CatalogSection
-                                                title={data.sectionTitle}
-                                                categories={data.categories}
-                                                items={data.catalogItems}
-                                                theme={data.theme}
-                                                isEditMode={false}
-                                                businessId={businessId}
-                                            />
-                                        )}
-                                    </>
-                                )}
+                                <div className={cn(
+                                    "transition-opacity duration-300",
+                                    computedActiveTab === 'links' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
+                                )}>
+                                    <LinksSection
+                                        links={data.customLinks}
+                                        theme={data.theme}
+                                        isEditMode={isEditMode}
+                                        onUpdate={onUpdateLinks || (() => { })}
+                                    />
+                                    <div className="mt-8 space-y-8">
+                                        <CarouselSection
+                                            businessId={businessId}
+                                            banners={data.banners || []}
+                                            theme={data.theme}
+                                            isEditMode={isEditMode}
+                                            onUpdate={onUpdateBanners || (() => { })}
+                                        />
+                                        <GallerySection
+                                            businessId={businessId}
+                                            images={data.gallery || []}
+                                            theme={data.theme}
+                                            isEditMode={isEditMode}
+                                            onUpdate={onUpdateGallery || (() => { })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={cn(
+                                    "transition-opacity duration-300",
+                                    computedActiveTab === 'menu' ? "opacity-100 relative z-10" : "opacity-0 absolute inset-0 -z-10 pointer-events-none h-0 overflow-hidden"
+                                )}>
+                                    <CatalogSection
+                                        title={data.sectionTitle}
+                                        categories={data.categories}
+                                        items={data.catalogItems}
+                                        theme={data.theme}
+                                        isEditMode={isEditMode}
+                                        onUpdateItems={onUpdateCatalogItems}
+                                        onUpdateCategories={onUpdateCategories}
+                                        businessId={businessId}
+                                    />
+                                </div>
                             </div>
 
                             {/* Footer */}
