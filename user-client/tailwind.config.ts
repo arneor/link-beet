@@ -16,6 +16,9 @@ const config: Config = {
                 md: ".375rem", /* 6px */
                 sm: ".1875rem", /* 3px */
             },
+            zIndex: {
+                '60': '60',
+            },
             colors: {
                 // Flat / base colors (regular buttons)
                 background: "hsl(var(--background) / <alpha-value>)",

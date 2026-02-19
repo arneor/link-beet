@@ -99,7 +99,6 @@ export function TreeProfileView({
 }: TreeProfileViewProps) {
     // Internal state for tab if not controlled
     const [internalActiveTab, setInternalActiveTab] = useState<'links' | 'menu'>('links');
-    const activeTab = controlledActiveTab ?? internalActiveTab;
     const router = useRouter();
     const pathname = usePathname();
 
@@ -123,14 +122,20 @@ export function TreeProfileView({
         }
     };
 
-    // Determine active tab: Controlled > EditMode Internal > Pathname derivation
+    // Determine active tab: Controlled > Public URL > EditMode Internal
     const computedActiveTab = useMemo(() => {
-        if (activeTab) return activeTab;
+        // 1. Controlled prop (highest priority, e.g. parent overrides)
+        if (controlledActiveTab) return controlledActiveTab;
+
+        // 2. Public View: Derive from URL
         if (!isEditMode && pathname) {
+            // Check if URL ends with /catalog (robustness for query params handled by usePathname)
             return pathname.endsWith('/catalog') ? 'menu' : 'links';
         }
+
+        // 3. Edit Mode Fallback to internal state
         return internalActiveTab;
-    }, [activeTab, isEditMode, pathname, internalActiveTab]);
+    }, [controlledActiveTab, isEditMode, pathname, internalActiveTab]);
 
     // CSS Variables for HIGH PERFORMANCE (No JS re-renders for styles)
     const cssVariables = useMemo(() => ({

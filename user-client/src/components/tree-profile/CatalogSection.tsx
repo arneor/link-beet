@@ -1,12 +1,12 @@
-'use client';
-
-import { useState, memo } from 'react';
+import { useState, memo, useCallback } from 'react';
 import Image from 'next/image';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { Star, Sparkles, Flame, Leaf, Edit2, Plus, Trash2 } from 'lucide-react';
 import { CatalogCategory, CatalogItem, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { cn, isColorExclusivelyDark } from '@/lib/utils';
 import { AddItemModal } from './AddItemModal';
 import { AddCategoryModal } from './AddCategoryModal';
+import { CatalogItemPopup } from './CatalogItemPopup';
 
 interface CatalogItemCardProps {
     item: CatalogItem;
@@ -15,15 +15,16 @@ interface CatalogItemCardProps {
     isEditMode?: boolean;
     onEdit?: () => void;
     onDelete?: () => void;
+    onView?: () => void;
 }
 
-const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDelete }: CatalogItemCardProps) => {
+const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDelete, onView }: CatalogItemCardProps) => {
     const tagIcons: Record<string, React.ReactNode> = {
         bestseller: <Star className="w-3 h-3" />,
         new: <Sparkles className="w-3 h-3" />,
         featured: <Flame className="w-3 h-3" />,
         veg: <Leaf className="w-3 h-3 text-green-400" />,
-        spicy: <Flame className="w-3 h-3 text-red-400" />,
+        spicy: <Flame className="w-3 h-3 text-red-500" />, // Corrected color class
     };
 
     const tagColors: Record<string, string> = {
@@ -51,11 +52,20 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
 
     return (
         <div
+            onClick={!isEditMode && item.isAvailable ? onView : undefined}
+            onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && !isEditMode && item.isAvailable) {
+                    onView?.();
+                }
+            }}
+            role={!isEditMode ? "button" : "presentation"}
+            tabIndex={!isEditMode ? 0 : -1}
             className={cn(
-                'group relative rounded-2xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 border',
+                'group relative rounded-2xl overflow-hidden transition-transform duration-200 border',
+                !isEditMode && 'hover:-translate-y-1 cursor-pointer',
                 cardBaseStyles[theme.cardStyle || 'glass'],
                 isLightTheme ? 'hover:border-black/20 hover:bg-black/10' : 'hover:border-white/20 hover:bg-white/10',
-                !item.isAvailable && 'opacity-50',
+                !item.isAvailable && 'opacity-50 pointer-events-none',
             )}
             style={{
                 animationDelay: `${index * 60}ms`,
@@ -138,7 +148,7 @@ const CatalogItemCardComponent = ({ item, index, theme, isEditMode, onEdit, onDe
 
             {/* Edit mode overlay */}
             {isEditMode && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-100 md:opacity-0 md:hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-100 md:opacity-0 md:hover:opacity-100 transition-opacity pointer-events-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
                         className="px-3 py-1.5 rounded-lg bg-white/20 text-white text-xs font-medium hover:bg-white/30 transition-colors flex items-center gap-1"
@@ -186,9 +196,15 @@ function CatalogSectionComponent({
     isEditMode,
     onUpdateItems,
     onUpdateCategories,
-    businessId
+    businessId,
+    title
 }: CatalogSectionProps) {
     const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]?.id || null);
+
+    // Navigation / Deep Linking
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -196,14 +212,16 @@ function CatalogSectionComponent({
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<CatalogCategory | null>(null);
 
+    // Deep Linking - Derived State 
+    const itemId = searchParams.get('item');
+    const viewingItem = !isEditMode && itemId ? items.find(i => i.id === itemId) || null : null;
+
     // Check if theme is likely light mode
     const isLightTheme = isColorExclusivelyDark(theme.textColor);
 
     const filteredItems = activeCategory
         ? items.filter(item => item.categoryId === activeCategory)
         : items;
-
-    // ... (item handlers remain same)
 
     const handleAddCategory = () => {
         if (!onUpdateCategories) return;
@@ -258,8 +276,6 @@ function CatalogSectionComponent({
         setEditingCategory(null);
     };
 
-    // ... (rest of item handlers)
-
     const handleSaveItem = (itemData: Partial<CatalogItem>) => {
         if (!onUpdateItems || !activeCategory) return;
 
@@ -304,12 +320,29 @@ function CatalogSectionComponent({
         setIsModalOpen(true);
     };
 
+    const handleViewItem = useCallback((item: CatalogItem) => {
+        if (isEditMode) return;
+
+        // Update URL to include item ID (Deep Linking)
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('item', item.id);
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }, [isEditMode, pathname, router, searchParams]);
+
+    const handleClosePopup = useCallback(() => {
+        // Remove item ID from URL
+        const params = new URLSearchParams(searchParams.toString());
+        if (params.has('item')) {
+            params.delete('item');
+            router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        }
+    }, [pathname, router, searchParams]);
+
+
     return (
         <div
             className="mt-8"
         >
-
-
             {/* Category Pills */}
             <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
                 {categories.map((category) => (
@@ -378,6 +411,7 @@ function CatalogSectionComponent({
                         isEditMode={isEditMode}
                         onEdit={() => openForEdit(item)}
                         onDelete={() => handleDeleteItem(item)}
+                        onView={() => handleViewItem(item)}
                     />
                 ))}
                 {isEditMode && (
@@ -421,7 +455,7 @@ function CatalogSectionComponent({
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Modals */}
             <AddItemModal
                 isOpen={isModalOpen}
                 onClose={() => {
@@ -447,6 +481,14 @@ function CatalogSectionComponent({
                 theme={theme}
                 initialData={editingCategory}
                 key={editingCategory ? editingCategory.id : 'new-cat'}
+            />
+
+            <CatalogItemPopup
+                isOpen={!!viewingItem}
+                onClose={handleClosePopup}
+                item={viewingItem}
+                theme={theme}
+                businessName={title}
             />
         </div>
     );
