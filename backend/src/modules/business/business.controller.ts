@@ -113,6 +113,7 @@ export class BusinessController {
       theme: merged.theme,
       customLinks: merged.customLinks,
       socialLinks: merged.socialLinks,
+      banners: merged.banners,
       gallery: (merged.gallery || []).slice(0, 12),
       totalGalleryImages: (merged.gallery || []).length,
       categories: merged.categories,
