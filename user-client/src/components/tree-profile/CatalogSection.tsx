@@ -7,6 +7,7 @@ import { cn, isColorExclusivelyDark } from '@/lib/utils';
 import { AddItemModal } from './AddItemModal';
 import { AddCategoryModal } from './AddCategoryModal';
 import { CatalogItemPopup } from './CatalogItemPopup';
+import type { ProfileEventType } from '@/hooks/use-profile-event-tracker';
 
 interface CatalogItemCardProps {
     item: CatalogItem;
@@ -187,6 +188,7 @@ interface CatalogSectionProps {
     onUpdateItems?: (items: CatalogItem[]) => void;
     onUpdateCategories?: (categories: CatalogCategory[]) => void;
     businessId: string;
+    onTrackEvent?: (eventType: ProfileEventType, options?: { elementId?: string; elementLabel?: string; metadata?: Record<string, unknown> }) => void;
 }
 
 function CatalogSectionComponent({
@@ -197,7 +199,8 @@ function CatalogSectionComponent({
     onUpdateItems,
     onUpdateCategories,
     businessId,
-    title
+    title,
+    onTrackEvent
 }: CatalogSectionProps) {
     const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]?.id || null);
 
@@ -323,11 +326,18 @@ function CatalogSectionComponent({
     const handleViewItem = useCallback((item: CatalogItem) => {
         if (isEditMode) return;
 
+        // Track product view
+        onTrackEvent?.('product_view', {
+            elementId: item.id,
+            elementLabel: item.title,
+            metadata: { categoryId: item.categoryId, price: item.price },
+        });
+
         // Update URL to include item ID (Deep Linking)
         const params = new URLSearchParams(searchParams.toString());
         params.set('item', item.id);
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    }, [isEditMode, pathname, router, searchParams]);
+    }, [isEditMode, pathname, router, searchParams, onTrackEvent]);
 
     const handleClosePopup = useCallback(() => {
         // Remove item ID from URL
@@ -351,7 +361,15 @@ function CatalogSectionComponent({
                         role="button"
                         tabIndex={0}
                         key={category.id}
-                        onClick={() => setActiveCategory(category.id)}
+                        onClick={() => {
+                            setActiveCategory(category.id);
+                            if (!isEditMode) {
+                                onTrackEvent?.('category_tap', {
+                                    elementId: category.id,
+                                    elementLabel: category.name,
+                                });
+                            }
+                        }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();

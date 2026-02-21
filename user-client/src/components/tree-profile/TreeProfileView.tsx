@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ import {
     CatalogItem,
     CatalogCategory
 } from '@/lib/treeProfileTypes';
+import { useProfileEventTracker, type ProfileEventType } from '@/hooks/use-profile-event-tracker';
 
 // Performance: Critical above-fold components loaded eagerly
 import { TreeProfileHeader } from '@/components/tree-profile/TreeProfileHeader';
@@ -105,6 +106,19 @@ export function TreeProfileView({
     const router = useRouter();
     const pathname = usePathname();
 
+    // Event tracking (only active in public/non-edit mode)
+    const { trackEvent } = useProfileEventTracker(!isEditMode && username ? username : '');
+
+    // Stable callback for child components to trigger tracking
+    const handleTrackEvent = useCallback(
+        (eventType: ProfileEventType, options?: { elementId?: string; elementLabel?: string; metadata?: Record<string, unknown> }) => {
+            if (!isEditMode && username) {
+                trackEvent(eventType, options);
+            }
+        },
+        [isEditMode, username, trackEvent]
+    );
+
     const handleTabChange = (tab: 'links' | 'menu') => {
         // Always update controlled/internal state for immediate tab switching
         if (onTabChange) {
@@ -113,11 +127,13 @@ export function TreeProfileView({
             setInternalActiveTab(tab);
         }
 
+        // Track tab switch in public mode
+        if (!isEditMode && username) {
+            trackEvent('tab_switch', { elementId: tab, elementLabel: tab === 'links' ? 'Quick Links' : 'Our Menu' });
+        }
+
         // Public view: navigate to route
         if (!isEditMode && username) {
-            // In "Keep Alive" mode, the layout persists, but we still update URL for sharing
-            // We use router.replace to avoid history stack pollution if desired, or push.
-            // Given user wants "tabs", navigation behavior is standard.
             const target = tab === 'menu' ? `/${username}/catalog` : `/${username}`;
             if (pathname !== target) {
                 router.replace(target, { scroll: false });
@@ -242,6 +258,7 @@ export function TreeProfileView({
                                         theme={data.theme}
                                         isEditMode={isEditMode}
                                         onUpdate={onUpdateLinks || (() => { })}
+                                        onTrackEvent={handleTrackEvent}
                                     />
                                     <div className="mt-8 space-y-8">
                                         <CarouselSection
@@ -249,6 +266,7 @@ export function TreeProfileView({
                                             theme={data.theme}
                                             isEditMode={isEditMode}
                                             onUpdate={onUpdateBanners || (() => { })}
+                                            onTrackEvent={handleTrackEvent}
                                         />
                                         <GallerySection
                                             key={businessId}
@@ -273,6 +291,7 @@ export function TreeProfileView({
                                         onUpdateItems={onUpdateCatalogItems}
                                         onUpdateCategories={onUpdateCategories}
                                         businessId={businessId}
+                                        onTrackEvent={handleTrackEvent}
                                     />
                                 </div>
                             </div>

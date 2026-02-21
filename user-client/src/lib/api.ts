@@ -646,6 +646,62 @@ export const analyticsApi = {
   },
 };
 
+// ===== BEET LINK ANALYTICS API (Client-side) =====
+export interface BeetLinkAnalytics {
+  totalPageViews: number;
+  uniqueSessions: number;
+  eventBreakdown: Array<{
+    eventType: string;
+    count: number;
+    breakdown: Array<{
+      elementId: string;
+      elementLabel: string;
+      count: number;
+      percentage: number;
+    }>;
+  }>;
+  dailyTrend: Array<{
+    date: string;
+    pageViews: number;
+    interactions: number;
+  }>;
+  topCategories: Array<{
+    elementId: string;
+    elementLabel: string;
+    count: number;
+    percentage: number;
+  }>;
+  topProducts: Array<{
+    elementId: string;
+    elementLabel: string;
+    count: number;
+    percentage: number;
+  }>;
+  topLinks: Array<{
+    elementId: string;
+    elementLabel: string;
+    count: number;
+    percentage: number;
+  }>;
+  startDate: string;
+  endDate: string;
+}
+
+export const beetLinkApi = {
+  async getAnalytics(
+    businessId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<BeetLinkAnalytics> {
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return apiRequest(`/beet-link-events/analytics/${businessId}${query}`);
+  },
+};
+
 // ===== AUTH API =====
 export interface AuthResponse {
   accessToken: string;

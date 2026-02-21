@@ -5,6 +5,7 @@ import { ExternalLink, Plus } from 'lucide-react';
 import { CustomLink, TreeProfileTheme } from '@/lib/treeProfileTypes';
 import { cn, isColorExclusivelyDark } from '@/lib/utils';
 import { AddLinkModal } from './AddLinkModal';
+import type { ProfileEventType } from '@/hooks/use-profile-event-tracker';
 
 interface LinkBlockProps {
     link: CustomLink;
@@ -12,9 +13,10 @@ interface LinkBlockProps {
     theme: TreeProfileTheme;
     isEditMode?: boolean;
     onEdit?: () => void;
+    onTrackEvent?: (eventType: ProfileEventType, options?: { elementId?: string; elementLabel?: string; metadata?: Record<string, unknown> }) => void;
 }
 
-const LinkBlockComponent = ({ link, theme, isEditMode, onEdit }: LinkBlockProps) => {
+const LinkBlockComponent = ({ link, theme, isEditMode, onEdit, onTrackEvent }: LinkBlockProps) => {
     // Check if theme is likely light mode
     const isLightTheme = isColorExclusivelyDark(theme.textColor);
 
@@ -88,6 +90,12 @@ const LinkBlockComponent = ({ link, theme, isEditMode, onEdit }: LinkBlockProps)
                     e.preventDefault();
                     e.stopPropagation();
                     onEdit?.();
+                } else {
+                    onTrackEvent?.('link_click', {
+                        elementId: link.id,
+                        elementLabel: link.title,
+                        metadata: { url: link.url, style: link.style },
+                    });
                 }
             }}
         >
@@ -159,9 +167,10 @@ interface LinksSectionProps {
     theme: TreeProfileTheme;
     isEditMode?: boolean;
     onUpdate?: (links: CustomLink[]) => void;
+    onTrackEvent?: (eventType: ProfileEventType, options?: { elementId?: string; elementLabel?: string; metadata?: Record<string, unknown> }) => void;
 }
 
-function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSectionProps) {
+function LinksSectionComponent({ links, theme, isEditMode, onUpdate, onTrackEvent }: LinksSectionProps) {
     const activeLinks = links.filter(l => l.isActive);
 
     // Modal State
@@ -238,6 +247,7 @@ function LinksSectionComponent({ links, theme, isEditMode, onUpdate }: LinksSect
                         theme={theme}
                         isEditMode={isEditMode}
                         onEdit={() => openForEdit(link)}
+                        onTrackEvent={onTrackEvent}
                     />
                 ))}
                 {isEditMode && activeLinks.length > 0 && (

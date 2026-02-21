@@ -9,7 +9,7 @@ import {
     Menu,
     Wand2,
     Wifi,
-    TreePine,
+    Link2,
     ChevronDown,
     Settings,
     QrCode,
@@ -46,7 +46,7 @@ export function Sidebar({ businessId }: SidebarProps) {
     };
 
     // Check if we're on any profile page
-    const isOnProfilePage = pathname.includes('/profile') || pathname.includes('/tree-profile');
+    const isOnProfilePage = pathname.includes('/profile') || pathname.includes('/beet-link');
     const [profileOpen, setProfileOpen] = useState(isOnProfilePage);
 
     // Keep dropdown open when navigating to profile pages
@@ -83,9 +83,9 @@ export function Sidebar({ businessId }: SidebarProps) {
 
     const profileLinks = [
         {
-            href: `/dashboard/${businessId}/tree-profile`,
+            href: `/dashboard/${businessId}/beet-link`,
             label: 'Beet Link',
-            icon: TreePine,
+            icon: Link2,
         },
         {
             href: `/dashboard/${businessId}/profile`,

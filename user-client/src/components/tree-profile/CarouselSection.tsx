@@ -12,6 +12,7 @@ import {
     Check
 } from 'lucide-react';
 import { ProfileBanner, TreeProfileTheme } from '@/lib/treeProfileTypes';
+import type { ProfileEventType } from '@/hooks/use-profile-event-tracker';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -29,9 +30,11 @@ interface CarouselSectionProps {
     isEditMode: boolean;
     onUpdate: (banners: ProfileBanner[]) => void;
     theme: TreeProfileTheme;
+    onTrackEvent?: (eventType: ProfileEventType, options?: { elementId?: string; elementLabel?: string; metadata?: Record<string, unknown> }) => void;
 }
 
-export function CarouselSection({ banners = [], isEditMode, onUpdate, theme }: CarouselSectionProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function CarouselSection({ banners = [], isEditMode, onUpdate, theme, onTrackEvent }: CarouselSectionProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [editingBanner, setEditingBanner] = useState<ProfileBanner | null>(null);
 
