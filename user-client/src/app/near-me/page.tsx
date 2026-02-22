@@ -1,24 +1,30 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { offersApi, type Offer, type NearbyOffersResponse } from '@/lib/api';
+import { offersApi, bannersApi, type Offer, type Banner, type NearbyOffersResponse } from '@/lib/api';
 import Image from 'next/image';
 import {
     MapPin,
     Search,
-    Filter,
     X,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Tag,
     Calendar,
-    AlertCircle,
     Navigation,
     Loader2,
-    IndianRupee,
     Clock,
     SlidersHorizontal,
     MapPinOff,
     ExternalLink,
+    Utensils,
+    Smartphone,
+    ShoppingBag,
+    Heart,
+    Sparkles,
+    Wrench,
+    Zap,
 } from 'lucide-react';
 
 // ─── Constants ──────────────────────────────────
@@ -39,6 +45,17 @@ const OFFER_CATEGORIES = [
     { value: 'automotive', label: 'Auto' },
     { value: 'services', label: 'Services' },
     { value: 'other', label: 'Other' },
+];
+
+// Quick filter chips shown above the feed (high-frequency categories)
+const QUICK_FILTERS = [
+    { value: '', label: 'All', icon: Zap },
+    { value: 'food', label: 'Food', icon: Utensils },
+    { value: 'electronics', label: 'Electronics', icon: Smartphone },
+    { value: 'clothing', label: 'Clothing', icon: ShoppingBag },
+    { value: 'health', label: 'Health', icon: Heart },
+    { value: 'beauty', label: 'Beauty', icon: Sparkles },
+    { value: 'services', label: 'Services', icon: Wrench },
 ];
 
 const DISTANCE_OPTIONS = [
@@ -74,6 +91,12 @@ export default function NearMePage() {
     const [maxDistanceKm, setMaxDistanceKm] = useState(10);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+
+    // Banner state
+    const [banners, setBanners] = useState<Banner[]>([]);
+    const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+    const bannerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const bannerTouchRef = useRef(false);
 
     // Search debounce
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -125,6 +148,29 @@ export default function NearMePage() {
     useEffect(() => {
         requestLocation();
     }, [requestLocation]);
+
+    // ─── Fetch Banners ──────────────────────────
+    useEffect(() => {
+        bannersApi.getActive().then(setBanners).catch(() => setBanners([]));
+    }, []);
+
+    // ─── Banner Auto-play ───────────────────────
+    useEffect(() => {
+        if (banners.length <= 1) return;
+
+        const startAutoPlay = () => {
+            bannerIntervalRef.current = setInterval(() => {
+                if (!bannerTouchRef.current) {
+                    setActiveBannerIndex(prev => (prev + 1) % banners.length);
+                }
+            }, 5000);
+        };
+
+        startAutoPlay();
+        return () => {
+            if (bannerIntervalRef.current) clearInterval(bannerIntervalRef.current);
+        };
+    }, [banners.length]);
 
     // ─── Debounced Search ────────────────────────
     useEffect(() => {
@@ -304,6 +350,18 @@ export default function NearMePage() {
                     {/* Filters Panel */}
                     {showFilters && (
                         <div className="mt-3 pt-3 border-t border-slate-100 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                            {/* Filter Panel Header with Close Button */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Filters</span>
+                                <button
+                                    onClick={() => setShowFilters(false)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-slate-900 text-white hover:bg-slate-700 transition-colors shadow-sm"
+                                    aria-label="Close filters"
+                                >
+                                    Close
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
                             {/* Category chips */}
                             <div>
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">Category</label>
@@ -354,6 +412,112 @@ export default function NearMePage() {
                     )}
                 </div>
             </div>
+
+            {/* ─── Banner Carousel ───────────────────── */}
+            {banners.length > 0 && locationState === 'granted' && (
+                <div className="max-w-6xl mx-auto px-4 pt-4">
+                    <div
+                        className="relative overflow-hidden rounded-2xl"
+                        onTouchStart={() => { bannerTouchRef.current = true; }}
+                        onTouchEnd={() => { bannerTouchRef.current = false; }}
+                        onMouseEnter={() => { bannerTouchRef.current = true; }}
+                        onMouseLeave={() => { bannerTouchRef.current = false; }}
+                    >
+                        <div
+                            className="flex transition-transform duration-500 ease-out"
+                            style={{ transform: `translateX(-${activeBannerIndex * 100}%)` }}
+                        >
+                            {banners.map((banner) => (
+                                <div key={banner._id} className="w-full shrink-0">
+                                    <a
+                                        href={banner.linkUrl || '#'}
+                                        target={banner.linkType === 'external' ? '_blank' : '_self'}
+                                        rel={banner.linkType === 'external' ? 'noopener noreferrer' : undefined}
+                                        className="block relative aspect-21/9 w-full overflow-hidden rounded-2xl"
+                                        style={{ backgroundColor: banner.accentColor || '#9EE53B' }}
+                                    >
+                                        <Image
+                                            src={banner.imageUrl}
+                                            alt={banner.title}
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, 1152px"
+                                            priority={activeBannerIndex === 0}
+                                        />
+                                        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+                                        <div className="absolute bottom-3 left-4 right-4">
+                                            <p className="text-white text-sm sm:text-base font-bold drop-shadow-lg">{banner.title}</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Navigation Arrows */}
+                        {banners.length > 1 && (
+                            <>
+                                <button
+                                    onClick={() => setActiveBannerIndex(prev => prev === 0 ? banners.length - 1 : prev - 1)}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white transition-colors"
+                                    aria-label="Previous banner"
+                                >
+                                    <ChevronLeft className="w-4 h-4 text-slate-700" />
+                                </button>
+                                <button
+                                    onClick={() => setActiveBannerIndex(prev => (prev + 1) % banners.length)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-white transition-colors"
+                                    aria-label="Next banner"
+                                >
+                                    <ChevronRight className="w-4 h-4 text-slate-700" />
+                                </button>
+                            </>
+                        )}
+
+                        {/* Pagination Dots */}
+                        {banners.length > 1 && (
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                                {banners.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setActiveBannerIndex(i)}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeBannerIndex
+                                            ? 'bg-white w-5 shadow-md'
+                                            : 'bg-white/50 hover:bg-white/75'
+                                            }`}
+                                        aria-label={`Go to banner ${i + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Quick Filter Chips ─────────────────── */}
+            {locationState === 'granted' && (
+                <div className="max-w-6xl mx-auto px-4 pt-4">
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+                        {QUICK_FILTERS.map(qf => {
+                            const Icon = qf.icon;
+                            const isActive = selectedCategory === qf.value;
+                            return (
+                                <button
+                                    key={qf.value}
+                                    onClick={() => setSelectedCategory(qf.value)}
+                                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all border shrink-0 ${isActive
+                                        ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
+                                        }`}
+                                    style={{ minHeight: 44 }}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {qf.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* ─── Results ────────────────────────── */}
             <div className="max-w-6xl mx-auto px-4 py-6">

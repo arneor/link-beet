@@ -18,6 +18,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { SplashModule } from "./modules/splash/splash.module";
 import { MediaModule } from "./modules/media/media.module";
 import { OffersModule } from "./modules/offers/offers.module";
+import { BannersModule } from "./modules/banners/banners.module";
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { OffersModule } from "./modules/offers/offers.module";
     SplashModule,
     MediaModule,
     OffersModule,
+    BannersModule,
   ],
   providers: [
     // Global Throttler Guard

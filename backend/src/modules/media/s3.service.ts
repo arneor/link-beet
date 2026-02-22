@@ -134,7 +134,7 @@ export class S3Service {
       case "user":
         return `users/${id}/`;
       case "system":
-        return `system/${placement}/`;
+        return `system/${id}/${placement}/`;
       default:
         return `misc/${id}/`;
     }

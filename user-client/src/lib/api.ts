@@ -1013,3 +1013,32 @@ export const offersApi = {
     return response.json();
   },
 };
+
+// ═══════════════════════════════════════════════════════════════
+// ═══ Banners (Admin-managed, public fetch) ════════════════════
+// ═══════════════════════════════════════════════════════════════
+
+export interface Banner {
+  _id: string;
+  title: string;
+  imageUrl: string;
+  accentColor: string;
+  linkUrl?: string;
+  linkType: 'internal' | 'external' | 'category';
+  position: number;
+  isActive: boolean;
+  startsAt?: string;
+  expiresAt?: string;
+}
+
+export const bannersApi = {
+  async getActive(): Promise<Banner[]> {
+    const response = await fetch(`${API_BASE_URL}/banners/active`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      return [];
+    }
+    return response.json();
+  },
+};
